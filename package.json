@@ -1,0 +1,81 @@
+{
+  "name": "@sunacchi/pila",
+  "version": "1.0.0",
+  "description": "Pieces of Information, Linked and Arranged — a framework-agnostic Notion-style block editor",
+  "type": "module",
+  "main": "./dist/pila.umd.js",
+  "module": "./dist/pila.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/pila.es.js",
+      "require": "./dist/pila.umd.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./styles": "./dist/pila.css",
+    "./styles/source": "./src/styles/pila.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "./dist/pila.css",
+    "./src/styles/pila.css",
+    "./src/styles/variables.css",
+    "./src/blocks/ParagraphBlock.ts",
+    "./src/blocks/HeadingBlock.ts",
+    "./src/blocks/ListBlock.ts",
+    "./src/blocks/TodoBlock.ts",
+    "./src/blocks/CodeBlock.ts",
+    "./src/blocks/QuoteBlock.ts",
+    "./src/blocks/CalloutBlock.ts",
+    "./src/blocks/DividerBlock.ts",
+    "./src/blocks/ImageBlock.ts",
+    "./src/blocks/TableBlock.ts",
+    "./src/blocks/ColumnsBlock.ts"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest --config vitest.config.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0",
+    "@types/prismjs": "^1.26.6",
+    "@vitest/coverage-v8": "^1.6.0",
+    "autoprefixer": "^10.4.19",
+    "jsdom": "^24.1.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
+    "vite-plugin-dts": "^3.9.1",
+    "vitest": "^1.6.0"
+  },
+  "keywords": [
+    "block-editor",
+    "notion",
+    "editor",
+    "typescript",
+    "no-framework"
+  ],
+  "license": "MIT",
+  "author": "juanchinovas",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/juanchinovas/pila.git"
+  },
+  "homepage": "https://github.com/juanchinovas/pila#readme",
+  "bugs": {
+    "url": "https://github.com/juanchinovas/pila/issues"
+  },
+  "dependencies": {
+    "lit": "^3.3.2",
+    "prismjs": "^1.30.0"
+  }
+}
