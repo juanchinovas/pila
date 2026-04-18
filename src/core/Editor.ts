@@ -34,6 +34,7 @@ import { DragHandle } from '../ui/DragHandle'
 import { JsonSerializer } from '../serializers/JsonSerializer'
 import { HtmlSerializer } from '../serializers/HtmlSerializer'
 import { MarkdownSerializer } from '../serializers/MarkdownSerializer'
+import { EmailSerializer } from '../serializers/EmailSerializer'
 
 export class PilaEditor {
   private container: HTMLElement
@@ -123,7 +124,7 @@ export class PilaEditor {
     this.manager.removeAllListeners()
   }
 
-  getContent(format: 'json' | 'html' | 'markdown'): string {
+  getContent(format: 'json' | 'html' | 'markdown' | 'email'): string {
     const blocks = this.manager.getAll().map((block) => {
       const instance = this.blockInstances.get(block.id)
       return instance ? instance.getContent() : block
@@ -133,6 +134,7 @@ export class PilaEditor {
       case 'json':     return JsonSerializer.serialize(blocks)
       case 'html':     return HtmlSerializer.serialize(blocks)
       case 'markdown': return MarkdownSerializer.serialize(blocks)
+      case 'email':    return EmailSerializer.serialize(blocks)
     }
   }
 

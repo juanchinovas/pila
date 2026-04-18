@@ -5,6 +5,7 @@ export { PilaEditor } from './core/Editor'
 export { JsonSerializer } from './serializers/JsonSerializer'
 export { HtmlSerializer } from './serializers/HtmlSerializer'
 export { MarkdownSerializer } from './serializers/MarkdownSerializer'
+export { EmailSerializer } from './serializers/EmailSerializer'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type {
