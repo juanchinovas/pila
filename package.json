@@ -68,7 +68,7 @@
   "author": "juanchinovas",
   "repository": {
     "type": "git",
-    "url": "https://github.com/juanchinovas/pila.git"
+    "url": "git+https://github.com/juanchinovas/pila.git"
   },
   "homepage": "https://github.com/juanchinovas/pila#readme",
   "bugs": {
