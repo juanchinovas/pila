@@ -36,7 +36,7 @@
       flex-wrap: wrap;
     }
     button {
-      padding: 6px 14px;
+      padding: .8em 1.4em;
       border: 1px solid #ccc;
       border-radius: 6px;
       background: #fff;
@@ -77,6 +77,7 @@
     <button id="btn-json">Get JSON</button>
     <button id="btn-html">Get HTML</button>
     <button id="btn-md">Get Markdown</button>
+    <button id="btn-email">Get Email HTML</button>
     <button id="btn-clear">Clear</button>
   </div>
   <pre id="output"></pre>
@@ -90,9 +91,10 @@
       const btn = document.getElementById(btnId)
       btn.prepend(icon(iconNode, 14))
     }
-    addIcon('btn-json', Icons.FileJson)
-    addIcon('btn-html', Icons.FileCode)
-    addIcon('btn-md',   Icons.FileText)
+    addIcon('btn-json',  Icons.FileJson)
+    addIcon('btn-html',  Icons.FileCode)
+    addIcon('btn-md',    Icons.FileText)
+    addIcon('btn-email', Icons.Mail)
     addIcon('btn-clear', Icons.Eraser)
 
     const initialContent = [
@@ -148,6 +150,9 @@
     })
     document.getElementById('btn-md').addEventListener('click', () => {
       output.textContent = editor.getContent('markdown')
+    })
+    document.getElementById('btn-email').addEventListener('click', () => {
+      output.textContent = editor.getContent('email')
     })
     document.getElementById('btn-clear').addEventListener('click', () => {
       output.textContent = ''

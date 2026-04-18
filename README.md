@@ -13,7 +13,7 @@ Pila is built on plain Web Components and requires no framework. It works in van
 - **Slash menu** — type `/` to insert any block type
 - **Drag & drop** — drag the handle beside any block to reorder
 - **Syntax highlighting** — code blocks with Prism.js (14 languages)
-- **Export** — JSON, HTML, and Markdown serializers built in
+- **Export** — JSON, HTML, Markdown, and **Email HTML** serializers built in
 - **Plugin API** — register custom block types, slash-menu items, and toolbar buttons
 - **Framework-agnostic** — pure DOM / Web Components, no React/Vue/Svelte dependency
 - **TypeScript** — full type declarations included
@@ -85,6 +85,7 @@ Call `editor.destroy()` when the editor is no longer needed to clean up event li
 | `getContent('json')`     | `string` | Serializes blocks to a JSON string      |
 | `getContent('html')`     | `string` | Serializes blocks to HTML               |
 | `getContent('markdown')` | `string` | Serializes blocks to Markdown           |
+| `getContent('email')`    | `string` | Serializes blocks to a standalone email-safe HTML document |
 
 ---
 
@@ -137,6 +138,17 @@ Returns clean semantic HTML (`<p>`, `<h1>`–`<h3>`, `<ul>`, `<ol>`, `<blockquot
 ### Markdown
 
 Returns standard Markdown. ATX headings, fenced code blocks with language labels, GFM tables, and task-list checkboxes are supported.
+
+### Email HTML
+
+Returns a complete `<!DOCTYPE html>` document suitable for sending as an HTML email. All styles are inlined (no `<style>` blocks), column layouts use `<table role="presentation">`, and client-specific quirks (Outlook conditional comments, `mso-` properties) are included. The output cannot be fed back into the editor.
+
+```ts
+const emailHtml = editor.getContent('email')
+// pass to your email-sending SDK, e.g. nodemailer, SendGrid, etc.
+```
+
+Callout flavour colours, todo checkboxes (☐ / ☑), code blocks, and all inline marks are fully supported.
 
 ---
 
