@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pila Block Editor — Demo</title>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px;
+    }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; color: #111; }
+    .subtitle { color: #666; margin-bottom: 32px; font-size: 0.9rem; }
+    #editor {
+      width: 100%;
+      max-width: 720px;
+      min-height: 400px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 24px;
+    }
+    .toolbar {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 6px 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    button svg {
+      display: block;
+      flex-shrink: 0;
+      stroke: currentColor;
+      fill: none;
+    }
+    button:hover { background: #f0f0f0; }
+    pre#output {
+      width: 100%;
+      max-width: 720px;
+      margin-top: 16px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pila Block Editor</h1>
+  <p class="subtitle">Type <code>/</code> to add a block · Select text for inline formatting · Drag rows to reorder</p>
+  <div id="editor"></div>
+  <div class="toolbar">
+    <button id="btn-json">Get JSON</button>
+    <button id="btn-html">Get HTML</button>
+    <button id="btn-md">Get Markdown</button>
+    <button id="btn-clear">Clear</button>
+  </div>
+  <pre id="output"></pre>
+
+  <script type="module">
+    import '../src/styles/pila.css'
+    import { PilaEditor, icon, Icons } from '../src/index.ts'
+
+    // Add lucide icons to each demo control button
+    function addIcon(btnId, iconNode) {
+      const btn = document.getElementById(btnId)
+      btn.prepend(icon(iconNode, 14))
+    }
+    addIcon('btn-json', Icons.FileJson)
+    addIcon('btn-html', Icons.FileCode)
+    addIcon('btn-md',   Icons.FileText)
+    addIcon('btn-clear', Icons.Eraser)
+
+    const initialContent = [
+      { id: '1', type: 'heading1', content: [{ text: 'Welcome to Pila ✦' }] },
+      { id: '2', type: 'paragraph', content: [{ text: 'A framework-agnostic block editor. Type ' }, { text: '/', code: true }, { text: ' to open the slash menu.' }] },
+      { id: '3', type: 'heading2', content: [{ text: 'Features' }] },
+      { id: '4', type: 'bulletList', content: [{ text: 'Drag & drop blocks' }] },
+      { id: '5', type: 'bulletList', content: [{ text: 'Inline formatting (bold, italic, code, links)' }] },
+      { id: '6', type: 'bulletList', content: [{ text: 'JSON / HTML / Markdown export' }] },
+      { id: '7', type: 'todo', content: [{ text: 'Try checking this off' }], attrs: { checked: false } },
+      { id: '8', type: 'code', content: [{ text: 'const editor = new PilaEditor(el, {\n\tplaceholder: "Type / to add a block…"\n});' }], attrs: { language: 'typescript' } },
+      { id: '9', type: 'quote', content: [{ text: 'The best editor is the one you actually use.' }] },
+      { id: '10a', type: 'callout', content: [{ text: 'This is an info callout.' }],    attrs: { icon: '💡', flavor: 'info'    } },
+      { id: '10b', type: 'callout', content: [{ text: 'This is a warning callout.' }],  attrs: { icon: '⚠️', flavor: 'warning' } },
+      { id: '10c', type: 'callout', content: [{ text: 'This is an error callout.' }],   attrs: { icon: '🚨', flavor: 'error'   } },
+      { id: '10d', type: 'callout', content: [{ text: 'This is a success callout.' }],  attrs: { icon: '✅', flavor: 'success' } },
+      { id: '10e', type: 'callout', content: [{ text: 'This is a tip callout.' }],      attrs: { icon: '💬', flavor: 'tip'     } },
+      { id: '11', type: 'divider' },
+      { id: '12', type: 'image', attrs: { src: 'https://picsum.photos/seed/pila/720/240', alt: 'Demo image' } },
+      { id: '13', type: 'table', attrs: { rows: [
+        { cells: [{ content: [{ text: 'Name' }] }, { content: [{ text: 'Role' }] }, { content: [{ text: 'Status' }] }] },
+        { cells: [{ content: [{ text: 'Alice' }] }, { content: [{ text: 'Engineer' }] }, { content: [{ text: 'Active' }] }] },
+        { cells: [{ content: [{ text: 'Bob' }] }, { content: [{ text: 'Designer' }] }, { content: [{ text: 'Active' }] }] },
+      ] } },
+      { id: '14', type: 'heading2', content: [{ text: 'Columns layout' }] },
+      { id: '15', type: 'paragraph', content: [{ text: 'Click a column to show the toolbar. Drag the handle between columns to resize them.' }] },
+      { id: '16', type: 'columns', attrs: { columnDefs: [
+        { width: 1, blocks: [{ id: 'c16a', type: 'paragraph', content: [{ text: 'Left column — equal width by default.' }] }] },
+        { width: 1, blocks: [{ id: 'c16b', type: 'paragraph', content: [{ text: 'Right column — equal width by default.' }] }] },
+      ] } },
+      { id: '17', type: 'columns', attrs: { columnDefs: [
+        { width: 2, blocks: [
+          { id: 'c17a1', type: 'paragraph', content: [{ text: 'Wide column (2×)' }, { text: ' — you can set per-column widths using the toolbar.', italic: true }] },
+          { id: 'c17a2', type: 'bulletList', content: [{ text: 'Heading, lists, code… all block types work here.' }] },
+        ] },
+        { width: 1, blocks: [{ id: 'c17b', type: 'paragraph', content: [{ text: 'Narrow column (1×)' }] }] },
+        { width: 1, blocks: [{ id: 'c17c', type: 'paragraph', content: [{ text: 'Narrow column (1×)' }] }] },
+      ] } },
+    ]
+
+    const editor = new PilaEditor(document.getElementById('editor'), {
+      placeholder: 'Type / to add a block…',
+      initialContent,
+    })
+    editor.mount()
+
+    const output = document.getElementById('output')
+    document.getElementById('btn-json').addEventListener('click', () => {
+      output.textContent = editor.getContent('json')
+    })
+    document.getElementById('btn-html').addEventListener('click', () => {
+      output.textContent = editor.getContent('html')
+    })
+    document.getElementById('btn-md').addEventListener('click', () => {
+      output.textContent = editor.getContent('markdown')
+    })
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      output.textContent = ''
+    })
+  </script>
+</body>
+</html>
