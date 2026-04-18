@@ -12,6 +12,8 @@ export default defineConfig({
       insertTypesEntry: true,
       include: ['src'],
       outDir: 'dist',
+      tsconfigPath: resolve(__dirname, 'tsconfig.json'),
+      skipDiagnostics: true,
     }),
   ],
   resolve: {
