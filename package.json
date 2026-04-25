@@ -12,7 +12,10 @@
       "require": "./dist/pila.umd.js",
       "types": "./dist/index.d.ts"
     },
-    "./styles": "./dist/pila.css",
+    "./styles": {
+      "import": "./dist/pila.css",
+      "types": "./dist/styles.d.ts"
+    },
     "./styles/source": "./src/styles/pila.css"
   },
   "files": [
@@ -37,7 +40,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && cp src/styles.d.ts dist/styles.d.ts",
     "preview": "vite preview",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
