@@ -1,0 +1,269 @@
+# @sunacchi/pila
+
+> **Pieces of Information, Linked and Arranged** — a framework-agnostic, Notion-style block editor in TypeScript.
+> Pure Web Components. No React / Vue / Svelte dependency. Full TypeScript types included.
+> npm: `@sunacchi/pila` | Repo: https://github.com/juanchinovas/pila
+
+## Install
+
+```bash
+npm install @sunacchi/pila
+```
+
+```ts
+import { PilaEditor } from '@sunacchi/pila'
+import '@sunacchi/pila/styles'          // required — import once in your entry point
+```
+
+## Core usage
+
+```ts
+const editor = new PilaEditor(document.getElementById('editor'), {
+  placeholder: 'Type / to add a block…',  // shown in empty first block
+  initialContent: [],                      // Block[] — pre-populate content
+  onChange(blocks) {},                     // called on every content change
+  plugins: [],                             // PilaPlugin[] — optional plugins
+})
+
+editor.mount()    // renders editor into the container
+editor.destroy()  // unmounts and cleans up all resources
+```
+
+## Export content
+
+```ts
+editor.getContent('json')      // → string  canonical Block[] JSON (round-trips back into editor)
+editor.getContent('html')      // → string  semantic HTML (display only, cannot feed back)
+editor.getContent('markdown')  // → string  GFM Markdown
+editor.getContent('email')     // → string  standalone <!DOCTYPE html> email (inline styles, Outlook-safe)
+```
+
+Restore from JSON:
+
+```ts
+new PilaEditor(el, { initialContent: JSON.parse(editor.getContent('json')) })
+```
+
+## Content model
+
+```ts
+interface Block {
+  id: string             // unique string id
+  type: BlockType        // see block types below
+  content?: InlineNode[] // rich-text content
+  attrs?: BlockAttrs     // block-specific attributes
+}
+
+interface InlineNode {
+  text: string
+  bold?: boolean
+  italic?: boolean
+  underline?: boolean
+  code?: boolean
+  link?: string          // http / https / mailto only
+}
+```
+
+## Block types
+
+All 14 built-in `type` values:
+
+| type | Description | Key attrs |
+|---|---|---|
+| `paragraph` | Plain text | — |
+| `heading1` `heading2` `heading3` | `<h1>`–`<h3>` | — |
+| `bulletList` | Unordered list item | — |
+| `numberedList` | Ordered list item | — |
+| `todo` | Checkbox item | `checked: boolean` |
+| `code` | Fenced code block (Prism.js, 16 languages) | `language: string` |
+| `quote` | Blockquote | — |
+| `callout` | Highlighted callout box | `icon: string`, `flavor: 'info'\|'warning'\|'error'\|'success'\|'tip'` |
+| `divider` | Horizontal rule (`<hr>`) | — |
+| `image` | Image with caption and props modal | `src`, `alt`, `width`, `height`, `alignment`, `tailwindClasses` |
+| `table` | Data table | `rows: TableRow[]`, `headerRows: number[]`, `headerCols: number[]` |
+| `columns` | Multi-column layout with nested blocks | `columnDefs: ColumnDef[]` |
+| `button` | Clickable button | `href: string`, `buttonStyle: 'primary'\|'secondary'\|'outline'` |
+
+### `code` language values
+
+`plaintext` `bash` `css` `csharp` `java` `javascript` `json` `jsx` `markdown` `markup` `python` `sql` `tsx` `typescript` `yaml`
+
+Aliases resolved automatically: `js`→`javascript`, `ts`→`typescript`, `py`→`python`, `sh`/`shell`/`zsh`→`bash`, `html`/`xml`/`svg`→`markup`, `yml`→`yaml`.
+
+### Table structure
+
+```ts
+interface TableRow  { cells: TableCell[] }
+interface TableCell { content: InlineNode[]; align?: 'left' | 'center' | 'right' }
+```
+
+### Columns structure
+
+```ts
+interface ColumnDef { width?: number; blocks: Block[] }  // width = flex-grow, default 1
+```
+
+## Plugin API
+
+```ts
+import type { PilaPlugin } from '@sunacchi/pila'
+
+const plugin: PilaPlugin = {
+  name: 'my-plugin',
+  install(api) {
+    // Register a custom block type
+    api.registerBlockType({
+      type: 'my-card',
+      factory(block) {
+        const el = document.createElement('div')
+        el.textContent = block.attrs?.title ?? ''
+        return el
+      },
+      slashItem: { name: 'Card', description: 'Insert a card', icon: '🃏' },
+    })
+
+    // Add a floating toolbar button
+    api.addToolbarButton({
+      label: 'Hi',
+      title: 'Say hi',
+      command() { alert('hello') },
+    })
+
+    // Subscribe to editor events
+    api.on('blocks:change', ({ blocks }) => console.log(blocks))
+  },
+}
+
+new PilaEditor(el, { plugins: [plugin] }).mount()
+```
+
+### PilaPluginAPI members
+
+| Member | Description |
+|---|---|
+| `editorEl` | Root editor DOM element |
+| `manager` | `BlockManager` — read/write access to block state |
+| `registerBlockType(descriptor)` | Register a custom block type with optional slash item |
+| `addToolbarButton(descriptor)` | Add a button to the floating formatting toolbar |
+| `on(event, handler)` | Subscribe to editor events; returns an unsubscribe fn |
+
+### Editor events
+
+| Event | Payload |
+|---|---|
+| `block:add` | `{ block: Block; index: number }` |
+| `block:update` | `{ id: string; block: Block }` |
+| `block:delete` | `{ id: string }` |
+| `block:move` | `{ id: string; toIndex: number }` |
+| `blocks:change` | `{ blocks: Block[] }` |
+
+## Theming — CSS custom properties
+
+Override on `:root` (global) or any ancestor selector (scoped). Import source variables with:
+
+```ts
+import '@sunacchi/pila/styles/source'
+```
+
+Full variable list (from `src/styles/variables.css`):
+
+```css
+:root {
+  --pila-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --pila-mono: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+
+  --pila-bg: #ffffff;
+  --pila-text: #1a1a1a;
+  --pila-muted: #9b9b9b;
+  --pila-placeholder: #c4c4c4;
+  --pila-accent: #2563eb;
+  --pila-accent-hover: #1d4ed8;
+  --pila-border: #e2e8f0;
+  --pila-radius: 6px;
+  --pila-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+
+  --pila-code-bg: #f1f5f9;
+  --pila-code-text: #0f172a;
+  --pila-inline-code-bg: #f1f5f9;
+  --pila-inline-code-text: #0f172a;
+
+  /* callout flavors: info / warning / error / success / tip */
+  --pila-callout-info-bg:       #eff6ff;
+  --pila-callout-info-border:   #2563eb;
+  --pila-callout-info-text:     #1e3a8a;
+  --pila-callout-warning-bg:    #fffbeb;
+  --pila-callout-warning-border: #d97706;
+  --pila-callout-warning-text:  #78350f;
+  --pila-callout-error-bg:      #fef2f2;
+  --pila-callout-error-border:  #dc2626;
+  --pila-callout-error-text:    #7f1d1d;
+  --pila-callout-success-bg:    #f0fdf4;
+  --pila-callout-success-border: #16a34a;
+  --pila-callout-success-text:  #14532d;
+  --pila-callout-tip-bg:        #faf5ff;
+  --pila-callout-tip-border:    #9333ea;
+  --pila-callout-tip-text:      #3b0764;
+
+  --pila-quote-border: #94a3b8;
+  --pila-quote-text:   #4b5563;
+
+  --pila-toolbar-bg:   #1e1e1e;
+  --pila-toolbar-text: #f8f8f8;
+
+  --pila-slash-bg:       #ffffff;
+  --pila-slash-border:   #e2e8f0;
+  --pila-slash-hover:    #f1f5f9;
+  --pila-slash-selected: #eff6ff;
+}
+```
+
+## Serializers (standalone use)
+
+```ts
+import { JsonSerializer, HtmlSerializer, MarkdownSerializer, EmailSerializer } from '@sunacchi/pila'
+
+JsonSerializer.serialize(blocks)    // Block[] → JSON string
+HtmlSerializer.serialize(blocks)    // Block[] → semantic HTML string
+MarkdownSerializer.serialize(blocks) // Block[] → GFM Markdown string
+EmailSerializer.serialize(blocks)   // Block[] → standalone <!DOCTYPE html> email string
+```
+
+## Framework integration
+
+Mount after the element is in the DOM; destroy before it is removed.
+
+**React**
+
+```tsx
+useEffect(() => {
+  const editor = new PilaEditor(ref.current!, options)
+  editor.mount()
+  return () => editor.destroy()
+}, [])
+```
+
+**Vue**
+
+```ts
+onMounted(() => { editor = new PilaEditor(el.value!, options); editor.mount() })
+onBeforeUnmount(() => editor?.destroy())
+```
+
+**Svelte**
+
+```ts
+onMount(() => { editor = new PilaEditor(el, options); editor.mount() })
+onDestroy(() => editor?.destroy())
+```
+
+## Source file map
+
+| File | Contents |
+|---|---|
+| `src/types.ts` | All TypeScript interfaces and types |
+| `src/index.ts` | Public exports |
+| `src/core/Editor.ts` | `PilaEditor` class |
+| `src/core/BlockManager.ts` | Block state management |
+| `src/styles/variables.css` | All CSS custom properties |
+| `src/blocks/README.md` | Per-block-type schema reference |
+| `src/serializers/` | JSON / HTML / Markdown / Email serializers |

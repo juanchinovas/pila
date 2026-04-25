@@ -4,6 +4,8 @@
 
 Pila is built on plain Web Components and requires no framework. It works in vanilla HTML as well as React, Vue, Svelte, or any other environment that can provide a DOM element.
 
+![Pila Block Editor demo](assets/demo.gif)
+
 ---
 
 ## Features
@@ -23,13 +25,13 @@ Pila is built on plain Web Components and requires no framework. It works in van
 ## Installation
 
 ```bash
-npm install pila
+npm install @sunacchi/pila
 ```
 
 Import the CSS once in your app entry point:
 
 ```ts
-import 'pila/styles'
+import '@sunacchi/pila/styles'
 ```
 
 ---
@@ -37,8 +39,8 @@ import 'pila/styles'
 ## Quick Start
 
 ```ts
-import { PilaEditor } from 'pila'
-import 'pila/styles'
+import { PilaEditor } from '@sunacchi/pila'
+import '@sunacchi/pila/styles'
 
 const editor = new PilaEditor(document.getElementById('editor'), {
   placeholder: 'Type / to add a block…',
@@ -152,6 +154,106 @@ Callout flavour colours, todo checkboxes (☐ / ☑), code blocks, and all inlin
 
 ---
 
+## Theming
+
+Pila exposes every visual token as a CSS custom property. Override them on `:root` (global) or scope them to a specific container to theme individual editor instances.
+
+```css
+/* global dark theme */
+:root {
+  --pila-bg:   #1e1e1e;
+  --pila-text: #d4d4d4;
+  --pila-border: #3a3a3a;
+
+  --pila-code-bg:   #2d2d2d;
+  --pila-code-text: #cdd6f4;
+
+  --pila-toolbar-bg:   #2d2d2d;
+  --pila-toolbar-text: #f8f8f8;
+
+  --pila-slash-bg:       #2d2d2d;
+  --pila-slash-border:   #3a3a3a;
+  --pila-slash-hover:    #3a3a3a;
+  --pila-slash-selected: #1e3a5f;
+}
+```
+
+### Full variable reference
+
+#### Typography
+
+| Variable | Default | Description |
+|---|---|---|
+| `--pila-font` | system-ui / `-apple-system` stack | Base font family |
+| `--pila-mono` | `'Fira Code'` / `Consolas` stack | Monospace font for code blocks |
+
+#### Colors
+
+| Variable | Default | Description |
+|---|---|---|
+| `--pila-bg` | `#ffffff` | Editor background |
+| `--pila-text` | `#1a1a1a` | Primary text |
+| `--pila-muted` | `#9b9b9b` | Secondary / muted text |
+| `--pila-placeholder` | `#c4c4c4` | Empty block placeholder |
+| `--pila-accent` | `#2563eb` | Links and selected state |
+| `--pila-accent-hover` | `#1d4ed8` | Accent hover state |
+| `--pila-border` | `#e2e8f0` | Borders and dividers |
+| `--pila-radius` | `6px` | Border radius for menus and modals |
+| `--pila-shadow` | `0 4px 24px rgba(0,0,0,.10)` | Floating element shadow |
+
+#### Code blocks
+
+| Variable | Default | Description |
+|---|---|---|
+| `--pila-code-bg` | `#f1f5f9` | Fenced code block background |
+| `--pila-code-text` | `#0f172a` | Fenced code block text |
+| `--pila-inline-code-bg` | `#f1f5f9` | Inline `code` background |
+| `--pila-inline-code-text` | `#0f172a` | Inline `code` text |
+
+#### Callout flavours
+
+Each callout flavour (`info`, `warning`, `error`, `success`, `tip`) has three tokens:
+
+| Variable pattern | Description |
+|---|---|
+| `--pila-callout-{flavour}-bg` | Background fill |
+| `--pila-callout-{flavour}-border` | Left accent border |
+| `--pila-callout-{flavour}-text` | Text colour |
+
+```css
+/* Example: custom "info" callout */
+:root {
+  --pila-callout-info-bg:     #e0f2fe;
+  --pila-callout-info-border: #0284c7;
+  --pila-callout-info-text:   #0c4a6e;
+}
+```
+
+#### Quote block
+
+| Variable | Default | Description |
+|---|---|---|
+| `--pila-quote-border` | `#94a3b8` | Left border colour |
+| `--pila-quote-text` | `#4b5563` | Quote text colour |
+
+#### Floating toolbar
+
+| Variable | Default | Description |
+|---|---|---|
+| `--pila-toolbar-bg` | `#1e1e1e` | Toolbar background |
+| `--pila-toolbar-text` | `#f8f8f8` | Toolbar icon / text colour |
+
+#### Slash menu
+
+| Variable | Default | Description |
+|---|---|---|
+| `--pila-slash-bg` | `#ffffff` | Menu background |
+| `--pila-slash-border` | `#e2e8f0` | Menu border |
+| `--pila-slash-hover` | `#f1f5f9` | Item hover background |
+| `--pila-slash-selected` | `#eff6ff` | Keyboard-selected item background |
+
+---
+
 ## Framework Integration
 
 Pila only needs a real `HTMLElement`. Call `mount()` after the element is in the DOM and `destroy()` before it is removed.
@@ -165,7 +267,8 @@ Pila only needs a real `HTMLElement`. Call `mount()` after the element is in the
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { PilaEditor } from 'pila'
+import { PilaEditor } from '@sunacchi/pila'
+import '@sunacchi/pila/styles'
 
 const editorEl = ref<HTMLElement | null>(null)
 let editor: PilaEditor | null = null
@@ -183,7 +286,8 @@ onBeforeUnmount(() => editor?.destroy())
 
 ```tsx
 import { useEffect, useRef } from 'react'
-import { PilaEditor } from 'pila'
+import { PilaEditor } from '@sunacchi/pila'
+import '@sunacchi/pila/styles'
 
 export function Editor() {
   const ref = useRef<HTMLDivElement>(null)
@@ -204,7 +308,8 @@ export function Editor() {
 ```svelte
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
-  import { PilaEditor } from 'pila'
+  import { PilaEditor } from '@sunacchi/pila'
+  import '@sunacchi/pila/styles'
 
   let el: HTMLDivElement
   let editor: PilaEditor
@@ -227,7 +332,7 @@ export function Editor() {
 A plugin is an object with a `name` string and an `install(api)` function.
 
 ```ts
-import type { PilaPlugin } from 'pila'
+import type { PilaPlugin } from '@sunacchi/pila'
 
 const myPlugin: PilaPlugin = {
   name: 'my-plugin',
