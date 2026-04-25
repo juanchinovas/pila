@@ -134,6 +134,14 @@ export class HtmlSerializer {
           .join('\n')
         return `<div class="pila-columns">${cols}</div>`
       }
+      case 'button': {
+        const label   = inlineToHtml(content)
+        const href    = escapeAttr(sanitizeHref(block.attrs?.href ?? '#'))
+        const style   = block.attrs?.buttonStyle ?? 'primary'
+        const align   = block.attrs?.alignment ?? 'left'
+        const textAlign = align === 'center' ? 'center' : align === 'right' ? 'right' : 'left'
+        return `<div style="text-align:${textAlign};"><a href="${href}" class="pila-button pila-button--${escapeAttr(style)}" target="_blank" rel="noopener noreferrer">${label}</a></div>`
+      }
       default:
         return ''
     }

@@ -9,11 +9,11 @@ export default defineConfig({
   root: 'demo',
   plugins: [
     dts({
+      root: resolve(__dirname),
       insertTypesEntry: true,
       include: ['src'],
-      outDir: 'dist',
+      outDir: resolve(__dirname, 'dist'),
       tsconfigPath: resolve(__dirname, 'tsconfig.json'),
-      skipDiagnostics: true,
     }),
   ],
   resolve: {

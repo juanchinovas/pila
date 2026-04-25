@@ -1,6 +1,6 @@
 # @sunacchi/pila
 
-> **Pieces of Information, Linked and Arranged** — a framework-agnostic, Notion-style block editor in TypeScript.
+> **Pluggable Inline Layout Authoring** — a framework-agnostic, Notion-style block editor in TypeScript.
 > Pure Web Components. No React / Vue / Svelte dependency. Full TypeScript types included.
 > npm: `@sunacchi/pila` | Repo: https://github.com/juanchinovas/pila
 

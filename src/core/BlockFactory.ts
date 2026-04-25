@@ -38,6 +38,8 @@ export function createBlockEl(block: Block, ctx: BlockContext): PilaBlock {
       el = document.createElement('pila-table') as PilaBlock; break
     case 'columns':
       el = document.createElement('pila-columns') as PilaBlock; break
+    case 'button':
+      el = document.createElement('pila-button') as PilaBlock; break
     default:
       el = document.createElement('pila-paragraph') as PilaBlock; break
   }

@@ -35,24 +35,38 @@
       margin-top: 16px;
       flex-wrap: wrap;
     }
-    button {
-      padding: .8em 1.4em;
-      border: 1px solid #ccc;
+    .toolbar button {
+      padding: .6em 1.1em;
+      border: 1px solid #d0d0d0;
       border-radius: 6px;
       background: #fff;
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #333;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
     }
-    button svg {
+    .toolbar button svg {
       display: block;
       flex-shrink: 0;
       stroke: currentColor;
       fill: none;
     }
-    button:hover { background: #f0f0f0; }
+    .toolbar button:hover { background: #f0f0f0; border-color: #bbb; }
+    .toolbar button:active { background: #e6e6e6; }
+    #btn-json  { color: #1a6fcf; border-color: #a8c8f5; }
+    #btn-json:hover  { background: #eef4fd; }
+    #btn-html  { color: #2a7c4e; border-color: #9dd4b5; }
+    #btn-html:hover  { background: #edf7f2; }
+    #btn-md    { color: #7b4e9e; border-color: #cfaee8; }
+    #btn-md:hover    { background: #f5eefb; }
+    #btn-email { color: #b05a1a; border-color: #f0c090; }
+    #btn-email:hover { background: #fdf3e8; }
+    #btn-clear { color: #c0392b; border-color: #f0a9a2; }
+    #btn-clear:hover { background: #fdf0ee; }
     pre#output {
       width: 100%;
       max-width: 720px;
@@ -98,41 +112,46 @@
     addIcon('btn-clear', Icons.Eraser)
 
     const initialContent = [
-      { id: '1', type: 'heading1', content: [{ text: 'Welcome to Pila ✦' }] },
-      { id: '2', type: 'paragraph', content: [{ text: 'A framework-agnostic block editor. Type ' }, { text: '/', code: true }, { text: ' to open the slash menu.' }] },
-      { id: '3', type: 'heading2', content: [{ text: 'Features' }] },
-      { id: '4', type: 'bulletList', content: [{ text: 'Drag & drop blocks' }] },
-      { id: '5', type: 'bulletList', content: [{ text: 'Inline formatting (bold, italic, code, links)' }] },
-      { id: '6', type: 'bulletList', content: [{ text: 'JSON / HTML / Markdown export' }] },
-      { id: '7', type: 'todo', content: [{ text: 'Try checking this off' }], attrs: { checked: false } },
-      { id: '8', type: 'code', content: [{ text: 'const editor = new PilaEditor(el, {\n\tplaceholder: "Type / to add a block…"\n});' }], attrs: { language: 'typescript' } },
-      { id: '9', type: 'quote', content: [{ text: 'The best editor is the one you actually use.' }] },
-      { id: '10a', type: 'callout', content: [{ text: 'This is an info callout.' }],    attrs: { icon: '💡', flavor: 'info'    } },
-      { id: '10b', type: 'callout', content: [{ text: 'This is a warning callout.' }],  attrs: { icon: '⚠️', flavor: 'warning' } },
-      { id: '10c', type: 'callout', content: [{ text: 'This is an error callout.' }],   attrs: { icon: '🚨', flavor: 'error'   } },
-      { id: '10d', type: 'callout', content: [{ text: 'This is a success callout.' }],  attrs: { icon: '✅', flavor: 'success' } },
-      { id: '10e', type: 'callout', content: [{ text: 'This is a tip callout.' }],      attrs: { icon: '💬', flavor: 'tip'     } },
-      { id: '11', type: 'divider' },
-      { id: '12', type: 'image', attrs: { src: 'https://picsum.photos/seed/pila/720/240', alt: 'Demo image' } },
-      { id: '13', type: 'table', attrs: { rows: [
+      { type: 'heading1', content: [{ text: 'Welcome to Pila ✦' }] },
+      { type: 'paragraph', content: [{ text: 'A framework-agnostic block editor. Type ' }, { text: '/', code: true }, { text: ' to open the slash menu.' }] },
+      { type: 'heading2', content: [{ text: 'Features' }] },
+      { type: 'bulletList', content: [{ text: 'Drag & drop blocks' }] },
+      { type: 'bulletList', content: [{ text: 'Inline formatting (bold, italic, code, links)' }] },
+      { type: 'bulletList', content: [{ text: 'JSON / HTML / Markdown export' }] },
+      { type: 'todo', content: [{ text: 'Try checking this off' }], attrs: { checked: false } },
+      { type: 'code', content: [{ text: 'const editor = new PilaEditor(el, {\n\tplaceholder: "Type / to add a block…"\n});' }], attrs: { language: 'typescript' } },
+      { type: 'quote', content: [{ text: 'The best editor is the one you actually use.' }] },
+      { type: 'callout', content: [{ text: 'This is an info callout.' }],    attrs: { icon: '💡', flavor: 'info'    } },
+      { type: 'callout', content: [{ text: 'This is a warning callout.' }],  attrs: { icon: '⚠️', flavor: 'warning' } },
+      { type: 'callout', content: [{ text: 'This is an error callout.' }],   attrs: { icon: '🚨', flavor: 'error'   } },
+      { type: 'callout', content: [{ text: 'This is a success callout.' }],  attrs: { icon: '✅', flavor: 'success' } },
+      { type: 'callout', content: [{ text: 'This is a tip callout.' }],      attrs: { icon: '💬', flavor: 'tip'     } },
+      { type: 'divider' },
+      { type: 'image', attrs: { src: 'https://picsum.photos/seed/pila/720/240', alt: 'Demo image' } },
+      { type: 'table', attrs: { rows: [
         { cells: [{ content: [{ text: 'Name' }] }, { content: [{ text: 'Role' }] }, { content: [{ text: 'Status' }] }] },
         { cells: [{ content: [{ text: 'Alice' }] }, { content: [{ text: 'Engineer' }] }, { content: [{ text: 'Active' }] }] },
         { cells: [{ content: [{ text: 'Bob' }] }, { content: [{ text: 'Designer' }] }, { content: [{ text: 'Active' }] }] },
       ] } },
-      { id: '14', type: 'heading2', content: [{ text: 'Columns layout' }] },
-      { id: '15', type: 'paragraph', content: [{ text: 'Click a column to show the toolbar. Drag the handle between columns to resize them.' }] },
-      { id: '16', type: 'columns', attrs: { columnDefs: [
-        { width: 1, blocks: [{ id: 'c16a', type: 'paragraph', content: [{ text: 'Left column — equal width by default.' }] }] },
-        { width: 1, blocks: [{ id: 'c16b', type: 'paragraph', content: [{ text: 'Right column — equal width by default.' }] }] },
+      { type: 'heading2', content: [{ text: 'Columns layout' }] },
+      { type: 'paragraph', content: [{ text: 'Click a column to show the toolbar. Drag the handle between columns to resize them.' }] },
+      { type: 'columns', attrs: { columnDefs: [
+        { width: 1, blocks: [{ type: 'paragraph', content: [{ text: 'Left column — equal width by default.' }] }] },
+        { width: 1, blocks: [{ type: 'paragraph', content: [{ text: 'Right column — equal width by default.' }] }] },
       ] } },
-      { id: '17', type: 'columns', attrs: { columnDefs: [
+      { type: 'columns', attrs: { columnDefs: [
         { width: 2, blocks: [
-          { id: 'c17a1', type: 'paragraph', content: [{ text: 'Wide column (2×)' }, { text: ' — you can set per-column widths using the toolbar.', italic: true }] },
-          { id: 'c17a2', type: 'bulletList', content: [{ text: 'Heading, lists, code… all block types work here.' }] },
+          { type: 'paragraph', content: [{ text: 'Wide column (2×)' }, { text: ' — you can set per-column widths using the toolbar.', italic: true }] },
+          { type: 'bulletList', content: [{ text: 'Heading, lists, code… all block types work here.' }] },
         ] },
-        { width: 1, blocks: [{ id: 'c17b', type: 'paragraph', content: [{ text: 'Narrow column (1×)' }] }] },
-        { width: 1, blocks: [{ id: 'c17c', type: 'paragraph', content: [{ text: 'Narrow column (1×)' }] }] },
+        { width: 1, blocks: [{ type: 'paragraph', content: [{ text: 'Narrow column (1×)' }] }] },
+        { width: 1, blocks: [{ type: 'paragraph', content: [{ text: 'Narrow column (1×)' }] }] },
       ] } },
+      { type: 'heading2', content: [{ text: 'Button blocks' }] },
+      { type: 'paragraph', content: [{ text: 'Click a button to show its edit bar (URL, style and alignment). Use the slash menu to insert more.' }] },
+      { type: 'button', content: [{ text: 'Get started' }], attrs: { buttonStyle: 'primary', href: 'https://github.com', alignment: 'left' } },
+      { type: 'button', content: [{ text: 'Learn more' }], attrs: { buttonStyle: 'outline', href: 'https://github.com', alignment: 'left' } },
+      { type: 'button', content: [{ text: 'Maybe later' }], attrs: { buttonStyle: 'secondary', href: '', alignment: 'center' } },
     ]
 
     const editor = new PilaEditor(document.getElementById('editor'), {

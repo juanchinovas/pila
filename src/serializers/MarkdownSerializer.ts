@@ -87,6 +87,11 @@ export class MarkdownSerializer {
           )
           .join('\n\n')
       }
+      case 'button': {
+        const label = inlineToMd(content)
+        const href  = block.attrs?.href ?? '#'
+        return `[${label}](${href})`
+      }
       default:
         return ''
     }

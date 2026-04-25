@@ -121,4 +121,20 @@ describe('MarkdownSerializer', () => {
     ])
     expect(md).toBe('A\n\nB')
   })
+
+  // ── Button block ────────────────────────────────────────────────────────
+
+  it('serializes button as a markdown link', () => {
+    const md = MarkdownSerializer.serialize([
+      { id: '1', type: 'button', content: [{ text: 'Click me' }], attrs: { href: 'https://example.com' } },
+    ])
+    expect(md).toBe('[Click me](https://example.com)')
+  })
+
+  it('button falls back to # when no href', () => {
+    const md = MarkdownSerializer.serialize([
+      { id: '1', type: 'button', content: [{ text: 'Go' }] },
+    ])
+    expect(md).toBe('[Go](#)')
+  })
 })

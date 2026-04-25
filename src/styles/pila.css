@@ -8,25 +8,20 @@
 /* ─── Editor Root ─────────────────────────────────────────────────────────── */
 
 .pila-editor {
+  @apply text-base leading-relaxed outline-none relative min-h-28;
   font-family: var(--pila-font);
-  font-size: 16px;
-  line-height: 1.65;
   color: var(--pila-text);
   background: var(--pila-bg);
-  outline: none;
-  position: relative;
-  min-height: 120px;
 }
 
 /* ─── Block Wrapper ───────────────────────────────────────────────────────── */
 
 .pila-block {
-  position: relative;
-  margin: 2px 0;
+  @apply relative my-0.5;
 }
 
 .pila-block:hover > .pila-drag-handle-inner {
-  opacity: 1;
+  @apply opacity-100;
 }
 
 /* ─── Paragraph placeholder ───────────────────────────────────────────────── */
@@ -35,16 +30,15 @@
 .pila-paragraph[data-placeholder]:empty::before,
 .pila-paragraph[data-placeholder]:has(br:only-child)::before {
   content: attr(data-placeholder);
+  @apply pointer-events-none italic;
   color: var(--pila-placeholder);
-  pointer-events: none;
-  font-style: italic;
 }
 
 /* ─── Todo checked state ──────────────────────────────────────────────────── */
 
 /* pila-todo-checkbox / pila-todo-content classes are retained for this sibling selector */
 .pila-todo-checkbox:checked + .pila-todo-content {
-  text-decoration: line-through;
+  @apply line-through;
   color: var(--pila-muted);
 }
 
@@ -53,54 +47,42 @@
 /* pila-image-caption class is retained by ImageBlock solely for this selector */
 .pila-image-caption:empty::before {
   content: 'Add a caption…';
+  @apply pointer-events-none;
   color: var(--pila-placeholder);
-  pointer-events: none;
 }
 
 /* ─── Code block ─────────────────────────────────────────────────────────── */
 
 pila-code {
-  display: block;
+  @apply block;
 }
 
 /* ─── Quote block ────────────────────────────────────────────────────────── */
 
 .pila-quote {
-  display: block;
+  @apply block rounded-none my-1;
   border-left: 3px solid var(--pila-quote-border);
   background: none;
-  border-radius: 0;
-  margin: 4px 0;
 }
 
 .pila-quote blockquote {
-  margin: 0;
+  @apply m-0;
 }
 
 .pila-quote-content {
-  display: block;
-  margin: 0;
-  padding: 12px 16px;
-  outline: none;
-  color: var(--pila-quote-text);
-  font-style: italic;
+  @apply block m-0 py-3 px-4 outline-none italic whitespace-pre-wrap break-words;
   line-height: 1.7;
-  white-space: pre-wrap;
-  word-break: break-words;
+  color: var(--pila-quote-text);
 }
 
 /* ─── Callout block ──────────────────────────────────────────────────────── */
 
 .pila-callout {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
+  @apply flex items-start gap-2.5 py-3 px-3.5 my-1;
   border-radius: var(--pila-radius);
   border-left: 4px solid var(--pila-callout-info-border);
   background: var(--pila-callout-info-bg);
   color: var(--pila-callout-info-text);
-  margin: 4px 0;
 }
 
 .pila-callout--info    { border-left-color: var(--pila-callout-info-border);    background: var(--pila-callout-info-bg);    color: var(--pila-callout-info-text);    }
@@ -110,22 +92,13 @@ pila-code {
 .pila-callout--tip     { border-left-color: var(--pila-callout-tip-border);     background: var(--pila-callout-tip-bg);     color: var(--pila-callout-tip-text);     }
 
 .pila-callout-icon {
-  flex-shrink: 0;
+  @apply shrink-0 cursor-text outline-none select-text leading-relaxed;
   font-size: 1.1em;
-  line-height: 1.65;
-  cursor: text;
-  outline: none;
   min-width: 1.3em;
-  user-select: text;
 }
 
 .pila-callout-content {
-  flex: 1;
-  outline: none;
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-words;
-  line-height: 1.65;
+  @apply flex-1 outline-none m-0 whitespace-pre-wrap break-words leading-relaxed;
 }
 
 /* ─── Table drag-and-drop indicators ─────────────────────────────────────── */
@@ -149,20 +122,15 @@ pila-code {
 /* ─── Divider block ─────────────────────────────────────────────────────── */
 
 .pila-divider {
-  display: block;
-  padding: 0.875rem 0;
+  @apply block py-3.5;
 }
 
 .pila-divider-wrapper {
-  display: block;
-  outline: none;
-  cursor: default;
-  border-radius: 4px;
+  @apply block outline-none cursor-default rounded;
 }
 
 .pila-divider-line {
-  width: 100%;
-  height: 1px;
+  @apply w-full h-px;
   background: linear-gradient(
     to right,
     transparent 0%,
@@ -199,32 +167,22 @@ pila-code {
 /* ─── Columns block ──────────────────────────────────────────────────────── */
 
 .pila-columns-block {
-  display: block;
-  margin: 4px 0;
+  @apply block my-1;
 }
 
 .pila-columns {
-  display: flex;
-  align-items: stretch;
-  width: 100%;
+  @apply flex items-stretch w-full;
 }
 
 .pila-column {
-  flex: 1 1 0%;
-  min-width: 0;
-  position: relative;
+  @apply flex-1 min-w-0 relative;
 }
 
 .pila-column-content {
-  outline: none;
+  @apply outline-none py-2.5 px-3 whitespace-pre-wrap break-words leading-relaxed h-full;
   min-height: 2.5em;
-  padding: 10px 12px;
   border: 1px solid var(--pila-border);
   border-radius: var(--pila-radius);
-  white-space: pre-wrap;
-  word-break: break-words;
-  line-height: 1.65;
-  height: 100%;
   transition: border-color 0.15s;
 }
 
@@ -235,22 +193,13 @@ pila-code {
 
 /* Resize handle between columns */
 .pila-column-resize-handle {
-  flex: 0 0 8px;
-  cursor: col-resize;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
+  @apply shrink-0 grow-0 basis-2 cursor-col-resize relative flex items-center justify-center select-none;
 }
 
 .pila-column-resize-handle::before {
   content: '';
-  display: block;
-  width: 2px;
+  @apply block w-0.5 min-h-5 rounded-sm;
   height: 40%;
-  min-height: 20px;
-  border-radius: 2px;
   background: var(--pila-border);
   transition: background 0.15s, height 0.15s;
 }
@@ -275,66 +224,43 @@ code[class*="language-"] {
 
 /* ─── Inline Styles ───────────────────────────────────────────────────────── */
 
-.pila-editor strong { font-weight: 700; }
-.pila-editor em { font-style: italic; }
-.pila-editor u { text-decoration: underline; }
+.pila-editor strong { @apply font-bold; }
+.pila-editor em { @apply italic; }
+.pila-editor u { @apply underline; }
 
 /* inline <code> only — never matches code inside a <pre> block */
 .pila-editor :not(pre) > code {
+  @apply text-sm py-px px-1.5 rounded;
   font-family: var(--pila-mono);
-  font-size: 0.875em;
   background: var(--pila-inline-code-bg);
-  padding: 1px 5px;
-  border-radius: 3px;
   color: var(--pila-inline-code-text);
 }
 
-.pila-editor a {
+.pila-editor a:not(.pila-button) {
+  @apply underline cursor-pointer;
   color: var(--pila-accent);
-  text-decoration: underline;
-  cursor: pointer;
 }
 
-.pila-editor a:hover { color: var(--pila-accent-hover); }
+.pila-editor a:not(.pila-button):hover { color: var(--pila-accent-hover); }
 
 /* ─── Floating Toolbar ────────────────────────────────────────────────────── */
 
 .pila-floating-toolbar {
-  position: absolute;
-  z-index: 9000;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 4px 6px;
+  @apply absolute z-[9000] flex items-center gap-0.5 py-1 px-1.5 pointer-events-auto;
   background: var(--pila-toolbar-bg);
   color: var(--pila-toolbar-text);
   border-radius: var(--pila-radius);
   box-shadow: var(--pila-shadow);
-  pointer-events: all;
 }
 
 .pila-toolbar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  background: transparent;
+  @apply flex items-center justify-center w-7 h-7 p-0 border-0 bg-transparent rounded cursor-pointer text-[0.85rem];
   color: var(--pila-toolbar-text);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
   transition: background 0.1s;
 }
 
 .pila-toolbar-btn svg {
-  display: block;
-  flex-shrink: 0;
-  pointer-events: none;
-  stroke: currentColor;
-  fill: none;
+  @apply block shrink-0 pointer-events-none stroke-current fill-none;
 }
 
 .pila-toolbar-btn:hover {
@@ -346,28 +272,18 @@ code[class*="language-"] {
 }
 
 .pila-toolbar-sep {
-  width: 1px;
-  height: 18px;
+  @apply w-px h-4 mx-0.5;
   background: rgba(255,255,255,0.2);
-  margin: 0 2px;
 }
 
 .pila-toolbar-link-area {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  @apply flex items-center gap-1;
 }
 
 .pila-toolbar-link-input {
-  height: 26px;
-  padding: 0 8px;
-  font-size: 0.8rem;
-  border: none;
-  border-radius: 4px;
+  @apply h-6 py-0 px-2 text-[0.8rem] border-0 rounded outline-none w-48;
   background: rgba(255,255,255,0.15);
   color: var(--pila-toolbar-text);
-  outline: none;
-  width: 200px;
 }
 
 .pila-toolbar-link-input:focus {
@@ -384,25 +300,15 @@ code[class*="language-"] {
 /* ─── Slash Menu ──────────────────────────────────────────────────────────── */
 
 .pila-slash-menu {
-  position: absolute;
-  z-index: 9001;
-  width: 280px;
-  max-height: 320px;
-  overflow-y: auto;
+  @apply absolute z-[9001] w-72 max-h-80 overflow-y-auto p-1;
   background: var(--pila-slash-bg);
   border: 1px solid var(--pila-slash-border);
   border-radius: var(--pila-radius);
   box-shadow: var(--pila-shadow);
-  padding: 4px;
 }
 
 .pila-slash-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 10px;
-  border-radius: 4px;
-  cursor: pointer;
+  @apply flex items-center gap-2.5 py-2 px-2.5 rounded cursor-pointer;
   transition: background 0.1s;
 }
 
@@ -412,103 +318,139 @@ code[class*="language-"] {
 }
 
 .pila-slash-icon {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @apply shrink-0 w-7 h-7 flex items-center justify-center rounded text-[0.85rem] font-bold;
   background: var(--pila-code-bg);
-  border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: 700;
   color: var(--pila-text);
 }
 
 .pila-slash-text {
-  display: flex;
-  flex-direction: column;
+  @apply flex flex-col;
 }
 
 .pila-slash-name {
-  font-size: 0.875rem;
-  font-weight: 500;
+  @apply text-sm font-medium leading-tight;
   color: var(--pila-text);
-  line-height: 1.3;
 }
 
 .pila-slash-desc {
-  font-size: 0.75rem;
+  @apply text-xs leading-tight;
   color: var(--pila-muted);
-  line-height: 1.3;
 }
 
 .pila-slash-icon svg {
-  display: block;
-  pointer-events: none;
-  stroke: currentColor;
-  fill: none;
+  @apply block pointer-events-none stroke-current fill-none;
 }
 
 .pila-slash-empty {
-  padding: 12px 10px;
-  font-size: 0.85rem;
+  @apply py-3 px-2.5 text-[0.85rem] text-center;
   color: var(--pila-muted);
-  text-align: center;
 }
 
 /* ─── Drag Handle ─────────────────────────────────────────────────────────── */
 
 .pila-drag-handle {
-  position: fixed;
-  z-index: 8000;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  cursor: grab;
+  @apply fixed z-[8000] w-6 h-6 flex items-center justify-center rounded cursor-grab opacity-60 select-none;
   color: var(--pila-muted);
-  opacity: 0.6;
   transition: opacity 0.1s, background 0.1s;
-  user-select: none;
-  -webkit-user-select: none;
 }
 
 .pila-drag-handle svg {
-  pointer-events: none;
-  display: block;
-  flex-shrink: 0;
-  stroke: currentColor;
-  fill: none;
+  @apply pointer-events-none block shrink-0 stroke-current fill-none;
 }
 
 .pila-drag-handle:hover {
-  opacity: 1;
+  @apply opacity-100;
   background: var(--pila-code-bg);
 }
 
-.pila-drag-handle:active { cursor: grabbing; }
+.pila-drag-handle:active { @apply cursor-grabbing; }
 
-.pila-drag-dots { font-size: 1rem; line-height: 1; user-select: none; }
+.pila-drag-dots { @apply text-base leading-none select-none; }
 
 .pila-drop-indicator {
-  position: fixed;
-  z-index: 7999;
-  height: 2px;
+  @apply fixed z-[7999] h-0.5 rounded-sm pointer-events-none;
   background: var(--pila-accent);
-  border-radius: 1px;
-  pointer-events: none;
 }
 
 .pila-drop-indicator::before {
   content: '';
-  position: absolute;
-  left: -4px;
-  top: -3px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  @apply absolute -left-1 -top-1 w-2 h-2 rounded-full;
   background: var(--pila-accent);
+}
+
+/* ─── Button block ────────────────────────────────────────────────────────── */
+
+pila-button {
+  @apply block my-1;
+}
+
+.pila-button-wrapper {
+  @apply flex flex-col items-start gap-1.5;
+}
+
+.pila-button {
+  @apply inline-flex items-center justify-center py-2 px-5 text-[0.95rem] font-medium cursor-text no-underline select-text transition-opacity min-w-20;
+  border-radius: var(--pila-radius);
+}
+
+.pila-button.pila-button--primary {
+  background: var(--pila-accent);
+  color: #fff;
+  border: 2px solid var(--pila-accent);
+}
+
+.pila-button.pila-button--secondary {
+  background: var(--pila-border);
+  color: var(--pila-text);
+  border: 2px solid var(--pila-border);
+}
+
+.pila-button.pila-button--outline {
+  @apply bg-transparent;
+  color: var(--pila-accent);
+  border: 2px solid var(--pila-accent);
+}
+
+.pila-button-edit-bar {
+  @apply flex items-center gap-1.5 flex-wrap text-[0.8rem];
+  padding: 5px 8px;
+  background: var(--pila-bg);
+  border: 1px solid var(--pila-border);
+  border-radius: var(--pila-radius);
+  box-shadow: var(--pila-shadow);
+}
+
+.pila-button-href-input {
+  @apply flex-1 min-w-36 py-0.5 px-2 text-[0.8rem] rounded outline-none;
+  border: 1px solid var(--pila-border);
+  background: var(--pila-bg);
+  color: var(--pila-text);
+  font-family: var(--pila-font);
+}
+
+.pila-button-href-input:focus {
+  border-color: var(--pila-accent);
+}
+
+.pila-button-style-group {
+  @apply flex gap-0.5;
+}
+
+.pila-button-style-btn {
+  @apply py-0.5 px-2 text-xs rounded cursor-pointer;
+  border: 1px solid var(--pila-border);
+  background: var(--pila-bg);
+  color: var(--pila-text);
+  font-family: var(--pila-font);
+  transition: background 0.1s;
+}
+
+.pila-button-style-btn:hover {
+  background: var(--pila-slash-hover);
+}
+
+.pila-button-style-btn--active {
+  @apply text-white;
+  background: var(--pila-accent);
+  border-color: var(--pila-accent);
 }

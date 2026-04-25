@@ -129,7 +129,7 @@ describe('EmailSerializer', () => {
 
   it('serializes callout with default info theme', () => {
     const html = serialize([{ id: '1', type: 'callout', content: [{ text: 'note' }], attrs: { flavor: 'info', icon: '💡' } }])
-    expect(html).toContain('#3b82f6')
+    expect(html).toContain('#2563eb')
     expect(html).toContain('#eff6ff')
     expect(html).toContain('💡')
   })
@@ -137,7 +137,7 @@ describe('EmailSerializer', () => {
   it.each(['warning', 'error', 'success', 'tip'] as const)(
     'callout flavor %s uses correct border colour',
     (flavor) => {
-      const colours = { warning: '#f59e0b', error: '#ef4444', success: '#22c55e', tip: '#8b5cf6' }
+      const colours = { warning: '#d97706', error: '#dc2626', success: '#16a34a', tip: '#9333ea' }
       const html = serialize([{ id: '1', type: 'callout', content: [{ text: 'x' }], attrs: { flavor } }])
       expect(html).toContain(colours[flavor])
     },
@@ -233,5 +233,69 @@ describe('EmailSerializer', () => {
     }])
     expect(html).not.toContain('<script>')
     expect(html).toContain('&lt;script&gt;')
+  })
+
+  // ─── Button block ──────────────────────────────────────────────────────────
+
+  it('serializes button with href and label', () => {
+    const html = serialize([{
+      id: '1', type: 'button',
+      content: [{ text: 'Click me' }],
+      attrs: { href: 'https://example.com', buttonStyle: 'primary' },
+    }])
+    expect(html).toContain('href="https://example.com"')
+    expect(html).toContain('Click me')
+    expect(html).toContain('target="_blank"')
+    expect(html).toContain('rel="noopener noreferrer"')
+  })
+
+  it('button primary style uses accent background', () => {
+    const html = serialize([{
+      id: '1', type: 'button',
+      content: [{ text: 'Go' }],
+      attrs: { href: 'https://example.com', buttonStyle: 'primary' },
+    }])
+    // Primary uses theme.accent as background
+    expect(html).toContain('background:#2563eb')
+    expect(html).toContain('color:#ffffff')
+  })
+
+  it('button outline style uses accent border and transparent background', () => {
+    const html = serialize([{
+      id: '1', type: 'button',
+      content: [{ text: 'Go' }],
+      attrs: { href: 'https://example.com', buttonStyle: 'outline' },
+    }])
+    // Outline: bg = theme.bg (#ffffff), fg = theme.accent, border = theme.accent
+    expect(html).toContain('background:#ffffff')
+    expect(html).toContain('color:#2563eb')
+  })
+
+  it('button blocks javascript: href', () => {
+    const html = serialize([{
+      id: '1', type: 'button',
+      content: [{ text: 'Go' }],
+      attrs: { href: 'javascript:alert(1)' },
+    }])
+    expect(html).toContain('href="#"')
+    expect(html).not.toContain('javascript:')
+  })
+
+  it('button falls back to # when no href', () => {
+    const html = serialize([{
+      id: '1', type: 'button',
+      content: [{ text: 'Go' }],
+    }])
+    expect(html).toContain('href="#"')
+  })
+
+  it('button includes MSO VML fallback for Outlook', () => {
+    const html = serialize([{
+      id: '1', type: 'button',
+      content: [{ text: 'Go' }],
+      attrs: { href: 'https://example.com' },
+    }])
+    expect(html).toContain('<!--[if mso]>')
+    expect(html).toContain('<v:roundrect')
   })
 })

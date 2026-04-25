@@ -38,6 +38,8 @@ export interface BlockAttrs {
   width?: string         // image (CSS value e.g. '50%', '400px')
   height?: string        // image (CSS value e.g. '200px', 'auto')
   tailwindClasses?: string // image — freeform Tailwind classes on <img>
+  href?: string           // button
+  buttonStyle?: 'primary' | 'secondary' | 'outline'  // button
   icon?: string          // callout
   color?: string         // callout (legacy, overridden by flavor)
   flavor?: 'info' | 'warning' | 'error' | 'success' | 'tip'  // callout
@@ -64,6 +66,7 @@ export type BuiltinBlockType =
   | 'image'
   | 'table'
   | 'columns'
+  | 'button'
 
 /** Plugin-registered custom types use plain strings. */
 export type BlockType = BuiltinBlockType | string

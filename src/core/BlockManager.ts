@@ -10,7 +10,7 @@ export class BlockManager extends EventEmitter<EditorEvents> {
 
   constructor(initial: Block[] = []) {
     super()
-    this.blocks = initial.map((b) => ({ ...b }))
+    this.blocks = initial.map((b) => ({ ...b, id: b.id ?? generateId() }))
   }
 
   getAll(): Block[] {

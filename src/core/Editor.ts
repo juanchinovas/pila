@@ -13,6 +13,7 @@ import '../blocks/DividerBlock'
 import '../blocks/ImageBlock'
 import '../blocks/TableBlock'
 import '../blocks/ColumnsBlock'
+import '../blocks/ButtonBlock'
 import { SlashMenu } from '../ui/SlashMenu'
 import { FloatingToolbar } from '../ui/FloatingToolbar'
 
@@ -248,6 +249,9 @@ export class PilaEditor {
         break
       case 'columns':
         el = document.createElement('pila-columns') as PilaBlock
+        break
+      case 'button':
+        el = document.createElement('pila-button') as PilaBlock
         break
       default:
         el = document.createElement('pila-paragraph') as PilaBlock

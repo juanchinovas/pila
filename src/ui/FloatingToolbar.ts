@@ -1,6 +1,7 @@
 import { BlockManager } from '../core/BlockManager'
 import { PluginRegistry } from '../core/PluginRegistry'
 import { InlineFormatter } from '../inline/InlineFormatter'
+import { InlineParser } from '../inline/InlineParser'
 import { icon, Icons, LucideIconNode } from './icons'
 
 interface ToolbarButton {
@@ -134,7 +135,16 @@ export class FloatingToolbar {
     if (!this.focusedBlockId) return
     const block = this.manager.getAll().find((b) => b.id === this.focusedBlockId)
     if (!block) return
+
+    // Flush current live DOM content (including any unsaved inline changes like links)
+    // so that the re-render triggered by manager.update uses up-to-date content.
+    const contentEl = this.editorEl.querySelector(
+      `[data-block-id="${this.focusedBlockId}"][contenteditable]`
+    ) as HTMLElement | null
+    const liveContent = contentEl ? InlineParser.parse(contentEl) : block.content
+
     this.manager.update(this.focusedBlockId, {
+      content: liveContent,
       attrs: { ...(block.attrs ?? {}), alignment: alignment as 'left' | 'center' | 'right' | 'justify' },
     })
     this.refreshActiveState()

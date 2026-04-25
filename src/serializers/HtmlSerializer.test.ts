@@ -345,4 +345,71 @@ describe('HtmlSerializer', () => {
     ])
     expect(html).toBe('<table>\n\n</table>')
   })
+
+  // ── Button block ─────────────────────────────────────────────────────────
+
+  it('serializes button with href and label', () => {
+    const html = HtmlSerializer.serialize([
+      { id: '1', type: 'button', content: [{ text: 'Click me' }], attrs: { href: 'https://example.com' } },
+    ])
+    expect(html).toContain('href="https://example.com"')
+    expect(html).toContain('Click me')
+    expect(html).toContain('pila-button')
+  })
+
+  it('button defaults to primary style', () => {
+    const html = HtmlSerializer.serialize([
+      { id: '1', type: 'button', content: [{ text: 'Go' }], attrs: { href: 'https://example.com' } },
+    ])
+    expect(html).toContain('pila-button--primary')
+  })
+
+  it('button respects secondary style', () => {
+    const html = HtmlSerializer.serialize([
+      { id: '1', type: 'button', content: [{ text: 'Go' }], attrs: { href: 'https://example.com', buttonStyle: 'secondary' } },
+    ])
+    expect(html).toContain('pila-button--secondary')
+  })
+
+  it('button respects outline style', () => {
+    const html = HtmlSerializer.serialize([
+      { id: '1', type: 'button', content: [{ text: 'Go' }], attrs: { href: 'https://example.com', buttonStyle: 'outline' } },
+    ])
+    expect(html).toContain('pila-button--outline')
+  })
+
+  it('button falls back to # when no href', () => {
+    const html = HtmlSerializer.serialize([
+      { id: '1', type: 'button', content: [{ text: 'Go' }] },
+    ])
+    expect(html).toContain('href="#"')
+  })
+
+  it('button blocks javascript: href', () => {
+    const html = HtmlSerializer.serialize([
+      { id: '1', type: 'button', content: [{ text: 'Go' }], attrs: { href: 'javascript:alert(1)' } },
+    ])
+    expect(html).toContain('href="#"')
+    expect(html).not.toContain('javascript:')
+  })
+
+  it('button opens in new tab with rel=noopener', () => {
+    const html = HtmlSerializer.serialize([
+      { id: '1', type: 'button', content: [{ text: 'Go' }], attrs: { href: 'https://example.com' } },
+    ])
+    expect(html).toContain('target="_blank"')
+    expect(html).toContain('rel="noopener noreferrer"')
+  })
+
+  it('button respects alignment', () => {
+    const centerHtml = HtmlSerializer.serialize([
+      { id: '1', type: 'button', content: [{ text: 'Go' }], attrs: { href: 'https://example.com', alignment: 'center' } },
+    ])
+    expect(centerHtml).toContain('text-align:center')
+
+    const rightHtml = HtmlSerializer.serialize([
+      { id: '2', type: 'button', content: [{ text: 'Go' }], attrs: { href: 'https://example.com', alignment: 'right' } },
+    ])
+    expect(rightHtml).toContain('text-align:right')
+  })
 })

@@ -31,6 +31,9 @@ const ITEMS: SlashItem[] = [
   { type: 'image',         name: 'Image',          description: 'Image by URL',             iconNode: Icons.Image         },
   { type: 'table',         name: 'Table',          description: '3×3 grid (editable)',      iconNode: Icons.Table         },
   { type: 'columns',       name: 'Columns',        description: 'Flexbox column layout',    iconNode: Icons.Columns,       defaultAttrs: { columnDefs: [{ blocks: [] }, { blocks: [] }] } },
+  { type: 'button',        name: 'Button · Primary',  description: 'CTA button (filled)',     iconNode: Icons.MousePointerClick, defaultAttrs: { buttonStyle: 'primary',   alignment: 'left' } },
+  { type: 'button',        name: 'Button · Outline',  description: 'CTA button (outlined)',   iconNode: Icons.MousePointerClick, defaultAttrs: { buttonStyle: 'outline',   alignment: 'left' } },
+  { type: 'button',        name: 'Button · Secondary', description: 'CTA button (muted)',     iconNode: Icons.MousePointerClick, defaultAttrs: { buttonStyle: 'secondary', alignment: 'left' } },
 ]
 
 export class SlashMenu {
@@ -249,6 +252,14 @@ export class SlashMenu {
         this.manager.update(this.activeBlockId, {
           type: 'callout',
           content: cleanText ? [{ text: cleanText }] : [],
+          attrs: defaultAttrs,
+        })
+      } else if (chosen === 'button') {
+        const item = this.filteredItems[this.selectedIndex]
+        const defaultAttrs = item?.defaultAttrs ?? { buttonStyle: 'primary' as const, alignment: 'left' as const }
+        this.manager.update(this.activeBlockId, {
+          type: 'button',
+          content: undefined,
           attrs: defaultAttrs,
         })
       } else if (chosen === 'columns') {

@@ -1,6 +1,6 @@
 # Pila
 
-**Pieces of Information, Linked and Arranged** — a framework-agnostic, Notion-style block editor written in TypeScript.
+**Pluggable Inline Layout Authoring** — a framework-agnostic, Notion-style block editor written in TypeScript.
 
 Pila is built on plain Web Components and requires no framework. It works in vanilla HTML as well as React, Vue, Svelte, or any other environment that can provide a DOM element.
 
