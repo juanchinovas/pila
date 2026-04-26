@@ -256,6 +256,60 @@ onMount(() => { editor = new PilaEditor(el, options); editor.mount() })
 onDestroy(() => editor?.destroy())
 ```
 
+## initialContent example
+
+A full `initialContent` array covering every built-in block type:
+
+```ts
+const initialContent = [
+  { type: 'heading1', content: [{ text: 'Welcome to Pila ✦' }] },
+  { type: 'paragraph', content: [
+    { text: 'A framework-agnostic block editor. Type ' },
+    { text: '/', code: true },
+    { text: ' to open the slash menu.' },
+  ] },
+  { type: 'heading2', content: [{ text: 'Features' }] },
+  { type: 'bulletList', content: [{ text: 'Drag & drop blocks' }] },
+  { type: 'bulletList', content: [{ text: 'Inline formatting (bold, italic, code, links)' }] },
+  { type: 'bulletList', content: [{ text: 'JSON / HTML / Markdown export' }] },
+  { type: 'todo', content: [{ text: 'Try checking this off' }], attrs: { checked: false } },
+  { type: 'code', content: [{ text: 'const editor = new PilaEditor(el, {\n\tplaceholder: "Type / to add a block…"\n});' }], attrs: { language: 'typescript' } },
+  { type: 'quote', content: [{ text: 'The best editor is the one you actually use.' }] },
+  { type: 'callout', content: [{ text: 'This is an info callout.' }],    attrs: { icon: '💡', flavor: 'info'    } },
+  { type: 'callout', content: [{ text: 'This is a warning callout.' }],  attrs: { icon: '⚠️', flavor: 'warning' } },
+  { type: 'callout', content: [{ text: 'This is an error callout.' }],   attrs: { icon: '🚨', flavor: 'error'   } },
+  { type: 'callout', content: [{ text: 'This is a success callout.' }],  attrs: { icon: '✅', flavor: 'success' } },
+  { type: 'callout', content: [{ text: 'This is a tip callout.' }],      attrs: { icon: '💬', flavor: 'tip'     } },
+  { type: 'divider' },
+  { type: 'image', attrs: { src: 'https://example.com/image.png', alt: 'Demo image', width: 720, height: 240, alignment: 'center' } },
+  { type: 'table', attrs: { rows: [
+    { cells: [{ content: [{ text: 'Name' }] }, { content: [{ text: 'Role' }] }, { content: [{ text: 'Status' }] }] },
+    { cells: [{ content: [{ text: 'Alice' }] }, { content: [{ text: 'Engineer' }] }, { content: [{ text: 'Active' }] }] },
+    { cells: [{ content: [{ text: 'Bob' }] }, { content: [{ text: 'Designer' }] }, { content: [{ text: 'Active' }] }] },
+  ], headerRows: [0], headerCols: [] } },
+  { type: 'columns', attrs: { columnDefs: [
+    { width: 1, blocks: [{ type: 'paragraph', content: [{ text: 'Left column — equal width by default.' }] }] },
+    { width: 1, blocks: [{ type: 'paragraph', content: [{ text: 'Right column — equal width by default.' }] }] },
+  ] } },
+  { type: 'columns', attrs: { columnDefs: [
+    { width: 2, blocks: [
+      { type: 'paragraph', content: [{ text: 'Wide column (2×)' }, { text: ' — per-column widths via the toolbar.', italic: true }] },
+      { type: 'bulletList', content: [{ text: 'All block types work inside columns.' }] },
+    ] },
+    { width: 1, blocks: [{ type: 'paragraph', content: [{ text: 'Narrow column (1×)' }] }] },
+    { width: 1, blocks: [{ type: 'paragraph', content: [{ text: 'Narrow column (1×)' }] }] },
+  ] } },
+  { type: 'button', content: [{ text: 'Get started' }], attrs: { buttonStyle: 'primary',   href: 'https://example.com', alignment: 'left'   } },
+  { type: 'button', content: [{ text: 'Learn more'  }], attrs: { buttonStyle: 'outline',   href: 'https://example.com', alignment: 'left'   } },
+  { type: 'button', content: [{ text: 'Maybe later' }], attrs: { buttonStyle: 'secondary', href: '',                    alignment: 'center' } },
+]
+
+new PilaEditor(document.getElementById('editor'), {
+  placeholder: 'Type / to add a block…',
+  initialContent,
+}).mount()
+```
+
 ## Source file map
 
 | File | Contents |
