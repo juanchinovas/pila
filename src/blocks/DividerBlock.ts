@@ -28,10 +28,10 @@ export class DividerBlock extends PilaBlock {
       this.handleArrow(e)
       if (e.key === 'Enter') {
         e.preventDefault()
-        const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id })
+        const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id! })
         requestAnimationFrame(() => {
           const el = this.ctx.editorEl.querySelector(
-            `[data-block-id="${newBlock.id}"] [contenteditable]`
+            `[data-block-id="${newBlock.id!}"] [contenteditable]`
           ) as HTMLElement | null
           el?.focus()
         })
@@ -39,7 +39,7 @@ export class DividerBlock extends PilaBlock {
       }
       if (e.key === 'Backspace' || e.key === 'Delete') {
         e.preventDefault()
-        this.ctx.manager.delete(this.block.id)
+        this.ctx.manager.delete(this.block.id!)
       }
     })
 

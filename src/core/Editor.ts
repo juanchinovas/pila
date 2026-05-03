@@ -47,6 +47,7 @@ export class PilaEditor {
   private slashMenu!: SlashMenu
   private floatingToolbar!: FloatingToolbar
   private dragHandle!: DragHandle
+  private overlayRoot: HTMLElement
   private unsubscribers: Array<() => void> = []
   private _mounted = false
 
@@ -55,6 +56,14 @@ export class PilaEditor {
     this.options = options
     this.manager = new BlockManager(options.initialContent ?? [])
     this.plugins = new PluginRegistry()
+    this.overlayRoot = this.resolveOverlayRoot(options.overlayRoot)
+  }
+
+  private resolveOverlayRoot(root?: HTMLElement | (() => HTMLElement | null)): HTMLElement {
+    if (typeof root === 'function') {
+      return root() ?? document.body
+    }
+    return root ?? document.body
   }
 
   mount(): void {
@@ -89,17 +98,20 @@ export class PilaEditor {
     this.renderAll()
 
     // Re-render on block model changes
-    const unsub = this.manager.on('blocks:change', () => this.renderAll())
+    const unsub = this.manager.on('blocks:change', () => { this.renderAll() })
     this.unsubscribers.push(unsub)
 
     // UI overlays — pass plugin registry so they can include extra items/buttons
-    this.slashMenu = new SlashMenu(this.editorEl, this.manager, this.plugins)
-    this.floatingToolbar = new FloatingToolbar(this.editorEl, this.manager, this.plugins)
-    this.dragHandle = new DragHandle(this.editorEl, this.manager)
+    this.slashMenu = new SlashMenu(this.editorEl, this.manager, this.plugins, this.overlayRoot)
+    this.floatingToolbar = new FloatingToolbar(this.editorEl, this.manager, this.plugins, this.overlayRoot)
+    this.dragHandle = new DragHandle(this.editorEl, this.manager, this.overlayRoot)
 
     this.slashMenu.mount()
     this.floatingToolbar.mount()
-    this.dragHandle.mount()
+    this.dragHandle.mount((blockId?: string) => {
+      const newBlock = this.manager.add('paragraph', { content: [], afterId: blockId });
+      this.setFocus(newBlock);
+    });
 
     // User onChange callback
     if (this.options.onChange) {
@@ -116,7 +128,7 @@ export class PilaEditor {
 
     this.unsubscribers.forEach((fn) => fn())
     this.unsubscribers = []
-    this.slashMenu?.destroy()
+    this.slashMenu?.destroy();
     this.floatingToolbar?.destroy()
     this.dragHandle?.destroy()
     this.blockInstances.forEach((b) => b.destroy())
@@ -127,7 +139,7 @@ export class PilaEditor {
 
   getContent(format: 'json' | 'html' | 'markdown' | 'email'): string {
     const blocks = this.manager.getAll().map((block) => {
-      const instance = this.blockInstances.get(block.id)
+      const instance = this.blockInstances.get(block.id!)
       return instance ? instance.getContent() : block
     })
 
@@ -146,26 +158,26 @@ export class PilaEditor {
     const seenIds = new Set<string>()
 
     blocks.forEach((block, index) => {
-      seenIds.add(block.id)
+      seenIds.add(block.id!)
 
-      let instance = this.blockInstances.get(block.id)
+      let instance = this.blockInstances.get(block.id!)
 
       // Destroy and recreate if block type changed (e.g. via slash menu)
       if (instance && instance.blockType !== block.type) {
         instance.destroy()
-        this.blockInstances.delete(block.id)
+        this.blockInstances.delete(block.id!)
         instance = undefined
       }
 
       if (!instance) {
         instance = this.createBlockInstance(block)
-        this.blockInstances.set(block.id, instance)
+        this.blockInstances.set(block.id!, instance)
       } else {
         instance.updateData(block)
       }
 
       const el = instance
-      el.dataset.blockId = block.id
+      el.dataset.blockId = block.id!
       el.dataset.blockIndex = String(index)
 
       // Insert in correct position
@@ -198,6 +210,7 @@ export class PilaEditor {
       manager: this.manager,
       editorEl: this.editorEl,
       placeholder: this.options.placeholder,
+      overlayRoot: this.overlayRoot,
     }
 
     // Plugin-registered custom block types
@@ -261,5 +274,33 @@ export class PilaEditor {
     el.block = block
     el.ctx = ctx
     return el
+  }
+
+
+
+  private setFocus(block: Block): void;
+  private setFocus(id: string): void;
+  private setFocus(blockOrId: Block | string): void {
+    let _block: Block | undefined;
+    // No-op here, but can be used by UI layer to scroll into view or similar
+    if (typeof blockOrId === 'string') {
+      _block = this.manager.getById(blockOrId)
+      if (!_block) {
+        console.warn(`BlockManager: setFocus called with unknown id ${blockOrId}`);
+        return;
+      }
+    } else {
+      _block = blockOrId
+    }
+
+    setTimeout(() => {
+      const newEl = this.editorEl.querySelector(`[data-block-id="${_block.id!}"] [contenteditable]`) as HTMLElement | null;
+
+      if (newEl) {
+        newEl.focus();
+      } else {
+        console.warn(`PilaEditor: setFocus could not find element for block id ${_block.id}`);
+      }
+    }, 200);
   }
 }

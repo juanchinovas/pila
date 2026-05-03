@@ -7,6 +7,7 @@ export class ParagraphBlock extends PilaBlock {
   private contentEl!: HTMLElement
 
   protected buildDOM(): void {
+    this.classList.add('!mt-5');
     this.contentEl = this.makeContentEditable(
       'p',
       this.block.content ?? [],
@@ -14,9 +15,7 @@ export class ParagraphBlock extends PilaBlock {
       'pila-paragraph m-0 px-0.5 py-[3px] min-h-[1.65em] outline-none whitespace-pre-wrap break-words'
     )
 
-    if (!this.block.content?.length) {
-      this.contentEl.setAttribute('data-placeholder', this.ctx.placeholder ?? 'Type / to add a block…')
-    }
+    this.contentEl.setAttribute('data-placeholder', this.ctx.placeholder ?? 'Type / to add a block…')
 
     this.appendChild(this.contentEl)
   }

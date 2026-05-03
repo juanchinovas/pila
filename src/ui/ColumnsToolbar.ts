@@ -27,15 +27,17 @@ const WIDTH_PRESETS: { label: string; flex: number; title: string }[] = [
 ]
 
 export class ColumnsToolbar {
+  private overlayRoot: HTMLElement
   private el: HTMLElement
   private ctx: ColumnsToolbarContext | null = null
   private deleteColBtn!: HTMLButtonElement
   private widthBtns: Array<{ btn: HTMLButtonElement; flex: number }> = []
 
-  constructor() {
+  constructor(overlayRoot: HTMLElement = document.body) {
+    this.overlayRoot = overlayRoot
     this.el = this.buildDOM()
     this.el.style.display = 'none'
-    document.body.appendChild(this.el)
+    this.overlayRoot.appendChild(this.el)
   }
 
   private buildDOM(): HTMLElement {
@@ -72,19 +74,19 @@ export class ColumnsToolbar {
     )
     this.deleteColBtn.classList.add('hover:!bg-red-500')
     toolbar.appendChild(this.deleteColBtn)
-
+/*
     toolbar.appendChild(this.sep())
 
     // Delete entire columns block
-    const delBlock = this.makeIconBtn(
-      Icons.Trash2,
-      () => this.ctx?.onDeleteBlock(),
-      'Delete columns block',
-      'Block'
-    )
-    delBlock.classList.add('hover:!bg-red-600')
-    toolbar.appendChild(delBlock)
-
+      const delBlock = this.makeIconBtn(
+        Icons.Trash2,
+        () => this.ctx?.onDeleteBlock(),
+        'Delete columns block',
+        'Block'
+      )
+      delBlock.classList.add('hover:!bg-red-600')
+      toolbar.appendChild(delBlock)
+    */
     return toolbar
   }
 
@@ -104,7 +106,7 @@ export class ColumnsToolbar {
     btn.type = 'button'
     btn.className = BTN
     if (title) btn.title = title
-    btn.appendChild(icon(iconNode, 14));
+    btn.appendChild(icon(iconNode, 12));
     if (text) btn.appendChild(document.createTextNode(text));
     btn.addEventListener('mousedown', (e: MouseEvent) => {
       e.preventDefault()

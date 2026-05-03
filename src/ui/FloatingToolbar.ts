@@ -15,21 +15,28 @@ export class FloatingToolbar {
   private editorEl: HTMLElement
   private manager: BlockManager
   private plugins: PluginRegistry
+  private overlayRoot: HTMLElement
   private toolbarEl!: HTMLElement
   private onSelectionChange!: () => void
   private savedRange: Range | null = null
   private isLinkMode: boolean = false
   private focusedBlockId: string | null = null
 
-  constructor(editorEl: HTMLElement, manager: BlockManager, plugins = new PluginRegistry()) {
+  constructor(
+    editorEl: HTMLElement,
+    manager: BlockManager,
+    plugins = new PluginRegistry(),
+    overlayRoot: HTMLElement = document.body
+  ) {
     this.editorEl = editorEl
     this.manager = manager
     this.plugins = plugins
+    this.overlayRoot = overlayRoot
   }
 
   mount(): void {
     this.toolbarEl = this.buildToolbar()
-    document.body.appendChild(this.toolbarEl)
+    this.overlayRoot.appendChild(this.toolbarEl)
 
     this.onSelectionChange = () => this.handleSelectionChange()
     document.addEventListener('selectionchange', this.onSelectionChange)
@@ -135,6 +142,34 @@ export class FloatingToolbar {
     if (!this.focusedBlockId) return
     const block = this.manager.getAll().find((b) => b.id === this.focusedBlockId)
     if (!block) return
+
+    if (block.type === 'table') {
+      // For tables, we don't want to replace the whole block state because it loses other cell data.
+      // We find the specific cell and update its align attribute.
+      const sel = window.getSelection()
+      if (!sel || !sel.rangeCount) return
+      const range = sel.getRangeAt(0)
+      const td = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE 
+        ? (range.commonAncestorContainer as Element).closest('td, th') 
+        : range.commonAncestorContainer.parentElement?.closest('td, th')
+      
+      const r = td?.getAttribute('data-row-index')
+      const c = td?.getAttribute('data-col-index')
+      
+      if (r !== null && c !== null && r !== undefined && c !== undefined) {
+        const rows = JSON.parse(JSON.stringify(block.attrs?.rows || []))
+        const rowIdx = parseInt(r, 10)
+        const colIdx = parseInt(c, 10)
+        if (rows[rowIdx]?.cells[colIdx]) {
+          rows[rowIdx].cells[colIdx].align = alignment
+          this.manager.update(this.focusedBlockId, {
+            attrs: { ...block.attrs, rows }
+          })
+          this.refreshActiveState()
+          return
+        }
+      }
+    }
 
     // Flush current live DOM content (including any unsaved inline changes like links)
     // so that the re-render triggered by manager.update uses up-to-date content.

@@ -259,7 +259,7 @@ A horizontal rule (`<hr>`). Has no content or attrs.
 
 ## image
 
-An image block with an optional caption, hover overlay with an Edit button, and a props modal for setting dimensions, alt text, and Tailwind classes.
+An image block with an optional caption, hover overlay with an Edit button to open a properties popover, and manual resize handles.
 
 **Custom element:** `<pila-image>`
 
@@ -269,12 +269,18 @@ An image block with an optional caption, hover overlay with an Edit button, and 
 
 | Property          | Type                                    | Description                                    |
 |-------------------|-----------------------------------------|------------------------------------------------|
-| `src`             | `string`                                | Image URL (`http://` or `https://` only)       |
+| `src`             | `string`                                | Image URL or data-url                          |
 | `alt`             | `string`                                | Alt text / caption                             |
 | `width`           | `string`                                | CSS width value, e.g. `'50%'`, `'400px'`       |
 | `height`          | `string`                                | CSS height value, e.g. `'200px'`, `'auto'`     |
-| `tailwindClasses` | `string`                                | Additional Tailwind classes applied to `<img>` |
+| `objectFit`       | `string`                                | CSS `object-fit` value                         |
+| `borderRadius`    | `string`                                | Corner radius in pixels                        |
 | `alignment`       | `'left' \| 'center' \| 'right'`         | Horizontal alignment of the figure             |
+
+**Features:**
+- **Local Upload** — Select a file to convert it to a data-url immediately.
+- **Manual Resize** — Drag the bottom-right corner to resize the image.
+- **Properties Popover** — Configure fit, radius, and dimensions via a floating popover.
 
 **Example:**
 

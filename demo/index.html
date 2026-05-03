@@ -9,23 +9,20 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f5f5f5;
+      background: var(--pila-bg);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 16px;
+      display: grid;
+      grid-template-columns: 25rem 1fr 25rem;
+      justify-items: center;
+      > * { 
+        grid-column: 2/2;
+      }
     }
     h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; color: #111; }
     .subtitle { color: #666; margin-bottom: 32px; font-size: 0.9rem; }
     #editor {
       width: 100%;
-      max-width: 720px;
       min-height: 400px;
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 24px;
     }
     .toolbar {
       width: 100%;
@@ -69,7 +66,6 @@
     #btn-clear:hover { background: #fdf0ee; }
     pre#output {
       width: 100%;
-      max-width: 720px;
       margin-top: 16px;
       background: #1e1e1e;
       color: #d4d4d4;
@@ -95,6 +91,7 @@
     <button id="btn-clear">Clear</button>
   </div>
   <pre id="output"></pre>
+  <section id="preview"></section>
 
   <script type="module">
     import '../src/styles/pila.css'
@@ -150,14 +147,15 @@
       { type: 'heading2', content: [{ text: 'Button blocks' }] },
       { type: 'paragraph', content: [{ text: 'Click a button to show its edit bar (URL, style and alignment). Use the slash menu to insert more.' }] },
       { type: 'button', content: [{ text: 'Get started' }], attrs: { buttonStyle: 'primary', href: 'https://github.com', alignment: 'left' } },
-      { type: 'button', content: [{ text: 'Learn more' }], attrs: { buttonStyle: 'outline', href: 'https://github.com', alignment: 'left' } },
       { type: 'button', content: [{ text: 'Maybe later' }], attrs: { buttonStyle: 'secondary', href: '', alignment: 'center' } },
+      { type: 'button', content: [{ text: 'Learn more' }], attrs: { buttonStyle: 'outline', href: 'https://github.com', alignment: 'right' } },
     ]
 
     const editor = new PilaEditor(document.getElementById('editor'), {
       placeholder: 'Type / to add a block…',
-      initialContent,
+      initialContent
     })
+
     editor.mount()
 
     const output = document.getElementById('output')
@@ -166,16 +164,26 @@
     })
     document.getElementById('btn-html').addEventListener('click', () => {
       output.textContent = editor.getContent('html')
+      showPreview(output.textContent)
     })
     document.getElementById('btn-md').addEventListener('click', () => {
       output.textContent = editor.getContent('markdown')
+      showPreview(output.textContent)
     })
     document.getElementById('btn-email').addEventListener('click', () => {
       output.textContent = editor.getContent('email')
+      showPreview(output.textContent)
     })
     document.getElementById('btn-clear').addEventListener('click', () => {
-      output.textContent = ''
+      output.textContent = '';
+      showPreview('');
     })
+    
+
+    function showPreview(content) {
+      const preview = document.getElementById('preview')
+      preview.innerHTML = content
+    }
   </script>
 </body>
 </html>

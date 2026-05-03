@@ -18,11 +18,11 @@ export class BlockManager extends EventEmitter<EditorEvents> {
   }
 
   getById(id: string): Block | undefined {
-    return this.blocks.find((b) => b.id === id)
+    return this.blocks.find((b) => b.id! === id)
   }
 
   getIndex(id: string): number {
-    return this.blocks.findIndex((b) => b.id === id)
+    return this.blocks.findIndex((b) => b.id! === id)
   }
 
   add(
@@ -38,7 +38,7 @@ export class BlockManager extends EventEmitter<EditorEvents> {
 
     let index: number
     if (options.afterId !== undefined) {
-      const afterIndex = this.blocks.findIndex((b) => b.id === options.afterId)
+      const afterIndex = this.blocks.findIndex((b) => b.id! === options.afterId)
       index = afterIndex >= 0 ? afterIndex + 1 : this.blocks.length
     } else {
       index = this.blocks.length
@@ -52,9 +52,10 @@ export class BlockManager extends EventEmitter<EditorEvents> {
 
   update(id: string, changes: Partial<Omit<Block, 'id'>>): Block | undefined {
     const index = this.getIndex(id)
+
     if (index === -1) return undefined
 
-    const existing = this.blocks[index]
+    const existing = this.blocks[index];
     const updated: Block = {
       ...existing,
       ...changes,
@@ -64,6 +65,7 @@ export class BlockManager extends EventEmitter<EditorEvents> {
           ? { ...existing.attrs, ...changes.attrs }
           : existing.attrs,
     }
+
     this.blocks[index] = updated
     this.emit('block:update', { id, block: updated })
     this.emit('blocks:change', { blocks: this.getAll() })
@@ -103,6 +105,24 @@ export class BlockManager extends EventEmitter<EditorEvents> {
     this.emit('block:move', { id, toIndex: clamped })
     this.emit('blocks:change', { blocks: this.getAll() })
     return true
+  }
+
+  duplicate(id: string): Block | undefined {
+    const block = this.getById(id)
+    if (!block) return undefined
+    return this.add(block.type, {
+      content: block.content ? JSON.parse(JSON.stringify(block.content)) : undefined,
+      attrs: block.attrs ? JSON.parse(JSON.stringify(block.attrs)) : undefined,
+      afterId: id,
+    })
+  }
+
+  remove(id: string): boolean {
+    return this.delete(id)
+  }
+
+  insertAfter(afterId: string, type: BlockType): Block {
+    return this.add(type, { afterId })
   }
 
   reset(blocks: Block[]): void {

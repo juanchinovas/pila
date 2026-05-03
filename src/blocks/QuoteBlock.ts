@@ -7,7 +7,7 @@ export class QuoteBlock extends PilaBlock {
   private contentEl!: HTMLElement
 
   protected buildDOM(): void {
-    this.classList.add('pila-quote')
+    this.classList.add('pila-quote', '!mt-5')
 
     this.contentEl = this.makeContentEditable(
       'blockquote',
@@ -46,10 +46,10 @@ export class QuoteBlock extends PilaBlock {
   }
 
   private exitAndAddParagraph(): void {
-    const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id })
+    const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id! })
     requestAnimationFrame(() => {
       const el = this.ctx.editorEl.querySelector(
-        `[data-block-id="${newBlock.id}"] [contenteditable]`
+        `[data-block-id="${newBlock.id!}"] [contenteditable]`
       ) as HTMLElement | null
       el?.focus()
     })

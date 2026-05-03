@@ -1,19 +1,20 @@
 import { Block } from '../types'
 import { PilaBlock } from './PilaBlock'
-import { ImagePropsModal } from '../ui/ImagePropsModal'
+import { ImagePropsPopover } from '../ui/ImagePropsPopover'
 
 export class ImageBlock extends PilaBlock {
   private img!: HTMLImageElement
   private caption!: HTMLElement
   private figure!: HTMLElement
   private overlay!: HTMLDivElement
-  private modal: ImagePropsModal | null = null
+  private propsPopover: ImagePropsPopover | null = null
 
   protected buildDOM(): void {
     // ── Figure wrapper ────────────────────────────────────────────────────
     // position:relative on the wrapper lets the overlay be positioned inside
+    this.classList.add('!mt-5');
     this.figure = document.createElement('figure')
-    this.figure.className = 'relative inline-block max-w-full m-0'
+    this.figure.className = 'relative inline-block max-w-full mt-5'
     // display:table enables margin:auto centering
     this.figure.style.cssText = 'display: table; margin: 4px 0; margin-right: auto;'
 
@@ -21,7 +22,7 @@ export class ImageBlock extends PilaBlock {
     this.img = document.createElement('img')
     this.img.src = this.block.attrs?.src ?? ''
     this.img.alt = this.block.attrs?.alt ?? ''
-    this.img.className = 'block max-w-full rounded-[var(--pila-radius)] outline-none'
+    this.img.className = 'block max-w-full rounded-[var(--pila-radius)] outline-none transition-all'
     this.img.setAttribute('tabindex', '0')
     this.applyImageStyles()
 
@@ -38,10 +39,10 @@ export class ImageBlock extends PilaBlock {
       this.handleArrow(e)
       if (e.key === 'Enter') {
         e.preventDefault()
-        const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id })
+        const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id! })
         requestAnimationFrame(() => {
           const el = this.ctx.editorEl.querySelector(
-            `[data-block-id="${newBlock.id}"] [contenteditable]`
+            `[data-block-id="${newBlock.id!}"] [contenteditable]`
           ) as HTMLElement | null
           el?.focus()
         })
@@ -49,7 +50,7 @@ export class ImageBlock extends PilaBlock {
       }
       if (e.key === 'Backspace' || e.key === 'Delete') {
         e.preventDefault()
-        this.ctx.manager.delete(this.block.id)
+        this.ctx.manager.delete(this.block.id!)
       }
     })
 
@@ -83,7 +84,7 @@ export class ImageBlock extends PilaBlock {
     editBtn.addEventListener('mousedown', (e: MouseEvent) => {
       e.preventDefault()
       e.stopPropagation()
-      this.openPropsModal()
+      this.openPropsPopover(e.clientX, e.clientY)
     })
     this.overlay.appendChild(editBtn)
 
@@ -99,38 +100,94 @@ export class ImageBlock extends PilaBlock {
     this.figure.addEventListener('mouseenter', showOverlay)
     this.figure.addEventListener('mouseleave', hideOverlay)
 
+    // ── Resizer ───────────────────────────────────────────────────────────
+    const resizer = document.createElement('div')
+    resizer.className = 'absolute bottom-8 right-0 w-1 top-8 cursor-col-resize opacity-0 group-hover:opacity-100 transition-opacity z-10'
+    resizer.style.cssText = 'background: var(--pila-accent); border-radius: 2px; margin: 2px;'
+    
+    // Add a group class to figure for the hover effect
+    this.figure.classList.add('group')
+
+    let isResizing = false
+    let startX: number, startWidth: number
+
+    resizer.addEventListener('mousedown', (e: MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      isResizing = true
+      startX = e.clientX
+      startWidth = this.img.clientWidth
+
+      const onMouseMove = (me: MouseEvent) => {
+        if (!isResizing) return
+        const dx = me.clientX - startX
+        const newWidth = Math.max(20, startWidth + dx)
+        this.img.style.width = `${newWidth}px`
+        this.img.style.height = 'auto' 
+      }
+
+      const onMouseUp = () => {
+        if (isResizing) {
+          isResizing = false
+          this.ctx.manager.update(this.block.id!, {
+            attrs: {
+              ...(this.block.attrs ?? {}),
+              width: `${this.img.clientWidth}px`,
+              height: 'auto'
+            }
+          })
+        }
+        document.removeEventListener('mousemove', onMouseMove)
+        document.removeEventListener('mouseup',   onMouseUp)
+      }
+
+      document.addEventListener('mousemove', onMouseMove)
+      document.addEventListener('mouseup',   onMouseUp)
+    })
+
+    // ── Wrapper for Image and Resizer ─────────────────────────────────────
+    const imgWrapper = document.createElement('div')
+    imgWrapper.className = 'relative inline-block leading-[0]'
+    imgWrapper.appendChild(this.img)
+    imgWrapper.appendChild(resizer)
+
     // ── Assemble ──────────────────────────────────────────────────────────
-    this.figure.appendChild(this.img)
+    this.figure.appendChild(imgWrapper)
     this.figure.appendChild(this.overlay)
     this.figure.appendChild(this.caption)
     this.appendChild(this.figure)
   }
 
-  private async openPropsModal(): Promise<void> {
-    if (!this.modal) {
-      this.modal = new ImagePropsModal()
+  private async openPropsPopover(x: number, y: number): Promise<void> {
+    if (!this.propsPopover) {
+      this.propsPopover = new ImagePropsPopover(this.ctx.overlayRoot)
     }
-    const result = await this.modal.open(this.block.attrs ?? {})
+    const result = await this.propsPopover.open(x, y, this.block.attrs ?? {});
+
     if (result === null) return
 
     const newAttrs = {
       ...(this.block.attrs ?? {}),
+      src:             result.src || this.block.attrs?.src,
       width:           result.width  || undefined,
       height:          result.height || undefined,
       alt:             result.alt,
-      tailwindClasses: result.tailwindClasses || undefined,
+      objectFit:       result.objectFit,
+      borderRadius:    result.borderRadius,
     }
 
-    this.ctx.manager.update(this.block.id, { attrs: newAttrs })
+    this.ctx.manager.update(this.block.id!, { attrs: newAttrs });
+    this.applyImageStyles();
   }
 
   private applyImageStyles(): void {
-    const { width, height, tailwindClasses } = this.block.attrs ?? {}
+    const { width, height, objectFit, borderRadius, src } = this.block.attrs ?? {}
     this.img.style.width  = width  ?? ''
+    this.img.src = src ?? this.img.src
     this.img.style.height = height ?? ''
-    this.img.className = tailwindClasses
-      ? `block max-w-full rounded-[var(--pila-radius)] outline-none ${tailwindClasses}`
-      : 'block max-w-full rounded-[var(--pila-radius)] outline-none'
+    this.img.style.objectFit = objectFit ?? ''
+    this.img.style.borderRadius = borderRadius ?? ''
+
     this.applyFigureAlignment(this.block.attrs?.alignment as 'left' | 'center' | 'right' | undefined)
   }
 
@@ -148,18 +205,7 @@ export class ImageBlock extends PilaBlock {
     }
   }
 
-  override updateData(block: Block): void {
-    super.updateData(block)
-    if (this.img) {
-      this.img.src = block.attrs?.src ?? ''
-      this.img.alt = block.attrs?.alt ?? ''
-      this.caption.textContent = block.attrs?.alt ?? ''
-      this.applyImageStyles()
-    }
-  }
-
   override destroy(): void {
-    this.modal?.destroy()
     super.destroy()
   }
 

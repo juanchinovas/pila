@@ -33,8 +33,8 @@ export class ColumnsBlock extends PilaBlock {
   }
 
   protected buildDOM(): void {
-    this.classList.add('pila-columns-block')
-    this.toolbar = new ColumnsToolbar()
+    this.classList.add('pila-columns-block', '!mt-5')
+    this.toolbar = new ColumnsToolbar(this.ctx.overlayRoot)
 
     this.containerEl = document.createElement('div')
     this.containerEl.className = 'pila-columns'
@@ -58,8 +58,8 @@ export class ColumnsBlock extends PilaBlock {
   }
 
   override destroy(): void {
-    document.removeEventListener('pila:text-selection', this.onTextSelection)
-    this.toolbar.destroy()
+    document.removeEventListener('pila:text-selection', this.onTextSelection);
+    this.toolbar?.destroy()
     this.destroyColumnEditors()
     super.destroy()
   }
@@ -110,7 +110,7 @@ export class ColumnsBlock extends PilaBlock {
     col.dataset.flexGrow = String(def.width ?? 1)
     col.style.flex       = `${def.width ?? 1} 1 0%`
 
-    const editor = new ColumnEditor(def, this.ctx.placeholder)
+    const editor = new ColumnEditor(def, this.ctx.placeholder, this.ctx.overlayRoot)
     this.columnEditors[idx] = editor
 
     editor.el.addEventListener('focusin', (e: FocusEvent) => {
@@ -194,7 +194,7 @@ export class ColumnsBlock extends PilaBlock {
       onAddColLeft:    () => this.addColumn('left'),
       onAddColRight:   () => this.addColumn('right'),
       onDeleteCol:     () => this.deleteColumn(),
-      onDeleteBlock:   () => this.ctx.manager.delete(this.block.id),
+      onDeleteBlock:   () => this.ctx.manager.delete(this.block.id!),
       onSetWidth:      (flex) => this.setColumnWidth(flex),
       getCurrentWidth: () => {
         const defs = this.block.attrs?.columnDefs ?? []
@@ -206,27 +206,27 @@ export class ColumnsBlock extends PilaBlock {
 
   private focusOuterBlock(direction: 'prev' | 'next'): void {
     const allBlocks = this.ctx.manager.getAll()
-    const idx       = allBlocks.findIndex((b) => b.id === this.block.id)
+    const idx       = allBlocks.findIndex((b) => b.id! === this.block.id!)
 
     if (direction === 'prev' && idx > 0) {
-      const targetId = allBlocks[idx - 1].id
+      const targetId = allBlocks[idx - 1].id!
       const targetEl = this.ctx.editorEl.querySelector<HTMLElement>(
         `[data-block-id="${targetId}"] [contenteditable], [data-block-id="${targetId}"] [tabindex]`
       )
       targetEl?.focus()
     } else if (direction === 'next') {
       if (idx < allBlocks.length - 1) {
-        const targetId = allBlocks[idx + 1].id
+        const targetId = allBlocks[idx + 1].id!
         const targetEl = this.ctx.editorEl.querySelector<HTMLElement>(
           `[data-block-id="${targetId}"] [contenteditable], [data-block-id="${targetId}"] [tabindex]`
         )
         targetEl?.focus()
       } else {
         // ColumnsBlock is the last block — append a new paragraph and focus it.
-        const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id })
+        const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id! })
         requestAnimationFrame(() => {
           const newEl = this.ctx.editorEl.querySelector<HTMLElement>(
-            `[data-block-id="${newBlock.id}"] [contenteditable]`
+            `[data-block-id="${newBlock.id!}"] [contenteditable]`
           )
           newEl?.focus()
         })
@@ -272,13 +272,13 @@ export class ColumnsBlock extends PilaBlock {
   }
 
   private persistDefs(): void {
-    this.ctx.manager.update(this.block.id, {
+    this.ctx.manager.update(this.block.id!, {
       attrs: { ...this.block.attrs, columnDefs: this.readDefs() },
     })
   }
 
   private saveDefs(defs: ColumnDef[]): void {
-    this.ctx.manager.update(this.block.id, {
+    this.ctx.manager.update(this.block.id!, {
       attrs: { ...this.block.attrs, columnDefs: defs },
     })
   }

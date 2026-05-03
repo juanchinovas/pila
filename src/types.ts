@@ -14,6 +14,11 @@ export interface InlineNode {
 export interface TableCell {
   content: InlineNode[]
   align?: 'left' | 'center' | 'right'
+  colspan?: number
+  rowspan?: number
+  background?: string
+  color?: string
+  width?: string
 }
 
 export interface TableRow {
@@ -37,12 +42,15 @@ export interface BlockAttrs {
   alt?: string           // image
   width?: string         // image (CSS value e.g. '50%', '400px')
   height?: string        // image (CSS value e.g. '200px', 'auto')
-  tailwindClasses?: string // image — freeform Tailwind classes on <img>
   href?: string           // button
   buttonStyle?: 'primary' | 'secondary' | 'outline'  // button
   icon?: string          // callout
   color?: string         // callout (legacy, overridden by flavor)
   flavor?: 'info' | 'warning' | 'error' | 'success' | 'tip'  // callout
+  background?: string    // global bg for blocks
+  textColor?: string     // global text color for blocks
+  objectFit?: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down' // image
+  borderRadius?: string  // image
   rows?: TableRow[]      // table
   headerRow?: boolean    // table — legacy: first row is header (use headerRows instead)
   headerCol?: boolean    // table — legacy: first col is header (use headerCols instead)
@@ -74,7 +82,7 @@ export type BlockType = BuiltinBlockType | string
 // ─── Block ───────────────────────────────────────────────────────────────────
 
 export interface Block {
-  id: string
+  id?: string
   type: BlockType
   content?: InlineNode[]
   attrs?: BlockAttrs
@@ -142,6 +150,12 @@ export interface EditorOptions {
   onChange?: (blocks: Block[]) => void
   /** Plugins to install on mount. */
   plugins?: PilaPlugin[]
+  /** 
+   * Root element for floating UI (popovers, menus, toolbars). 
+   * Useful when the editor is inside a modal or fixed container.
+   * Defaults to document.body.
+   */
+  overlayRoot?: HTMLElement | (() => HTMLElement | null)
 }
 
 // ─── Editor Events ───────────────────────────────────────────────────────────

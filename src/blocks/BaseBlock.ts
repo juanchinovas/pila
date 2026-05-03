@@ -80,7 +80,7 @@ export abstract class BaseBlock {
     el.setAttribute('contenteditable', 'true')
     el.setAttribute('spellcheck', 'true')
     if (extraClass) el.className = extraClass
-    el.setAttribute('data-block-id', this.block.id)
+    el.setAttribute('data-block-id', this.block.id!)
 
     // Render inline content
     InlineRenderer.render(el, inlineNodes)
@@ -106,18 +106,18 @@ export abstract class BaseBlock {
     const { before, after } = this.splitAtCaret(el)
 
     // Update current block with 'before' content
-    this.ctx.manager.update(this.block.id, { content: before })
+    this.ctx.manager.update(this.block.id!, { content: before })
 
     // Add new paragraph after with 'after' content
     const newBlock = this.ctx.manager.add('paragraph', {
       content: after,
-      afterId: this.block.id,
+      afterId: this.block.id!,
     })
 
     // Focus new block
     requestAnimationFrame(() => {
       const newEl = this.ctx.editorEl.querySelector(
-        `[data-block-id="${newBlock.id}"] [contenteditable]`
+        `[data-block-id="${newBlock.id!}"] [contenteditable]`
       ) as HTMLElement | null
       if (newEl) {
         newEl.focus()
@@ -150,13 +150,13 @@ export abstract class BaseBlock {
     e.preventDefault()
 
     const allBlocks = this.ctx.manager.getAll()
-    const idx = allBlocks.findIndex((b) => b.id === this.block.id)
+    const idx = allBlocks.findIndex((b) => b.id! === this.block.id!)
     if (idx <= 0) return
 
     const prevBlock = allBlocks[idx - 1]
     // Only merge text blocks
     if (!prevBlock.content) {
-      this.ctx.manager.delete(this.block.id)
+      this.ctx.manager.delete(this.block.id!)
       return
     }
 
@@ -164,12 +164,12 @@ export abstract class BaseBlock {
     const mergedContent = [...(prevBlock.content ?? []), ...currentNodes]
     const mergeOffset = (prevBlock.content ?? []).reduce((s, n) => s + n.text.length, 0)
 
-    this.ctx.manager.update(prevBlock.id, { content: mergedContent })
-    this.ctx.manager.delete(this.block.id)
+    this.ctx.manager.update(prevBlock.id!, { content: mergedContent })
+    this.ctx.manager.delete(this.block.id!)
 
     requestAnimationFrame(() => {
       const prevEl = this.ctx.editorEl.querySelector(
-        `[data-block-id="${prevBlock.id}"] [contenteditable]`
+        `[data-block-id="${prevBlock.id!}"] [contenteditable]`
       ) as HTMLElement | null
       if (prevEl) {
         prevEl.focus()
@@ -180,10 +180,10 @@ export abstract class BaseBlock {
 
   protected handleArrow(e: KeyboardEvent): void {
     const allBlocks = this.ctx.manager.getAll()
-    const idx = allBlocks.findIndex((b) => b.id === this.block.id)
+    const idx = allBlocks.findIndex((b) => b.id! === this.block.id!)
 
     if (e.key === 'ArrowUp' && idx > 0) {
-      const targetId = allBlocks[idx - 1].id
+      const targetId = allBlocks[idx - 1].id!
       const targetEl = this.ctx.editorEl.querySelector(
         `[data-block-id="${targetId}"] [contenteditable]`
       ) as HTMLElement | null
@@ -192,7 +192,7 @@ export abstract class BaseBlock {
         targetEl.focus()
       }
     } else if (e.key === 'ArrowDown' && idx < allBlocks.length - 1) {
-      const targetId = allBlocks[idx + 1].id
+      const targetId = allBlocks[idx + 1].id!
       const targetEl = this.ctx.editorEl.querySelector(
         `[data-block-id="${targetId}"] [contenteditable]`
       ) as HTMLElement | null

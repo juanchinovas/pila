@@ -11,6 +11,8 @@ Pila is built on plain Web Components and requires no framework. It works in van
 ## Features
 
 - **Block-based editing** — paragraphs, headings, lists, todos, code, quotes, callouts, dividers, images, tables, and multi-column layouts
+- **Block Customization** — change background and text color of any block directly from the drag handle popover
+- **Image Editing** — upload local images, resize them manually, and configure object-fit and border-radius via an intuitive popover
 - **Inline formatting** — bold, italic, underline, inline code, links via floating toolbar or keyboard shortcuts
 - **Slash menu** — type `/` to insert any block type
 - **Drag & drop** — drag the handle beside any block to reorder
@@ -77,6 +79,7 @@ Call `editor.destroy()` when the editor is no longer needed to clean up event li
 | `initialContent` | `Block[]`                   | Pre-populate the editor with content                    |
 | `onChange`       | `(blocks: Block[]) => void` | Called whenever blocks change                           |
 | `plugins`        | `PilaPlugin[]`              | Plugins to install on mount                             |
+| `overlayRoot`    | `HTMLElement \| (() => HTMLElement \| null)` | Optional element or getter to append floating UI (menus, popovers) to. Defaults to `document.body`. |
 
 ### Methods
 
@@ -396,7 +399,8 @@ editor.mount()
 
 ```bash
 npm install
-npm run dev        # start Vite dev server with the demo page
+npm run dev        # start vanilla demo
+npm run dev:vue    # start Vue 3 demo
 npm run build      # type-check + build to dist/
 npm run test       # run unit tests (Vitest)
 npm run test:e2e   # run end-to-end tests (Playwright)

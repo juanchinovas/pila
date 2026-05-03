@@ -73,10 +73,10 @@ export class ButtonBlock extends PilaBlock {
       if (e.key === 'Enter') {
         e.preventDefault()
         this.commitLabel()
-        const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id })
+        const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id! })
         requestAnimationFrame(() => {
           const el = this.ctx.editorEl.querySelector(
-            `[data-block-id="${newBlock.id}"] [contenteditable]`
+            `[data-block-id="${newBlock.id!}"] [contenteditable]`
           ) as HTMLElement | null
           el?.focus()
         })
@@ -84,7 +84,7 @@ export class ButtonBlock extends PilaBlock {
       }
       if (e.key === 'Backspace' && this.labelEl.textContent === '') {
         e.preventDefault()
-        this.ctx.manager.delete(this.block.id)
+        this.ctx.manager.delete(this.block.id!)
         return
       }
       this.handleArrow(e)
@@ -177,7 +177,7 @@ export class ButtonBlock extends PilaBlock {
     this.hrefInput.addEventListener('input', () => {
       const href = this.hrefInput.value
       this.btnEl.href = href || '#'
-      this.ctx.manager.update(this.block.id, { attrs: { href: href || undefined } })
+      this.ctx.manager.update(this.block.id!, { attrs: { href: href || undefined } })
     })
 
     // ── Style toggle ───────────────────────────────────────────────────────
@@ -197,7 +197,7 @@ export class ButtonBlock extends PilaBlock {
           this.applyStyleBtnInline(b as HTMLButtonElement, false)
         )
         this.applyStyleBtnInline(btn, true)
-        this.ctx.manager.update(this.block.id, { attrs: { buttonStyle: s } })
+        this.ctx.manager.update(this.block.id!, { attrs: { buttonStyle: s } })
       })
       styleGroup.appendChild(btn)
     }
@@ -225,7 +225,7 @@ export class ButtonBlock extends PilaBlock {
           this.applyStyleBtnInline(b as HTMLButtonElement, false)
         )
         this.applyStyleBtnInline(btn, true)
-        this.ctx.manager.update(this.block.id, { attrs: { alignment: a } })
+        this.ctx.manager.update(this.block.id!, { attrs: { alignment: a } })
       })
       alignGroup.appendChild(btn)
     }
@@ -249,7 +249,7 @@ export class ButtonBlock extends PilaBlock {
 
   private commitLabel(): void {
     const nodes = InlineParser.parse(this.labelEl)
-    this.ctx.manager.update(this.block.id, { content: nodes })
+    this.ctx.manager.update(this.block.id!, { content: nodes })
   }
 
   override updateData(block: Block): void {

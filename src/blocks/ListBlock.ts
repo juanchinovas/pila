@@ -11,7 +11,7 @@ export class ListBlock extends PilaBlock {
   protected buildDOM(): void {
     const isBullet = this.block.type === 'bulletList'
 
-    this.classList.add('flex', 'items-baseline', 'gap-2', 'py-0.5', 'px-1')
+    this.classList.add('flex', 'items-center', 'gap-1', 'py-0.5', 'px-1', 'mt-5')
 
     const li = this.makeContentEditable(
       'li',
@@ -44,6 +44,30 @@ export class ListBlock extends PilaBlock {
     this.contentEl = li
   }
 
+  protected override handleEnter(el: HTMLElement): void {
+    const text = el.textContent ?? ''
+    if (text.trim() === '') {
+      // Empty list item: exit list and turn into paragraph
+      this.ctx.manager.update(this.block.id!, { type: 'paragraph', content: [] })
+      return
+    }
+
+    const { before, after } = this.splitAtCaret(el)
+    this.ctx.manager.update(this.block.id!, { content: before })
+
+    const newBlock = this.ctx.manager.add(this.block.type as any, {
+      content: after,
+      afterId: this.block.id!,
+    })
+
+    requestAnimationFrame(() => {
+      const newEl = this.ctx.editorEl.querySelector(
+        `[data-block-id="${newBlock.id!}"][contenteditable]`
+      ) as HTMLElement | null
+      newEl?.focus()
+    })
+  }
+
   override updateData(block: Block): void {
     super.updateData(block)
     if (this.contentEl) {
@@ -57,7 +81,7 @@ export class ListBlock extends PilaBlock {
   /** Returns the 1-based position of this block within its consecutive numbered-list run. */
   private orderedIndex(): number {
     const all = this.ctx.manager.getAll()
-    const pos = all.findIndex((b) => b.id === this.block.id)
+    const pos = all.findIndex((b) => b.id! === this.block.id!)
     if (pos === -1) return 1
     let count = 1
     for (let i = pos - 1; i >= 0; i--) {

@@ -3,13 +3,13 @@
   "version": "1.1.0",
   "description": "Pluggable Inline Layout Authoring — a framework-agnostic Notion-style block editor",
   "type": "module",
-  "main": "./dist/pila.umd.js",
-  "module": "./dist/pila.es.js",
+  "main": "./dist/pila.umd.cjs",
+  "module": "./dist/pila.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/pila.es.js",
-      "require": "./dist/pila.umd.js",
+      "import": "./dist/pila.js",
+      "require": "./dist/pila.umd.cjs",
       "types": "./dist/index.d.ts"
     },
     "./styles": {
@@ -40,8 +40,10 @@
   ],
   "scripts": {
     "dev": "vite",
+    "dev:vue": "cd demo-vue && npm run dev",
     "build": "tsc --noEmit && vite build && cp src/styles.d.ts dist/styles.d.ts",
     "preview": "vite preview",
+    "preview:vue": "cd demo-vue && npm run preview",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
     "test:e2e": "playwright test",
@@ -51,6 +53,7 @@
     "@playwright/test": "^1.59.1",
     "@types/node": "^25.6.0",
     "@types/prismjs": "^1.26.6",
+    "@vitejs/plugin-vue": "^6.0.6",
     "@vitest/coverage-v8": "^1.6.0",
     "autoprefixer": "^10.4.19",
     "gifenc": "^1.0.3",
@@ -61,7 +64,8 @@
     "typescript": "^5.4.5",
     "vite": "^5.2.11",
     "vite-plugin-dts": "^3.9.1",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.0",
+    "vue": "^3.5.33"
   },
   "keywords": [
     "block-editor",
@@ -81,6 +85,7 @@
     "url": "https://github.com/juanchinovas/pila/issues"
   },
   "dependencies": {
+    "class-variance-authority": "^0.7.1",
     "lit": "^3.3.2",
     "prismjs": "^1.30.0"
   }

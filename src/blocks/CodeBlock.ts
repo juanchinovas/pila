@@ -54,7 +54,7 @@ export class CodeBlock extends PilaBlock {
   protected buildDOM(): void {
     this.classList.add(
       'bg-[var(--pila-code-bg)]', 'border', 'border-[var(--pila-code-border,var(--pila-border))]',
-      'rounded-[var(--pila-radius)]', 'overflow-hidden', 'my-1'
+      'rounded-[var(--pila-radius)]', 'overflow-hidden', '!mt-5'
     )
 
     // ── Header ──────────────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ export class CodeBlock extends PilaBlock {
     })
     this.langEl.value = this.block.attrs?.language ?? 'plaintext'
     this.langEl.addEventListener('change', () => {
-      this.ctx.manager.update(this.block.id, {
+      this.ctx.manager.update(this.block.id!, {
         attrs: { ...this.block.attrs, language: this.langEl.value },
       })
       void this.syncHighlight()
@@ -136,7 +136,7 @@ export class CodeBlock extends PilaBlock {
       'relative z-10 outline-none min-h-[2.5em]',
       'text-transparent [caret-color:var(--pila-code-text)] bg-transparent',
     ].join(' ')
-    this.codeEl.setAttribute('data-block-id', this.block.id)
+    this.codeEl.setAttribute('data-block-id', this.block.id!)
     this.codeEl.textContent = (this.block.content ?? []).map((n) => n.text).join('')
 
     this.codeEl.addEventListener('keydown', (e) => {
@@ -246,13 +246,13 @@ export class CodeBlock extends PilaBlock {
   }
 
   private exitBlock(): void {
-    this.ctx.manager.update(this.block.id, {
+    this.ctx.manager.update(this.block.id!, {
       content: [{ text: this.codeEl.textContent ?? '' }],
     })
-    const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id })
+    const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id! })
     requestAnimationFrame(() => {
       const el = this.ctx.editorEl.querySelector(
-        `[data-block-id="${newBlock.id}"] [contenteditable]`
+        `[data-block-id="${newBlock.id!}"] [contenteditable]`
       ) as HTMLElement | null
       el?.focus()
     })

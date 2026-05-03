@@ -46,6 +46,7 @@ export class InlineFormatter {
 
     const range = sel.getRangeAt(0)
     const ancestor = range.commonAncestorContainer
+
     const existingLink =
       ancestor.nodeType === Node.ELEMENT_NODE
         ? (ancestor as Element).closest('a')

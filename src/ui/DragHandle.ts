@@ -1,11 +1,16 @@
 import { BlockManager } from '../core/BlockManager'
 import { icon, Icons } from './icons'
+import { BlockPopover } from './BlockPopover'
 
 export class DragHandle {
   private editorEl: HTMLElement
   private manager: BlockManager
+  private overlayRoot: HTMLElement
+  private popover: BlockPopover
   private handleEl!: HTMLElement
-  private dropIndicator!: HTMLElement
+  private dropIndicator!: HTMLElement;
+  private addingBelowBtn!: HTMLButtonElement;
+  private draggingBtn!: HTMLButtonElement;
   private dragBlockId: string | null = null
   private isPointerDown = false
   private isDragging = false
@@ -20,28 +25,57 @@ export class DragHandle {
   private onDragStart!: (e: DragEvent) => void
   private onDocDragOver!: (e: DragEvent) => void
   private onDocDrop!:     (e: DragEvent) => void
-  private onDragEnd!: () => void
+  private onDragEnd!: () => void;
+  private onAddingNewBlock!: null | (() => void);
 
-  constructor(editorEl: HTMLElement, manager: BlockManager) {
+  constructor(editorEl: HTMLElement, manager: BlockManager, overlayRoot: HTMLElement = document.body) {
     this.editorEl = editorEl
     this.manager = manager
+    this.overlayRoot = overlayRoot
+    this.popover = new BlockPopover(overlayRoot)
   }
 
-  mount(): void {
+  mount(onAddingNewBlock?: (blockId?: string) => void): void {
     // Grip handle (shown on hover) — position:fixed so no scroll-offset math needed
-    this.handleEl = document.createElement('div')
-    this.handleEl.className = 'pila-drag-handle'
-    this.handleEl.setAttribute('draggable', 'true')
-    this.handleEl.setAttribute('aria-label', 'Drag to reorder')
-    this.handleEl.appendChild(icon(Icons.GripVertical, 18))
+    this.handleEl = document.createElement('div');
+    this.handleEl.className = 'pila-drag-handle';
+    this.handleEl.setAttribute('draggable', 'true');
+    this.handleEl.setAttribute('aria-label', 'Drag to reorder');
+    this.addingBelowBtn = document.createElement('button');
+    this.addingBelowBtn.type = 'button';
+    this.addingBelowBtn.classList.add('p-0.5');
+    this.addingBelowBtn.title = 'Insert new block';
+    this.addingBelowBtn.appendChild(icon(Icons.Plus, 18));
+    this.handleEl.appendChild(this.addingBelowBtn);
+
+    this.draggingBtn = document.createElement('button');
+    this.draggingBtn.appendChild(icon(Icons.GripVertical, 18));
+    this.draggingBtn.classList.add('p-0.5');
+    this.draggingBtn.title = 'Drag to reorder\nclick for more actions';
+    this.handleEl.appendChild(this.draggingBtn);
+
+    this.draggingBtn.addEventListener('click', (e) => {
+      const blockId = this.handleEl.dataset.blockId
+      if (blockId) {
+        this.openPopover(e, blockId)
+      }
+    })
+
     this.handleEl.style.display = 'none'
-    document.body.appendChild(this.handleEl)
+    this.overlayRoot.appendChild(this.handleEl)
+
+    if (onAddingNewBlock) {
+      this.onAddingNewBlock = 
+      () => onAddingNewBlock(this.handleEl.dataset.blockId ?? undefined);
+
+      this.addingBelowBtn.addEventListener('click', this.onAddingNewBlock);
+    }
 
     // Drop indicator line
     this.dropIndicator = document.createElement('div')
     this.dropIndicator.className = 'pila-drop-indicator'
     this.dropIndicator.style.display = 'none'
-    document.body.appendChild(this.dropIndicator)
+    this.overlayRoot.appendChild(this.dropIndicator)
 
     this.onEditorMouseOver  = (e) => this.handleMouseOver(e)
     this.onEditorMouseOut   = (e) => this.handleMouseOut(e)
@@ -77,9 +111,143 @@ export class DragHandle {
     this.handleEl?.removeEventListener('dragend',   this.onDragEnd)
     document.removeEventListener('dragover', this.onDocDragOver)
     document.removeEventListener('drop',     this.onDocDrop)
+    
+    if (this.onAddingNewBlock) {
+      this.addingBelowBtn.removeEventListener('click', this.onAddingNewBlock)
+      this.onAddingNewBlock = null;
+    }
+
+    this.popover.close()
     this.cancelHide()
     this.handleEl?.remove()
     this.dropIndicator?.remove()
+  }
+
+  private openPopover(_: MouseEvent, blockId: string): void {
+    const rect = this.draggingBtn.getBoundingClientRect()
+    const block = this.manager.getById(blockId)
+
+    const bgColors = [
+      { name: 'Default', bg: 'transparent' },
+      { name: 'Gray',    bg: 'var(--pila-code-bg)' },
+      { name: 'Blue',    bg: 'rgba(59, 130, 246, 0.1)' },
+      { name: 'Green',   bg: 'rgba(34, 197, 94, 0.1)' },
+      { name: 'Yellow',  bg: 'rgba(234, 179, 8, 0.1)' },
+      { name: 'Red',     bg: 'rgba(239, 68, 68, 0.1)' },
+    ]
+
+    const textColors = [
+      { name: 'Default', text: 'inherit' },
+      { name: 'Gray',    text: 'var(--pila-muted)' },
+      { name: 'Blue',    text: 'rgb(37, 99, 235)' },
+      { name: 'Green',   text: 'rgb(21, 128, 61)' },
+      { name: 'Yellow',  text: 'rgb(161, 98, 7)' },
+      { name: 'Red',     text: 'rgb(185, 28, 28)' },
+    ]
+
+    const bgActions = bgColors.map(c => ({
+      label: c.name,
+      icon: 'Square' as const,
+      color: c.bg,
+      handler: () => {
+        this.manager.update(blockId, {
+          attrs: { ...(block?.attrs ?? {}), background: c.bg }
+        });
+        this.changeBlockBackground(blockId, c.bg);
+      }
+    }))
+
+    // Add custom bg color input
+    bgActions.push({
+      label: 'Custom...',
+      icon: 'Plus',
+      color: '', // Ensure color is at least an empty string if checked
+      handler: (_: MouseEvent) => {
+        const input = document.createElement('input')
+        input.type = 'color'
+        input.className = 'pila-custom-color-input'
+        input.style.position = 'absolute'
+        input.style.opacity = '0'
+        input.addEventListener('input', (ev: any) => {
+          this.manager.update(blockId, {
+            attrs: { ...(block?.attrs ?? {}), background: ev.target.value }
+          });
+          this.changeBlockBackground(blockId, `lch(from ${ev.target.value} l c calc(h + 180))`);
+
+          this.popover.close()
+        })
+        document.body.appendChild(input)
+        input.click()
+        setTimeout(() => input.remove(), 1000)
+      }
+    } as any)
+
+    const textActions = textColors.map(c => ({
+      label: c.name,
+      icon: 'Type' as const,
+      color: c.text === 'inherit' ? 'transparent' : c.text,
+      handler: () => {
+        this.manager.update(blockId, {
+          attrs: { ...(block?.attrs ?? {}), textColor: c.text }
+        })
+        this.changeBlockTextColor(blockId, c.text);
+      }
+    }))
+
+    // Add custom text color input
+    textActions.push({
+      label: 'Custom...',
+      icon: 'Plus',
+      color: '', // Ensure color is at least an empty string
+      handler: (_: MouseEvent) => {
+        const input = document.createElement('input')
+        input.type = 'color'
+        input.className = 'pila-custom-color-input'
+        input.style.position = 'absolute'
+        input.style.opacity = '0'
+        input.addEventListener('input', (ev: any) => {
+          this.manager.update(blockId, {
+            attrs: { ...(block?.attrs ?? {}), textColor: ev.target.value }
+          });
+          this.changeBlockTextColor(blockId, ev.target.value);
+
+          this.popover.close()
+        })
+        document.body.appendChild(input)
+        input.click()
+        setTimeout(() => input.remove(), 1000)
+      }
+    } as any)
+
+    this.popover.open(rect.right + 5, rect.top, [
+      {
+        label: 'Background',
+        icon: 'Paintbucket',
+        children: bgActions
+      },
+      {
+        label: 'Text Color',
+        icon: 'Type',
+        children: textActions
+      },
+      { 
+        label: 'Duplicate', 
+        icon: 'Copy', 
+        shortcut: '⌘D', 
+        handler: () => {
+          this.manager.duplicate(blockId)
+        } 
+      },
+      { 
+        label: 'Delete', 
+        icon: 'Trash2', 
+        shortcut: 'Del', 
+        danger: true, 
+        handler: () => {
+          this.manager.remove(blockId)
+        } 
+      }
+    ])
   }
 
   private cancelHide(): void {
@@ -99,7 +267,7 @@ export class DragHandle {
     const rect = wrapper.getBoundingClientRect()
     // position:fixed — coords are already viewport-relative, no scrollY needed
     this.handleEl.style.top  = `${rect.top + rect.height / 2 - 12}px`
-    this.handleEl.style.left = `${rect.left - 28}px`
+    this.handleEl.style.left = `${rect.left - 52}px`
   }
 
   private handleMouseOver(e: MouseEvent): void {
@@ -218,5 +386,34 @@ export class DragHandle {
     this.dragBlockId = null
     this.dropIndicator.style.display = 'none'
     this.handleEl.style.display = 'none'
+  }
+
+  private changeBlockBackground(blockId: string, color: string): void {
+    const wrapper = this.editorEl.querySelector(
+      `[data-block-id="${blockId}"][contenteditable]`
+    ) as HTMLElement | null
+    
+    if (!wrapper) return;
+console.log('Changing background of block', blockId, 'to', color, wrapper)
+    if (wrapper.nodeName === 'PILA-QUOTE') {
+      wrapper.style.setProperty('--pila-block-background', color);
+      wrapper.style.setProperty('--pila-quote-border', color);
+    } else {
+      wrapper.style.setProperty('background-color', color)
+    }
+  }
+
+  private changeBlockTextColor(blockId: string, color: string): void {
+    const wrapper = this.editorEl.querySelector(
+      `[data-block-id="${blockId}"][contenteditable]`
+    ) as HTMLElement | null
+
+    if (!wrapper) return;
+    console.log('Changing text color of block', blockId, 'to', color, wrapper)
+    if (wrapper.nodeName === 'PILA-QUOTE') {
+      wrapper.style.setProperty('--pila-quote-text', color)
+    } else {
+      wrapper.style.setProperty('color', color)
+    }
   }
 }

@@ -75,14 +75,14 @@ describe('BlockManager', () => {
   describe('update', () => {
     it('updates content', () => {
       const b = manager.add('paragraph', { content: [{ text: 'old' }] })
-      manager.update(b.id, { content: [{ text: 'new' }] })
-      expect(manager.getById(b.id)?.content?.[0]?.text).toBe('new')
+      manager.update(b.id!, { content: [{ text: 'new' }] })
+      expect(manager.getById(b.id!)?.content?.[0]?.text).toBe('new')
     })
 
     it('shallow-merges attrs', () => {
       const b = manager.add('todo', { attrs: { checked: false } })
-      manager.update(b.id, { attrs: { checked: true } })
-      expect(manager.getById(b.id)?.attrs?.checked).toBe(true)
+      manager.update(b.id!, { attrs: { checked: true } })
+      expect(manager.getById(b.id!)?.attrs?.checked).toBe(true)
     })
 
     it('returns undefined for unknown id', () => {
@@ -93,7 +93,7 @@ describe('BlockManager', () => {
       const events: unknown[] = []
       const b = manager.add('paragraph', {})
       manager.on('block:update', (p) => events.push(p))
-      manager.update(b.id, { content: [] })
+      manager.update(b.id!, { content: [] })
       expect(events).toHaveLength(1)
     })
   })
@@ -104,13 +104,13 @@ describe('BlockManager', () => {
     it('removes a block', () => {
       manager.add('paragraph', { content: [{ text: 'first' }] })
       const b = manager.add('paragraph', {})
-      manager.delete(b.id)
+      manager.delete(b.id!)
       expect(manager.getAll()).toHaveLength(1)
     })
 
     it('resets to empty paragraph instead of deleting the last block', () => {
       const b = manager.add('paragraph', { content: [{ text: 'last' }] })
-      manager.delete(b.id)
+      manager.delete(b.id!)
       const all = manager.getAll()
       expect(all).toHaveLength(1)
       expect(all[0].type).toBe('paragraph')
@@ -126,7 +126,7 @@ describe('BlockManager', () => {
       const a = manager.add('paragraph', {})
       manager.add('paragraph', {})
       manager.on('block:delete', (p) => events.push(p))
-      manager.delete(a.id)
+      manager.delete(a.id!)
       expect(events).toHaveLength(1)
     })
   })
@@ -142,7 +142,7 @@ describe('BlockManager', () => {
       manager.add('paragraph', { content: [{ text: 'D' }] })
 
       // Move A (index 0) to after C (index 2) → toIndex = 3
-      manager.move(a.id, 3)
+      manager.move(a.id!, 3)
       const texts = manager.getAll().map((bl) => bl.content?.[0]?.text)
       expect(texts).toEqual(['B', 'C', 'A', 'D'])
     })
@@ -154,7 +154,7 @@ describe('BlockManager', () => {
       manager.add('paragraph', { content: [{ text: 'C' }] })
       const d = manager.add('paragraph', { content: [{ text: 'D' }] })
 
-      manager.move(d.id, manager.getIndex(b.id))
+      manager.move(d.id!, manager.getIndex(b.id!))
       const texts = manager.getAll().map((bl) => bl.content?.[0]?.text)
       expect(texts).toEqual(['A', 'D', 'B', 'C'])
     })
@@ -162,7 +162,7 @@ describe('BlockManager', () => {
     it('clamps out-of-range toIndex', () => {
       const a = manager.add('paragraph', {})
       manager.add('paragraph', {})
-      manager.move(a.id, 999)
+      manager.move(a.id!, 999)
       expect(manager.getAll()[1].id).toBe(a.id)
     })
 
@@ -175,7 +175,7 @@ describe('BlockManager', () => {
       const a = manager.add('paragraph', {})
       manager.add('paragraph', {})
       manager.on('block:move', (p) => events.push(p))
-      manager.move(a.id, 1)
+      manager.move(a.id!, 1)
       expect(events).toHaveLength(1)
     })
   })

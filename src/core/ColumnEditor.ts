@@ -25,10 +25,12 @@ export class ColumnEditor {
   private blockInstances = new Map<string, PilaBlock>()
   private slashMenu!: SlashMenu
   private dragHandle!: DragHandle
+  private overlayRoot: HTMLElement
   private unsub: (() => void) | null = null
 
-  constructor(def: ColumnDef, placeholder = 'Type / to add a block…') {
+  constructor(def: ColumnDef, placeholder = 'Type / to add a block…', overlayRoot: HTMLElement = document.body) {
     this.placeholder = placeholder
+    this.overlayRoot = overlayRoot
 
     this.el = document.createElement('div')
     this.el.className = 'pila-column-editor'
@@ -42,10 +44,10 @@ export class ColumnEditor {
     this.unsub    = this.manager.on('blocks:change', () => this.renderAll())
     this.renderAll()
 
-    this.slashMenu = new SlashMenu(this.el, this.manager)
+    this.slashMenu = new SlashMenu(this.el, this.manager, undefined, this.overlayRoot)
     this.slashMenu.mount()
 
-    this.dragHandle = new DragHandle(this.el, this.manager)
+    this.dragHandle = new DragHandle(this.el, this.manager, this.overlayRoot)
     this.dragHandle.mount()
 
     this.el.addEventListener('keydown', (e: KeyboardEvent) => this.handleEscape(e))
@@ -54,7 +56,7 @@ export class ColumnEditor {
   // ── Private ────────────────────────────────────────────────────────────────
 
   private get ctx(): BlockContext {
-    return { manager: this.manager, editorEl: this.el, placeholder: this.placeholder }
+    return { manager: this.manager, editorEl: this.el, placeholder: this.placeholder, overlayRoot: this.overlayRoot }
   }
 
   private renderAll(): void {
@@ -62,24 +64,24 @@ export class ColumnEditor {
     const seenIds = new Set<string>()
 
     blocks.forEach((block, index) => {
-      seenIds.add(block.id)
+      seenIds.add(block.id!)
 
-      let instance = this.blockInstances.get(block.id)
+      let instance = this.blockInstances.get(block.id!)
 
       if (instance && instance.blockType !== block.type) {
         instance.destroy()
-        this.blockInstances.delete(block.id)
+        this.blockInstances.delete(block.id!)
         instance = undefined
       }
 
       if (!instance) {
         instance = createBlockEl(block, this.ctx)
-        this.blockInstances.set(block.id, instance)
+        this.blockInstances.set(block.id!, instance)
       } else {
         instance.updateData(block)
       }
 
-      instance.dataset.blockId    = block.id
+      instance.dataset.blockId    = block.id!
       instance.dataset.blockIndex = String(index)
 
       const existingAt = this.el.children[index]
@@ -134,7 +136,7 @@ export class ColumnEditor {
   /** Collect current block data from live instances. */
   getBlocks(): Block[] {
     return this.manager.getAll().map((b) => {
-      const inst = this.blockInstances.get(b.id)
+      const inst = this.blockInstances.get(b.id!)
       return inst ? inst.getContent() : b
     })
   }

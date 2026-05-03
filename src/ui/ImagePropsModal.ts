@@ -4,17 +4,13 @@ export interface ImagePropsResult {
   width: string
   height: string
   alt: string
-  tailwindClasses: string
 }
 
 export class ImagePropsModal {
+  private overlayRoot: HTMLElement
   private backdrop!: HTMLDivElement
   private dialog!: HTMLDivElement
   private srcField!: HTMLInputElement
-  private widthField!: HTMLInputElement
-  private heightField!: HTMLInputElement
-  private altField!: HTMLInputElement
-  private twField!: HTMLInputElement
   private confirmBtn!: HTMLButtonElement
   private cancelBtn!: HTMLButtonElement
 
@@ -30,7 +26,8 @@ export class ImagePropsModal {
   private readonly BTN_BASE =
     'px-4 py-1.5 text-sm rounded cursor-pointer transition-colors'
 
-  constructor() {
+  constructor(overlayRoot: HTMLElement = document.body) {
+    this.overlayRoot = overlayRoot
     this.buildDOM()
   }
 
@@ -59,12 +56,19 @@ export class ImagePropsModal {
     // Fields
     const fields = document.createElement('div')
     fields.className = 'flex flex-col gap-3'
+    const separator = document.createElement('div')
+    separator.className = 'flex items-center justify-center p-1';
+    separator.innerHTML = `<span class="text-[var(--pila-muted)] text-xs">or</span>`
 
-    fields.appendChild(this.makeField('Source', 'src', false, (el) => { this.srcField = el as HTMLInputElement }))
-    fields.appendChild(this.makeField('Width (e.g. 50%, 300px)', 'width', false, (el) => { this.widthField = el as HTMLInputElement }))
-    fields.appendChild(this.makeField('Height (e.g. 200px, auto)', 'height', false, (el) => { this.heightField = el as HTMLInputElement }))
-    fields.appendChild(this.makeField('Alt / caption', 'alt', false, (el) => { this.altField = el as HTMLInputElement }))
-    fields.appendChild(this.makeField('Tailwind classes', 'twClasses', false, (el) => { this.twField = el as HTMLInputElement }))
+    const uploadArea = this.makeFileInputField()
+    fields.appendChild(uploadArea);
+    fields.appendChild(separator);
+    fields.appendChild(this.makeField('URL', 'src', false, (el) => {
+      this.srcField = el as HTMLInputElement;
+      el.addEventListener('input', (ev) => {
+        uploadArea.querySelector('img')?.setAttribute('src', ev.target instanceof HTMLInputElement ? ev.target.value : '');
+      })
+    }));
 
     // Action row
     const actions = document.createElement('div')
@@ -143,22 +147,51 @@ export class ImagePropsModal {
     return wrapper
   }
 
+  private makeFileInputField() {
+    // Fields
+      const uploadArea = document.createElement('div')
+      uploadArea.className = 'relative flex flex-col items-center justify-center gap-1 h-40 rounded border border-dashed border-[var(--pila-border)] transition-colors'
+      const uploadBtn = document.createElement('button')
+      uploadBtn.type = 'button'
+      uploadBtn.textContent = 'Upload Image'
+      uploadBtn.className = 'fixed bg-black/60 rounded px-3 py-1.5 text-xs text-white hover:border-[var(--pila-accent)] hover:bg-black/80'
+      
+      const imagePreview = document.createElement('img')
+      imagePreview.className = 'max-h-40 object-contain'
+      uploadArea.appendChild(imagePreview)
+
+      const fileInput = document.createElement('input')
+      fileInput.type = 'file'
+      fileInput.accept = 'image/*'
+      fileInput.style.display = 'none'
+      
+      uploadBtn.onclick = () => fileInput.click()
+      fileInput.onchange = (e: any) => {
+        const file = e.target.files?.[0]
+        if (file) {
+          const reader = new FileReader()
+          reader.onload = (rev) => {
+            const dataUrl = rev.target?.result as string
+            this.srcField.value = dataUrl;
+            imagePreview.src = dataUrl;
+          }
+          reader.readAsDataURL(file)
+        }
+      }
+      
+      uploadArea.appendChild(uploadBtn);
+
+      return uploadArea;
+  }
   /**
    * Opens the modal pre-filled with `attrs` and resolves with the edited
    * values when the user confirms, or `null` when cancelled.
    */
   open(attrs: BlockAttrs): Promise<ImagePropsResult | null> {
     this.srcField.value = attrs.src ?? ''
-    this.widthField.value = attrs.width ?? ''
-    this.heightField.value = attrs.height ?? ''
-    this.altField.value = attrs.alt ?? ''
-    this.twField.value = attrs.tailwindClasses ?? ''
 
     this.backdrop.style.display = 'flex'
-    document.body.appendChild(this.backdrop)
-
-    // Focus first editable field
-    requestAnimationFrame(() => this.widthField.focus())
+    this.overlayRoot.appendChild(this.backdrop)
 
     return new Promise<ImagePropsResult | null>((resolve) => {
       this.resolveFn = resolve
@@ -175,13 +208,9 @@ export class ImagePropsModal {
     this.srcField.tabIndex = 0
     this.srcField.className = this.srcField.className
       .replace(' opacity-60 cursor-default', '')
-    this.widthField.value = ''
-    this.heightField.value = ''
-    this.altField.value = ''
-    this.twField.value = ''
 
     this.backdrop.style.display = 'flex'
-    document.body.appendChild(this.backdrop)
+    this.overlayRoot.appendChild(this.backdrop)
 
     requestAnimationFrame(() => this.srcField.focus())
 
@@ -195,10 +224,9 @@ export class ImagePropsModal {
 
   private confirm(): void {
     this.close({
-      width: this.widthField.value.trim(),
-      height: this.heightField.value.trim(),
-      alt: this.altField.value.trim(),
-      tailwindClasses: this.twField.value.trim(),
+      width: '',
+      height: '',
+      alt: ''
     })
   }
 

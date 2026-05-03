@@ -33,10 +33,10 @@ export class CalloutBlock extends PilaBlock {
     this.contentEl.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault()
-        const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id })
+        const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id! })
         requestAnimationFrame(() => {
           const el = this.ctx.editorEl.querySelector(
-            `[data-block-id="${newBlock.id}"] [contenteditable]`
+            `[data-block-id="${newBlock.id!}"] [contenteditable]`
           ) as HTMLElement | null
           el?.focus()
         })

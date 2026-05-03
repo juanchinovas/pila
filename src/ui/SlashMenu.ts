@@ -3,6 +3,7 @@ import { PluginRegistry } from '../core/PluginRegistry'
 import { BlockAttrs, BlockType } from '../types'
 import { icon as makeIcon, Icons, LucideIconNode } from './icons'
 import { ImagePropsModal } from './ImagePropsModal'
+import { EmojiPopover } from './EmojiPopover'
 
 interface SlashItem {
   type: BlockType
@@ -40,6 +41,7 @@ export class SlashMenu {
   private editorEl: HTMLElement
   private manager: BlockManager
   private plugins: PluginRegistry
+  private overlayRoot: HTMLElement
   private menuEl!: HTMLElement
   private activeBlockId: string | null = null
   private filter = ''
@@ -47,19 +49,29 @@ export class SlashMenu {
   private filteredItems: SlashItem[] = []
   private onKeyDown!: (e: KeyboardEvent) => void
   private onInput!: (e: Event) => void
-  private imageModal = new ImagePropsModal()
+  private onClickOutsideBound = this.handleClickOutside.bind(this)
+  private imageModal: ImagePropsModal
+  private emojiPopover: EmojiPopover
 
-  constructor(editorEl: HTMLElement, manager: BlockManager, plugins = new PluginRegistry()) {
+  constructor(
+    editorEl: HTMLElement,
+    manager: BlockManager,
+    plugins = new PluginRegistry(),
+    overlayRoot: HTMLElement = document.body
+  ) {
     this.editorEl = editorEl
     this.manager = manager
     this.plugins = plugins
+    this.overlayRoot = overlayRoot
+    this.emojiPopover = new EmojiPopover(editorEl, overlayRoot)
+    this.imageModal = new ImagePropsModal(overlayRoot)
   }
 
   mount(): void {
     this.menuEl = document.createElement('div')
     this.menuEl.className = 'pila-slash-menu'
     this.menuEl.style.display = 'none'
-    document.body.appendChild(this.menuEl)
+    this.overlayRoot.appendChild(this.menuEl)
 
     this.onKeyDown = (e: KeyboardEvent) => this.handleKeyDown(e)
     this.onInput = (e: Event) => this.handleInput(e)
@@ -76,9 +88,17 @@ export class SlashMenu {
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
+    if (this.emojiPopover.handleKeyDown(e)) return
+
     if (this.isOpen()) {
       if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); this.moveSelection(1); return }
       if (e.key === 'ArrowUp')   { e.preventDefault(); e.stopPropagation(); this.moveSelection(-1); return }
+      if (e.key === 'Tab')       { 
+        e.preventDefault(); 
+        e.stopPropagation(); 
+        this.moveSelection(e.shiftKey ? -1 : 1); 
+        return 
+      }
       if (e.key === 'Enter')     { e.preventDefault(); e.stopPropagation(); this.confirm(); return }
       if (e.key === 'Escape')    { e.stopPropagation(); this.close(); return }
     }
@@ -89,7 +109,8 @@ export class SlashMenu {
       const blockId = target.dataset.blockId
       if (blockId && this.isAtStartOrEmpty(target)) {
         // Let the keystroke insert '/' first, then open on input
-        this.activeBlockId = blockId
+        // For tables, the ID might be "blockId_cell_0_0", so we normalize to base ID
+        this.activeBlockId = blockId.split('_cell_')[0]
       }
     }
   }
@@ -98,10 +119,15 @@ export class SlashMenu {
     const target = e.target as HTMLElement
     if (!target.hasAttribute('contenteditable')) return
 
+    this.emojiPopover.handleInput(e)
+
     const text = target.textContent ?? ''
     const slashIdx = text.indexOf('/')
 
-    if (slashIdx !== -1 && this.activeBlockId === (target.dataset.blockId ?? null)) {
+    const blockIdAttr = target.dataset.blockId ?? ''
+    const normalizedId = blockIdAttr.split('_cell_')[0]
+
+    if (slashIdx !== -1 && this.activeBlockId === normalizedId) {
       this.filter = text.slice(slashIdx + 1).toLowerCase()
       this.selectedIndex = 0
       this.renderItems()
@@ -179,6 +205,7 @@ export class SlashMenu {
 
       row.addEventListener('mousedown', (e) => {
         e.preventDefault()
+        e.stopPropagation()
         this.selectedIndex = idx
         this.confirm()
       })
@@ -209,10 +236,16 @@ export class SlashMenu {
     const chosen = types[this.selectedIndex]
     if (!chosen) { this.close(); return }
 
-    // Remove the slash + filter text from the block
-    const contentEl = this.editorEl.querySelector(
-      `[data-block-id="${this.activeBlockId}"] [contenteditable]`
-    ) as HTMLElement | null
+    // Find the actual element being edited
+    const sel = window.getSelection()
+    let contentEl = sel?.anchorNode?.parentElement?.closest('[contenteditable]') as HTMLElement | null
+    
+    // Fallback to searching by ID if selection isn't clear
+    if (!contentEl || !contentEl.getAttribute('data-block-id')?.startsWith(this.activeBlockId)) {
+      contentEl = this.editorEl.querySelector(
+        `[data-block-id^="${this.activeBlockId}"] [contenteditable]`
+      ) as HTMLElement | null
+    }
 
     if (contentEl) {
       const text = contentEl.textContent ?? ''
@@ -230,7 +263,12 @@ export class SlashMenu {
         this.manager.update(blockId, {
           type: 'image',
           content: undefined,
-          attrs: { src: result.src, alt: result.alt, width: result.width || undefined, height: result.height || undefined, tailwindClasses: result.tailwindClasses || undefined },
+          attrs: {
+            src: result.src,
+            alt: result.alt,
+            width: result.width || undefined,
+            height: result.height || undefined
+          },
         })
         return
       } else if (chosen === 'table') {
@@ -282,7 +320,9 @@ export class SlashMenu {
     this.close()
 
     requestAnimationFrame(() => {
-      const focusEl = this.editorEl.querySelector(
+      // If we're refocusing, try to find the exact same element first (important for tables/columns)
+      const stillSameEl = contentEl && document.body.contains(contentEl) && contentEl
+      const focusEl = stillSameEl || this.editorEl.querySelector(
         `[data-block-id="${id}"] [contenteditable]`
       ) as HTMLElement | null
       focusEl?.focus()
@@ -305,6 +345,7 @@ export class SlashMenu {
 
   private show(): void {
     this.menuEl.style.display = 'block'
+    document.addEventListener('mousedown', this.onClickOutsideBound, true)
   }
 
   private close(): void {
@@ -312,6 +353,13 @@ export class SlashMenu {
     this.activeBlockId = null
     this.filter = ''
     this.selectedIndex = 0
+    document.removeEventListener('mousedown', this.onClickOutsideBound, true)
+  }
+
+  private handleClickOutside(e: MouseEvent): void {
+    if (this.menuEl && !this.menuEl.contains(e.target as Node)) {
+      this.close()
+    }
   }
 
   private isOpen(): boolean {

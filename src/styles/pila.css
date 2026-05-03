@@ -11,7 +11,6 @@
   @apply text-base leading-relaxed outline-none relative min-h-28;
   font-family: var(--pila-font);
   color: var(--pila-text);
-  background: var(--pila-bg);
 }
 
 /* ─── Block Wrapper ───────────────────────────────────────────────────────── */
@@ -27,8 +26,13 @@
 /* ─── Paragraph placeholder ───────────────────────────────────────────────── */
 
 /* pila-paragraph class is retained by ParagraphBlock solely for this selector */
-.pila-paragraph[data-placeholder]:empty::before,
-.pila-paragraph[data-placeholder]:has(br:only-child)::before {
+.pila-paragraph[data-placeholder]:not(:focus):empty:before,
+.pila-paragraph[data-placeholder]:not(:focus):has(br:only-child):before {
+  content: none;
+}
+
+.pila-paragraph[data-placeholder]:focus:empty:before,
+.pila-paragraph[data-placeholder]:focus:has(br:only-child):before {
   content: attr(data-placeholder);
   @apply pointer-events-none italic;
   color: var(--pila-placeholder);
@@ -65,12 +69,8 @@ pila-code {
   background: none;
 }
 
-.pila-quote blockquote {
-  @apply m-0;
-}
-
 .pila-quote-content {
-  @apply block m-0 py-3 px-4 outline-none italic whitespace-pre-wrap break-words;
+  @apply block py-3 px-4 outline-none italic whitespace-pre-wrap break-words;
   line-height: 1.7;
   color: var(--pila-quote-text);
 }
@@ -78,7 +78,7 @@ pila-code {
 /* ─── Callout block ──────────────────────────────────────────────────────── */
 
 .pila-callout {
-  @apply flex items-start gap-2.5 py-3 px-3.5 my-1;
+  @apply flex items-start gap-2.5 py-3 px-3.5 mt-5;
   border-radius: var(--pila-radius);
   border-left: 4px solid var(--pila-callout-info-border);
   background: var(--pila-callout-info-bg);
@@ -102,6 +102,33 @@ pila-code {
 }
 
 /* ─── Table drag-and-drop indicators ─────────────────────────────────────── */
+
+.pila-table-handle {
+  @apply fixed z-[9000] flex items-center justify-center rounded cursor-pointer transition-colors;
+  background: var(--pila-bg);
+  border: 1px solid var(--pila-border);
+  color: var(--pila-muted);
+}
+
+.pila-table-handle:hover {
+  background: var(--pila-accent);
+  color: white;
+  border-color: var(--pila-accent);
+}
+
+.pila-table-handle svg {
+  @apply opacity-60;
+}
+
+.pila-table-handle:hover svg {
+  @apply opacity-100;
+}
+
+.pila-cell-selected {
+  outline: 2px solid var(--pila-accent) !important;
+  outline-offset: -2px;
+  background-color: rgba(var(--pila-accent-rgb, 14, 165, 233), 0.1) !important;
+}
 
 .pila-drop-above {
   box-shadow: 0 -2px 0 0 var(--pila-accent);
@@ -167,7 +194,7 @@ pila-code {
 /* ─── Columns block ──────────────────────────────────────────────────────── */
 
 .pila-columns-block {
-  @apply block my-1;
+  @apply block;
 }
 
 .pila-columns {
@@ -349,7 +376,7 @@ code[class*="language-"] {
 /* ─── Drag Handle ─────────────────────────────────────────────────────────── */
 
 .pila-drag-handle {
-  @apply fixed z-[8000] w-6 h-6 flex items-center justify-center rounded cursor-grab opacity-60 select-none;
+  @apply fixed z-[8000] h-6 flex gap-x-0.5 items-center justify-center rounded cursor-grab opacity-60 select-none transition-all;
   color: var(--pila-muted);
   transition: opacity 0.1s, background 0.1s;
 }
@@ -358,12 +385,12 @@ code[class*="language-"] {
   @apply pointer-events-none block shrink-0 stroke-current fill-none;
 }
 
-.pila-drag-handle:hover {
-  @apply opacity-100;
-  background: var(--pila-code-bg);
+.pila-drag-handle svg:hover,
+.pila-drag-handle button:hover {
+  @apply opacity-100 bg-[var(--pila-code-bg)] rounded-sm rounded-full;
 }
 
-.pila-drag-handle:active { @apply cursor-grabbing; }
+.pila-drag-handle svg:active { @apply cursor-grabbing; }
 
 .pila-drag-dots { @apply text-base leading-none select-none; }
 
@@ -376,6 +403,52 @@ code[class*="language-"] {
   content: '';
   @apply absolute -left-1 -top-1 w-2 h-2 rounded-full;
   background: var(--pila-accent);
+}
+
+/* ─── Block Popover ──────────────────────────────────────────────────────── */
+
+.pila-block-popover {
+  @apply fixed z-[10000] w-64 p-1 flex flex-col gap-0.5;
+  background: var(--pila-slash-bg);
+  border: 1px solid var(--pila-slash-border);
+  border-radius: var(--pila-radius);
+  box-shadow: var(--pila-shadow);
+}
+
+.pila-popover-item {
+  @apply flex items-center gap-2.5 py-1.5 px-2 rounded cursor-pointer transition-colors;
+}
+
+.pila-popover-item:hover {
+  background: var(--pila-slash-selected);
+}
+
+.pila-popover-item--danger {
+  @apply text-red-500;
+}
+
+.pila-popover-item--danger:hover {
+  @apply bg-red-500/10;
+}
+
+.pila-popover-icon {
+  @apply shrink-0 w-6 h-6 flex items-center justify-center rounded;
+  color: var(--pila-muted);
+}
+
+.pila-popover-label {
+  @apply flex-1 text-sm font-medium;
+  color: var(--pila-text);
+}
+
+.pila-popover-shortcut {
+  @apply text-[10px] tabular-nums opacity-40 font-mono tracking-tighter;
+}
+
+/* ─── Emoji Popover ──────────────────────────────────────────────────────── */
+
+.pila-emoji-popover {
+  @apply w-72;
 }
 
 /* ─── Button block ────────────────────────────────────────────────────────── */
