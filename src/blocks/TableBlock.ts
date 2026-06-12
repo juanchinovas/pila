@@ -1,147 +1,148 @@
-import { InlineParser } from '../inline/InlineParser'
-import { InlineRenderer } from '../inline/InlineRenderer'
-import { Block, TableCell, TableRow } from '../types'
-import { PilaBlock } from './PilaBlock'
-import { BlockPopover } from '../ui/BlockPopover'
-import { icon, Icons } from '../ui/icons'
+import { InlineParser } from '../inline/InlineParser';
+import { InlineRenderer } from '../inline/InlineRenderer';
+import { Block, TableCell, TableRow } from '../types';
+import { PilaBlock } from './PilaBlock';
+import { BlockPopover } from '../ui/BlockPopover';
+import { icon, Icons } from '../ui/icons';
 
 export class TableBlock extends PilaBlock {
-  private tableEl!: HTMLTableElement
-  private focusedRow = 0
-  private focusedCol = 0
+  private tableEl!: HTMLTableElement;
+  private focusedRow = 0;
+  private focusedCol = 0;
 
   // Hover Handles
-  private rowHandle: HTMLDivElement | null = null
-  private colHandle: HTMLDivElement | null = null
-  private hideTimeout: any = null
+  private rowHandle: HTMLDivElement | null = null;
+  private colHandle: HTMLDivElement | null = null;
+  private hideTimeout: NodeJS.Timeout | null = null;
 
   // Drag state
-  private dragType: 'row' | 'col' | null = null
-  private dragIndex = -1
-  private dropIndex = -1
+  private dragType: 'row' | 'col' | null = null;
+  private dragIndex = -1;
+  private dropIndex = -1;
 
   // Selection state for merging
-  private selectionStart: { r: number, c: number } | null = null
-  private selectionEnd: { r: number, c: number } | null = null
-  private isSelecting = false
-  private cellSettingsBtn: HTMLDivElement | null = null
+  private selectionStart: { r: number, c: number } | null = null;
+  private selectionEnd: { r: number, c: number } | null = null;
+  private isSelecting = false;
+  private cellSettingsBtn: HTMLDivElement | null = null;
 
   protected buildDOM(): void {
-    this.classList.add('overflow-x-auto', '!mt-5')
-    this.tableEl = this.buildTable(this.block.attrs?.rows ?? [])
-    this.appendChild(this.tableEl)
+    this.classList.add('overflow-x-auto', '!my-5');
+    this.tableEl = this.buildTable(this.block.attrs?.rows ?? []);
+    this.appendChild(this.tableEl);
 
     this.addEventListener('mouseleave', () => {
-      this.scheduleHide()
-    })
+      this.scheduleHide();
+    });
   }
 
   private scheduleHide(): void {
-    this.clearHideTimeout()
-    this.hideTimeout = setTimeout(() => this.hideHandles(), 100)
+    this.clearHideTimeout();
+    this.hideTimeout = setTimeout(() => this.hideHandles(), 100);
   }
 
   private clearHideTimeout(): void {
     if (this.hideTimeout) {
-      clearTimeout(this.hideTimeout)
-      this.hideTimeout = null
+      clearTimeout(this.hideTimeout);
+      this.hideTimeout = null;
     }
   }
 
   private hideHandles(): void {
-    if (this.rowHandle) this.rowHandle.style.display = 'none'
-    if (this.colHandle) this.colHandle.style.display = 'none'
-    if (this.cellSettingsBtn) this.cellSettingsBtn.style.display = 'none'
+    if (this.rowHandle) this.rowHandle.style.display = 'none';
+    if (this.colHandle) this.colHandle.style.display = 'none';
+    if (this.cellSettingsBtn) this.cellSettingsBtn.style.display = 'none';
   }
 
   private showColHandle(colIdx: number, td: HTMLElement): void {
     if (!this.colHandle) {
-      this.colHandle = document.createElement('div')
-      this.colHandle.className = 'pila-table-handle hover:bg-gray-500/100 h-2'
-      this.colHandle.appendChild(icon(Icons.MoreHorizontal, 14))
-      this.colHandle.draggable = true
-      this.colHandle.addEventListener('dragstart', (e) => this.onColDragStart(e, this.focusedCol))
-      this.colHandle.addEventListener('dragend', () => this.onDragEnd())
+      this.colHandle = document.createElement('div');
+      this.colHandle.className = 'pila-table-handle hover:bg-gray-500/100 h-2';
+      this.colHandle.appendChild(icon(Icons.MoreHorizontal, 14));
+      this.colHandle.draggable = true;
+      this.colHandle.addEventListener('dragstart', (e) => this.onColDragStart(e, this.focusedCol));
+      this.colHandle.addEventListener('dragend', () => this.onDragEnd());
       // Use click instead of mousedown to allow drag-start on mousedown
       this.colHandle.addEventListener('click', (e) => {
-        e.stopPropagation()
-        this.openColMenu(e.clientX, e.clientY)
-      })
-      this.colHandle.addEventListener('mouseenter', () => this.clearHideTimeout())
-      this.colHandle.addEventListener('mouseleave', () => this.scheduleHide())
-      document.body.appendChild(this.colHandle)
+        e.stopPropagation();
+        this.openColMenu(e.clientX, e.clientY);
+      });
+      this.colHandle.addEventListener('mouseenter', () => this.clearHideTimeout());
+      this.colHandle.addEventListener('mouseleave', () => this.scheduleHide());
+      
+      this.ctx.portalTo?.appendChild(this.colHandle);
     }
 
-    const tableRect = this.tableEl.getBoundingClientRect()
-    const cellRect = td.getBoundingClientRect()
+    const tableRect = this.tableEl.getBoundingClientRect();
+    const cellRect = td.getBoundingClientRect();
     
-    this.colHandle.style.display = 'flex'
+    this.colHandle.style.display = 'flex';
     // Position at the very top of the table, centered horizontally on the column
-    this.colHandle.style.top = `${tableRect.top - 10}px`
-    this.colHandle.style.left = `${cellRect.left}px`
-    this.colHandle.style.width = `${cellRect.width}px`
+    this.colHandle.style.top = `${tableRect.top - 10}px`;
+    this.colHandle.style.left = `${cellRect.left}px`;
+    this.colHandle.style.width = `${cellRect.width}px`;
     // this.colHandle.style.height = '24px'
 
-    this.focusedCol = colIdx
-    this.clearHideTimeout()
+    this.focusedCol = colIdx;
+    this.clearHideTimeout();
   }
 
   private showRowHandle(rowIdx: number, tr: HTMLTableRowElement): void {
     if (!this.rowHandle) {
-      this.rowHandle = document.createElement('div')
-      this.rowHandle.className = 'pila-table-handle hover:bg-gray-500/100 w-2'
-      this.rowHandle.appendChild(icon(Icons.MoreVertical, 14))
-      this.rowHandle.draggable = true
-      this.rowHandle.addEventListener('dragstart', (e) => this.onRowDragStart(e, this.focusedRow))
-      this.rowHandle.addEventListener('dragend', () => this.onDragEnd())
+      this.rowHandle = document.createElement('div');
+      this.rowHandle.className = 'pila-table-handle hover:bg-gray-500/100 w-2';
+      this.rowHandle.appendChild(icon(Icons.MoreVertical, 14));
+      this.rowHandle.draggable = true;
+      this.rowHandle.addEventListener('dragstart', (e) => this.onRowDragStart(e, this.focusedRow));
+      this.rowHandle.addEventListener('dragend', () => this.onDragEnd());
       this.rowHandle.addEventListener('click', (e) => {
-        e.stopPropagation()
-        this.openRowMenu(e.clientX, e.clientY)
-      })
-      this.rowHandle.addEventListener('mouseenter', () => this.clearHideTimeout())
-      this.rowHandle.addEventListener('mouseleave', () => this.scheduleHide())
-      document.body.appendChild(this.rowHandle)
+        e.stopPropagation();
+        this.openRowMenu(e.clientX, e.clientY);
+      });
+      this.rowHandle.addEventListener('mouseenter', () => this.clearHideTimeout());
+      this.rowHandle.addEventListener('mouseleave', () => this.scheduleHide());
+      this.ctx.portalTo?.appendChild(this.rowHandle);
     }
 
-    const rect = tr.getBoundingClientRect()
-    this.rowHandle.style.display = 'flex'
-    this.rowHandle.style.top = `${rect.top}px`
-    this.rowHandle.style.left = `${rect.left - 10}px`
-    this.rowHandle.style.height = `${rect.height}px`
+    const rect = tr.getBoundingClientRect();
+    this.rowHandle.style.display = 'flex';
+    this.rowHandle.style.top = `${rect.top}px`;
+    this.rowHandle.style.left = `${rect.left - 10}px`;
+    this.rowHandle.style.height = `${rect.height}px`;
 
-    this.focusedRow = rowIdx
-    this.clearHideTimeout()
+    this.focusedRow = rowIdx;
+    this.clearHideTimeout();
   }
 
   private showCellSettings(r: number, c: number, td: HTMLElement): void {
     if (!this.cellSettingsBtn) {
-      this.cellSettingsBtn = document.createElement('div')
-      this.cellSettingsBtn.className = 'pila-table-handle w-5 h-5 !p-0'
-      this.cellSettingsBtn.style.position = 'fixed'
-      this.cellSettingsBtn.style.zIndex = '9001'
-      this.cellSettingsBtn.appendChild(icon(Icons.Settings2, 12))
+      this.cellSettingsBtn = document.createElement('div');
+      this.cellSettingsBtn.className = 'pila-table-handle w-5 h-5 !p-0';
+      this.cellSettingsBtn.style.position = 'fixed';
+      this.cellSettingsBtn.style.zIndex = '9001';
+      this.cellSettingsBtn.appendChild(icon(Icons.Settings2, 12));
       this.cellSettingsBtn.addEventListener('click', (e) => {
-        e.stopPropagation()
-        this.openCellPopover(e.clientX, e.clientY)
-      })
-      this.cellSettingsBtn.addEventListener('mouseenter', () => this.clearHideTimeout())
-      this.cellSettingsBtn.addEventListener('mouseleave', () => this.scheduleHide())
-      document.body.appendChild(this.cellSettingsBtn)
+        e.stopPropagation();
+        this.openCellPopover(e.clientX, e.clientY);
+      });
+      this.cellSettingsBtn.addEventListener('mouseenter', () => this.clearHideTimeout());
+      this.cellSettingsBtn.addEventListener('mouseleave', () => this.scheduleHide());
+      this.ctx.portalTo?.appendChild(this.cellSettingsBtn);
     }
 
-    const rect = td.getBoundingClientRect()
-    this.cellSettingsBtn.style.display = 'flex'
+    const rect = td.getBoundingClientRect();
+    this.cellSettingsBtn.style.display = 'flex';
     // Position at top-right of cell
-    this.cellSettingsBtn.style.top = `${rect.top + 2}px`
-    this.cellSettingsBtn.style.left = `${rect.right - 22}px`
+    this.cellSettingsBtn.style.top = `${rect.top + 2}px`;
+    this.cellSettingsBtn.style.left = `${rect.right - 22}px`;
     
-    this.focusedRow = r
-    this.focusedCol = c
-    this.clearHideTimeout()
+    this.focusedRow = r;
+    this.focusedCol = c;
+    this.clearHideTimeout();
   }
 
   private openCellPopover(x: number, y: number): void {
-    const popover = new BlockPopover(this.ctx.overlayRoot)
+    const popover = new BlockPopover(this.ctx.portalTo);
     popover.open(x, y, [
       { label: 'Align left', icon: 'AlignLeft', handler: () => this.setCellStyle({ align: 'left' }) },
       { label: 'Align center', icon: 'AlignCenter', handler: () => this.setCellStyle({ align: 'center' }) },
@@ -149,318 +150,322 @@ export class TableBlock extends PilaBlock {
       { label: 'Background', icon: 'Paintbucket', handler: (e) => this.showColorPicker(e, 'cell', 'background') },
       { label: 'Text color', icon: 'Palette', handler: (e) => this.showColorPicker(e, 'cell', 'color') },
       { label: 'Clear styling', icon: 'Eraser', handler: () => this.setCellStyle({ background: '', color: '', align: undefined }) },
-    ])
+    ]);
   }
 
   private onStartResize(e: MouseEvent, colIdx: number, td: HTMLElement): void {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
 
-    const startX = e.clientX
-    const startWidth = td.offsetWidth
+    const startX = e.clientX;
+    const startWidth = td.offsetWidth;
 
     const onMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - startX
-      const newWidth = Math.max(50, startWidth + deltaX)
+      const deltaX = moveEvent.clientX - startX;
+      const newWidth = Math.max(50, startWidth + deltaX);
       
       // Update all cells in this column
-      const allRows = Array.from(this.tableEl.querySelectorAll('tr'))
+      const allRows = Array.from(this.tableEl.querySelectorAll('tr'));
       allRows.forEach(tr => {
-        const cells = Array.from(tr.querySelectorAll<HTMLElement>('th, td'))
-        const cell = cells[colIdx]
-        if (cell) cell.style.width = `${newWidth}px`
-      })
-    }
+        const cells = Array.from(tr.querySelectorAll<HTMLElement>('th, td'));
+        const cell = cells[colIdx];
+        if (cell) cell.style.width = `${newWidth}px`;
+      });
+    };
 
     const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove)
-      document.removeEventListener('mouseup', onMouseUp)
-      this.saveRows(this.currentRows())
-    }
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      this.saveRows(this.currentRows());
+    };
 
-    document.addEventListener('mousemove', onMouseMove)
-    document.addEventListener('mouseup', onMouseUp)
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
   }
 
   private openRowMenu(x: number, y: number): void {
-    const popover = new BlockPopover(this.ctx.overlayRoot)
-    const actions: any[] = [
+    const popover = new BlockPopover(this.ctx.portalTo);
+    const actions: { label: string; icon: string; handler: (e: MouseEvent) => void; danger?: boolean }[] = [
       { label: 'Toggle row as header', icon: 'Rows2', handler: () => this.toggleHeaderRow() },
       { label: 'Add row above', icon: 'ArrowUpToLine', handler: () => this.addRow('above') },
       { label: 'Add row below', icon: 'ArrowDownToLine', handler: () => this.addRow('below') },
       { label: 'Align left', icon: 'AlignLeft', handler: () => this.setRowStyle({ align: 'left' }) },
       { label: 'Align center', icon: 'AlignCenter', handler: () => this.setRowStyle({ align: 'center' }) },
       { label: 'Align right', icon: 'AlignRight', handler: () => this.setRowStyle({ align: 'right' }) },
-      { label: 'Row background', icon: 'Paintbucket', handler: (e: any) => this.showColorPicker(e, 'row', 'background') },
-      { label: 'Row text color', icon: 'Palette', handler: (e: any) => this.showColorPicker(e, 'row', 'color') },
+      { label: 'Background', icon: 'Paintbucket', handler: (e: MouseEvent) => this.showColorPicker(e, 'row', 'background') },
+      { label: 'Text color', icon: 'Palette', handler: (e: MouseEvent) => this.showColorPicker(e, 'row', 'color') },
       { label: 'Clear styling', icon: 'Eraser', handler: () => this.setRowStyle({ background: '', color: '', align: undefined }) },
       { label: 'Delete row', icon: 'Trash2', danger: true, handler: () => this.removeRow() },
-    ]
+    ];
 
     if (this.hasSelection()) {
-      actions.splice(actions.length - 1, 0, { label: 'Merge cells', icon: 'Table2', handler: () => this.mergeSelected() })
+      actions.splice(actions.length - 1, 0, { label: 'Merge cells', icon: 'Table2', handler: () => this.mergeSelected() });
     } else {
-      actions.splice(actions.length - 1, 0, { label: 'Unmerge cells', icon: 'Grid', handler: () => this.unmergeFocused() })
+      actions.splice(actions.length - 1, 0, { label: 'Unmerge cells', icon: 'Grid', handler: () => this.unmergeFocused() });
     }
 
-    popover.open(x, y, actions)
+    popover.open(x, y, actions);
   }
 
   private openColMenu(x: number, y: number): void {
-    const popover = new BlockPopover(this.ctx.overlayRoot)
-    const actions: any[] = [
+    const popover = new BlockPopover(this.ctx.portalTo);
+    const actions: { label: string; icon: string; handler: (e: MouseEvent) => void; danger?: boolean }[] = [
       { label: 'Toggle column as header', icon: 'Columns2', handler: () => this.toggleHeaderCol() },
       { label: 'Add column left', icon: 'ArrowLeftToLine', handler: () => this.addCol('left') },
       { label: 'Add column right', icon: 'ArrowRightToLine', handler: () => this.addCol('right') },
       { label: 'Align left', icon: 'AlignLeft', handler: () => this.setColStyle({ align: 'left' }) },
       { label: 'Align center', icon: 'AlignCenter', handler: () => this.setColStyle({ align: 'center' }) },
       { label: 'Align right', icon: 'AlignRight', handler: () => this.setColStyle({ align: 'right' }) },
-      { label: 'Column background', icon: 'Paintbucket', handler: (e: any) => this.showColorPicker(e, 'col', 'background') },
-      { label: 'Column text color', icon: 'Palette', handler: (e: any) => this.showColorPicker(e, 'col', 'color') },
+      { label: 'Background', icon: 'Paintbucket', handler: (e: MouseEvent) => this.showColorPicker(e, 'col', 'background') },
+      { label: 'Text color', icon: 'Palette', handler: (e: MouseEvent) => this.showColorPicker(e, 'col', 'color') },
       { label: 'Clear styling', icon: 'Eraser', handler: () => this.setColStyle({ background: '', color: '', align: undefined }) },
       { label: 'Delete column', icon: 'Trash2', danger: true, handler: () => this.removeCol() },
-    ]
+    ];
 
     if (this.hasSelection()) {
-      actions.splice(actions.length - 1, 0, { label: 'Merge cells', icon: 'Table2', handler: () => this.mergeSelected() })
+      actions.splice(actions.length - 1, 0, { label: 'Merge cells', icon: 'Table2', handler: () => this.mergeSelected() });
     } else {
-      actions.splice(actions.length - 1, 0, { label: 'Unmerge cells', icon: 'Grid', handler: () => this.unmergeFocused() })
+      actions.splice(actions.length - 1, 0, { label: 'Unmerge cells', icon: 'Grid', handler: () => this.unmergeFocused() });
     }
 
-    popover.open(x, y, actions)
+    popover.open(x, y, actions);
   }
 
   private hasSelection(): boolean {
-    if (!this.selectionStart || !this.selectionEnd) return false
-    return this.selectionStart.r !== this.selectionEnd.r || this.selectionStart.c !== this.selectionEnd.c
+    if (!this.selectionStart || !this.selectionEnd) return false;
+    return this.selectionStart.r !== this.selectionEnd.r || this.selectionStart.c !== this.selectionEnd.c;
   }
 
   private onTableMouseDown(e: MouseEvent): void {
-    const td = (e.target as HTMLElement).closest('td, th') as HTMLElement
-    if (!td) return
+    const td = (e.target as HTMLElement).closest('td, th') as HTMLElement;
+    if (!td) return;
 
-    const r = parseInt(td.dataset.rowIndex || '0', 10)
-    const c = parseInt(td.dataset.colIndex || '0', 10)
+    const r = parseInt(td.dataset.rowIndex || '0', 10);
+    const c = parseInt(td.dataset.colIndex || '0', 10);
 
-    this.isSelecting = true
-    this.selectionStart = { r, c }
-    this.selectionEnd = { r, c }
-    this.updateSelectionUI()
+    this.isSelecting = true;
+    this.selectionStart = { r, c };
+    this.selectionEnd = { r, c };
+    this.updateSelectionUI();
   }
 
   private onCellMouseEnter(r: number, c: number): void {
-    if (!this.isSelecting) return
-    this.selectionEnd = { r, c }
-    this.updateSelectionUI()
+    if (!this.isSelecting) return;
+    this.selectionEnd = { r, c };
+    this.updateSelectionUI();
   }
 
   private onTableMouseUp(): void {
-    this.isSelecting = false
+    this.isSelecting = false;
   }
 
   private updateSelectionUI(): void {
-    const cells = Array.from(this.tableEl.querySelectorAll('td, th'))
-    cells.forEach(cell => (cell as HTMLElement).classList.remove('pila-cell-selected'))
+    const cells = Array.from(this.tableEl.querySelectorAll('td, th'));
+    cells.forEach(cell => (cell as HTMLElement).classList.remove('pila-cell-selected'));
 
-    if (!this.selectionStart || !this.selectionEnd) return
+    if (!this.selectionStart || !this.selectionEnd) return;
 
-    const r1 = Math.min(this.selectionStart.r, this.selectionEnd.r)
-    const r2 = Math.max(this.selectionStart.r, this.selectionEnd.r)
-    const c1 = Math.min(this.selectionStart.c, this.selectionEnd.c)
-    const c2 = Math.max(this.selectionStart.c, this.selectionEnd.c)
+    const r1 = Math.min(this.selectionStart.r, this.selectionEnd.r);
+    const r2 = Math.max(this.selectionStart.r, this.selectionEnd.r);
+    const c1 = Math.min(this.selectionStart.c, this.selectionEnd.c);
+    const c2 = Math.max(this.selectionStart.c, this.selectionEnd.c);
 
     cells.forEach(cell => {
-      const td = cell as HTMLElement
-      const r = parseInt(td.dataset.rowIndex || '0', 10)
-      const c = parseInt(td.dataset.colIndex || '0', 10)
+      const td = cell as HTMLElement;
+      const r = parseInt(td.dataset.rowIndex || '0', 10);
+      const c = parseInt(td.dataset.colIndex || '0', 10);
       if (r >= r1 && r <= r2 && c >= c1 && c <= c2) {
-        td.classList.add('pila-cell-selected')
+        td.classList.add('pila-cell-selected');
       }
-    })
+    });
   }
 
   private mergeSelected(): void {
-    if (!this.selectionStart || !this.selectionEnd) return
+    if (!this.selectionStart || !this.selectionEnd) return;
     
-    const r1 = Math.min(this.selectionStart.r, this.selectionEnd.r)
-    const r2 = Math.max(this.selectionStart.r, this.selectionEnd.r)
-    const c1 = Math.min(this.selectionStart.c, this.selectionEnd.c)
-    const c2 = Math.max(this.selectionStart.c, this.selectionEnd.c)
+    const r1 = Math.min(this.selectionStart.r, this.selectionEnd.r);
+    const r2 = Math.max(this.selectionStart.r, this.selectionEnd.r);
+    const c1 = Math.min(this.selectionStart.c, this.selectionEnd.c);
+    const c2 = Math.max(this.selectionStart.c, this.selectionEnd.c);
 
-    const rows = this.currentRows()
-    const targetCell = rows[r1].cells[c1]
+    const rows = this.currentRows();
+    const targetCell = rows[r1].cells[c1];
     
     // Combine content
-    let combinedContent: any[] = [...targetCell.content]
+    const combinedContent: { text: string }[] = [...targetCell.content];
     for (let r = r1; r <= r2; r++) {
       for (let c = c1; c <= c2; c++) {
-        if (r === r1 && c === c1) continue
-        const cell = rows[r].cells[c]
+        if (r === r1 && c === c1) continue;
+        const cell = rows[r].cells[c];
         if (cell.content.length > 0) {
-          combinedContent.push({ text: ' ' }, ...cell.content)
+          combinedContent.push({ text: ' ' }, ...cell.content);
         }
       }
     }
 
-    targetCell.content = combinedContent
-    const colspan = (c2 - c1) + 1
-    const rowspan = (r2 - r1) + 1
+    targetCell.content = combinedContent;
+    const colspan = (c2 - c1) + 1;
+    const rowspan = (r2 - r1) + 1;
 
     // Rebuild the data structure: 
     // We need to keep the grid consistent. Merged cells are removed from the array 
     // but the target cell gets colspan/rowspan.
     for (let r = r2; r >= r1; r--) {
       for (let c = c2; c >= c1; c--) {
-        if (r === r1 && c === c1) continue
-        rows[r].cells.splice(c, 1)
+        if (r === r1 && c === c1) continue;
+        rows[r].cells.splice(c, 1);
       }
     }
 
-    targetCell.colspan = colspan
-    targetCell.rowspan = rowspan
+    targetCell.colspan = colspan;
+    targetCell.rowspan = rowspan;
 
-    this.saveRows(rows)
-    this.selectionStart = null
-    this.selectionEnd = null
-    this.updateSelectionUI()
+    this.saveRows(rows);
+    this.selectionStart = null;
+    this.selectionEnd = null;
+    this.updateSelectionUI();
   }
 
   private unmergeFocused(): void {
-    const rows = this.currentRows()
-    const targetCell = rows[this.focusedRow]?.cells[this.focusedCol]
-    if (!targetCell || (!targetCell.colspan && !targetCell.rowspan)) return
+    const rows = this.currentRows();
+    const targetCell = rows[this.focusedRow]?.cells[this.focusedCol];
+    if (!targetCell || (!targetCell.colspan && !targetCell.rowspan)) return;
 
-    const rs = targetCell.rowspan || 1
-    const cs = targetCell.colspan || 1
+    const rs = targetCell.rowspan || 1;
+    const cs = targetCell.colspan || 1;
 
-    targetCell.colspan = undefined
-    targetCell.rowspan = undefined
+    targetCell.colspan = undefined;
+    targetCell.rowspan = undefined;
 
     // Inject empty cells back into the grid
     for (let r = 0; r < rs; r++) {
       for (let c = 0; c < cs; c++) {
-        if (r === 0 && c === 0) continue
-        rows[this.focusedRow + r].cells.splice(this.focusedCol + c, 0, { content: [] })
+        if (r === 0 && c === 0) continue;
+        rows[this.focusedRow + r].cells.splice(this.focusedCol + c, 0, { content: [] });
       }
     }
 
-    this.saveRows(rows)
+    this.saveRows(rows);
   }
 
   private showColorPicker(e: MouseEvent, target: 'row' | 'col' | 'cell', type: 'background' | 'color'): void {
-    if (e) e.stopPropagation()
+    if (e) e.stopPropagation();
     
+    const targetEl = e.target as HTMLElement;
+    const currentColor = targetEl.style[type] || '#ffffff';
+
     // Use input type=color for a native picker
-    const input = document.createElement('input')
-    input.type = 'color'
-    input.value = '#ffffff' // Default to white
-    input.style.position = 'fixed'
-    input.style.opacity = '0'
-    input.style.left = `${e.clientX}px`
-    input.style.top = `${e.clientY}px`
-    document.body.appendChild(input)
+    const input = document.createElement('input');
+    input.id = 'color_picker_input_table';
+    input.type = 'color';
+    input.value = currentColor; // Default to current color
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    input.style.left = `${e.clientX}px`;
+    input.style.top = `${e.clientY}px`;
+    this.ctx.portalTo?.appendChild(input);
     
     input.addEventListener('input', () => {
-      const val = input.value
-      if (target === 'row') this.setRowStyle({ [type]: val })
-      else if (target === 'col') this.setColStyle({ [type]: val })
-      else this.setCellStyle({ [type]: val })
-    })
+      const val = input.value;
+      if (target === 'row') this.setRowStyle({ [type]: val });
+      else if (target === 'col') this.setColStyle({ [type]: val });
+      else this.setCellStyle({ [type]: val });
+    });
 
     input.addEventListener('change', () => {
-      input.remove()
-    })
+      input.remove();
+    });
 
-    input.click()
+    input.click();
   }
 
   private setCellStyle(style: { background?: string, color?: string, align?: 'left' | 'center' | 'right' }): void {
-    const rows = this.currentRows()
-    const cell = rows[this.focusedRow]?.cells[this.focusedCol]
-    if (!cell) return
-    if (style.background !== undefined) cell.background = style.background
-    if (style.color !== undefined) cell.color = style.color
-    if ('align' in style) cell.align = style.align
-    this.saveRows(rows)
+    const rows = this.currentRows();
+    const cell = rows[this.focusedRow]?.cells[this.focusedCol];
+    if (!cell) return;
+    if (style.background !== undefined) cell.background = style.background;
+    if (style.color !== undefined) cell.color = style.color;
+    if ('align' in style) cell.align = style.align;
+    this.saveRows(rows);
   }
 
   private setRowStyle(style: { background?: string, color?: string, align?: 'left' | 'center' | 'right' }): void {
-    const rows = this.currentRows()
-    const row = rows[this.focusedRow]
-    if (!row) return
+    const rows = this.currentRows();
+    const row = rows[this.focusedRow];
+    if (!row) return;
     row.cells.forEach(cell => {
-      if (style.background !== undefined) cell.background = style.background
-      if (style.color !== undefined) cell.color = style.color
-      if ('align' in style) cell.align = style.align
-    })
-    this.saveRows(rows)
+      if (style.background !== undefined) cell.background = style.background;
+      if (style.color !== undefined) cell.color = style.color;
+      if ('align' in style) cell.align = style.align;
+    });
+    this.saveRows(rows);
   }
 
   private setColStyle(style: { background?: string, color?: string, align?: 'left' | 'center' | 'right' }): void {
-    const rows = this.currentRows()
+    const rows = this.currentRows();
     rows.forEach(row => {
-      const cell = row.cells[this.focusedCol]
+      const cell = row.cells[this.focusedCol];
       if (cell) {
-        if (style.background !== undefined) cell.background = style.background
-        if (style.color !== undefined) cell.color = style.color
-        if ('align' in style) cell.align = style.align
+        if (style.background !== undefined) cell.background = style.background;
+        if (style.color !== undefined) cell.color = style.color;
+        if ('align' in style) cell.align = style.align;
       }
-    })
-    this.saveRows(rows)
+    });
+    this.saveRows(rows);
   }
 
   // ── Header helpers ──────────────────────────────────────────────────────────
 
   /** Returns the effective set of header row indices, migrating the legacy boolean if needed. */
   private headerRowSet(): number[] {
-    const attrs = this.block.attrs ?? {}
-    if (attrs.headerRows) return attrs.headerRows
-    return attrs.headerRow ? [0] : []
+    const attrs = this.block.attrs ?? {};
+    if (attrs.headerRows) return attrs.headerRows;
+    return attrs.headerRow ? [0] : [];
   }
 
   /** Returns the effective set of header col indices, migrating the legacy boolean if needed. */
   private headerColSet(): number[] {
-    const attrs = this.block.attrs ?? {}
-    if (attrs.headerCols) return attrs.headerCols
-    return attrs.headerCol ? [0] : []
+    const attrs = this.block.attrs ?? {};
+    if (attrs.headerCols) return attrs.headerCols;
+    return attrs.headerCol ? [0] : [];
   }
 
   // ── Table construction ────────────────────────────────────────────────────
 
   private buildTable(rows: TableRow[]): HTMLTableElement {
-    const table = document.createElement('table')
-    table.className = 'border-collapse w-full text-[0.9rem] mt-5'
+    const table = document.createElement('table');
+    table.className = 'border-collapse w-full text-[0.9rem] mt-5';
 
     // Single delegated listeners for drag
-    table.addEventListener('dragover', (e) => this.onTableDragOver(e))
-    table.addEventListener('drop',     (e) => e.preventDefault())
+    table.addEventListener('dragover', (e) => this.onTableDragOver(e));
+    table.addEventListener('drop',     (e) => e.preventDefault());
 
     // Cell selection listeners
-    table.addEventListener('mousedown', (e) => this.onTableMouseDown(e))
-    window.addEventListener('mouseup', () => this.onTableMouseUp())
+    table.addEventListener('mousedown', (e) => this.onTableMouseDown(e));
+    window.addEventListener('mouseup', () => this.onTableMouseUp());
 
-    const headerRowSet = this.headerRowSet()
-    const headerColSet = this.headerColSet()
+    const headerRowSet = this.headerRowSet();
+    const headerColSet = this.headerColSet();
 
     // Rows with headerRow index 0 go in <thead>, rest in <tbody>
-    const hasTheadRows = headerRowSet.includes(0) && rows.length > 0
+    const hasTheadRows = headerRowSet.includes(0) && rows.length > 0;
     if (hasTheadRows) {
-      const thead = document.createElement('thead')
-      const tbody = document.createElement('tbody')
+      const thead = document.createElement('thead');
+      const tbody = document.createElement('tbody');
       rows.forEach((row, rowIdx) => {
-        const tr = this.buildRow(row, rowIdx, headerRowSet.includes(rowIdx), headerColSet)
-        if (rowIdx === 0) thead.appendChild(tr)
-        else             tbody.appendChild(tr)
-      })
-      table.appendChild(thead)
-      table.appendChild(tbody)
+        const tr = this.buildRow(row, rowIdx, headerRowSet.includes(rowIdx), headerColSet);
+        if (rowIdx === 0) thead.appendChild(tr);
+        else             tbody.appendChild(tr);
+      });
+      table.appendChild(thead);
+      table.appendChild(tbody);
     } else {
       rows.forEach((row, rowIdx) => {
-        table.appendChild(this.buildRow(row, rowIdx, headerRowSet.includes(rowIdx), headerColSet))
-      })
+        table.appendChild(this.buildRow(row, rowIdx, headerRowSet.includes(rowIdx), headerColSet));
+      });
     }
 
-    return table
+    return table;
   }
 
   private buildRow(
@@ -469,282 +474,282 @@ export class TableBlock extends PilaBlock {
     isHeaderRow: boolean,
     headerColSet: number[],
   ): HTMLTableRowElement {
-    const tr = document.createElement('tr')
-    tr.dataset.rowIndex = String(rowIdx)
-    tr.addEventListener('mouseenter', () => this.showRowHandle(rowIdx, tr))
+    const tr = document.createElement('tr');
+    tr.dataset.rowIndex = String(rowIdx);
+    tr.addEventListener('mouseenter', () => this.showRowHandle(rowIdx, tr));
 
     // Data cells
     row.cells.forEach((cell, colIdx) => {
-      const isHeaderCell = isHeaderRow || headerColSet.includes(colIdx)
-      const tag  = isHeaderCell ? 'th' : 'td'
-      const td   = document.createElement(tag)
+      const isHeaderCell = isHeaderRow || headerColSet.includes(colIdx);
+      const tag  = isHeaderCell ? 'th' : 'td';
+      const td   = document.createElement(tag);
 
       const alignClass =
         cell.align === 'center' ? 'text-center' :
-        cell.align === 'right'  ? 'text-right'  : 'text-left'
+        cell.align === 'right'  ? 'text-right'  : 'text-left';
 
       td.className = [
         'border border-[var(--pila-border)] p-0 min-w-[120px] transition-colors',
         isHeaderCell ? 'bg-[var(--pila-code-bg)] font-semibold' : '',
         alignClass,
-      ].filter(Boolean).join(' ')
+      ].filter(Boolean).join(' ');
 
-      if (cell.background) td.style.backgroundColor = cell.background
-      if (cell.color) td.style.color = cell.color
+      if (cell.background) td.style.backgroundColor = cell.background;
+      if (cell.color) td.style.color = cell.color;
 
-      td.dataset.rowIndex = String(rowIdx)
-      td.dataset.colIndex = String(colIdx)
-      if (cell.align) td.dataset.align = cell.align
-      if (cell.colspan) td.setAttribute('colspan', String(cell.colspan))
-      if (cell.rowspan) td.setAttribute('rowspan', String(cell.rowspan))
+      td.dataset.rowIndex = String(rowIdx);
+      td.dataset.colIndex = String(colIdx);
+      if (cell.align) td.dataset.align = cell.align;
+      if (cell.colspan) td.setAttribute('colspan', String(cell.colspan));
+      if (cell.rowspan) td.setAttribute('rowspan', String(cell.rowspan));
 
       // Resize handle
-      const resizeHandle = document.createElement('div')
-      resizeHandle.className = 'absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[var(--pila-accent)] opacity-0 hover:opacity-100 transition-opacity z-10'
-      resizeHandle.addEventListener('mousedown', (e) => this.onStartResize(e, colIdx, td))
-      td.appendChild(resizeHandle)
-      td.classList.add('relative')
+      const resizeHandle = document.createElement('div');
+      resizeHandle.className = 'absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[var(--pila-accent)] opacity-0 hover:opacity-100 transition-opacity z-10';
+      resizeHandle.addEventListener('mousedown', (e) => this.onStartResize(e, colIdx, td));
+      td.appendChild(resizeHandle);
+      td.classList.add('relative');
 
       td.addEventListener('mouseenter', (e) => {
-        e.stopPropagation()
-        this.showRowHandle(rowIdx, tr)
-        this.showColHandle(colIdx, td)
-        this.showCellSettings(rowIdx, colIdx, td)
-        this.onCellMouseEnter(rowIdx, colIdx)
-      })
+        e.stopPropagation();
+        this.showRowHandle(rowIdx, tr);
+        this.showColHandle(colIdx, td);
+        this.showCellSettings(rowIdx, colIdx, td);
+        this.onCellMouseEnter(rowIdx, colIdx);
+      });
 
       // Contenteditable cell content
-      const cellEl = document.createElement('div')
-      cellEl.setAttribute('contenteditable', 'true')
-      cellEl.setAttribute('spellcheck', 'true')
-      cellEl.setAttribute('data-block-id', `${this.block.id!}_cell_${rowIdx}_${colIdx}`)
+      const cellEl = document.createElement('div');
+      cellEl.setAttribute('contenteditable', 'true');
+      cellEl.setAttribute('spellcheck', 'true');
+      cellEl.setAttribute('data-block-id', `${this.block.id!}_cell_${rowIdx}_${colIdx}`);
       cellEl.className =
-        `px-[10px] py-2 outline-none min-h-[1.4em] whitespace-pre-wrap break-words ${alignClass}`
-      InlineRenderer.render(cellEl, cell.content)
+        `px-[10px] py-2 outline-none min-h-[1.4em] whitespace-pre-wrap break-words ${alignClass}`;
+      InlineRenderer.render(cellEl, cell.content);
 
-      if (cell.width) td.style.width = cell.width
+      if (cell.width) td.style.width = cell.width;
 
       cellEl.addEventListener('focus', () => {
-        this.focusedRow = rowIdx
-        this.focusedCol = colIdx
-      })
+        this.focusedRow = rowIdx;
+        this.focusedCol = colIdx;
+      });
 
       cellEl.addEventListener('blur', () => {
         // High frequency save to keep FloatingToolbar and Serializers in sync
-        this.saveRows(this.currentRows())
-      })
+        this.saveRows(this.currentRows());
+      });
 
       cellEl.addEventListener('keydown', (e: KeyboardEvent) => {
         if (e.key === 'Tab') {
-          e.preventDefault()
-          const all = Array.from(this.tableEl.querySelectorAll<HTMLElement>('[contenteditable]'))
-          const idx  = all.indexOf(cellEl)
-          const next = all[e.shiftKey ? idx - 1 : idx + 1]
-          next?.focus()
+          e.preventDefault();
+          const all = Array.from(this.tableEl.querySelectorAll<HTMLElement>('[contenteditable]'));
+          const idx  = all.indexOf(cellEl);
+          const next = all[e.shiftKey ? idx - 1 : idx + 1];
+          next?.focus();
         }
         if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-          this.handleArrow(e)
+          this.handleArrow(e);
         }
-      })
+      });
 
-      td.appendChild(cellEl)
-      tr.appendChild(td)
-    })
+      td.appendChild(cellEl);
+      tr.appendChild(td);
+    });
 
-    return tr
+    return tr;
   }
 
   // ── Drag: rows ────────────────────────────────────────────────────────────
 
   private onRowDragStart(e: DragEvent, rowIdx: number): void {
-    this.dragType  = 'row'
-    this.dragIndex = rowIdx
-    this.dropIndex = -1
-    e.dataTransfer?.setData('text/plain', `row:${rowIdx}`)
+    this.dragType  = 'row';
+    this.dragIndex = rowIdx;
+    this.dropIndex = -1;
+    e.dataTransfer?.setData('text/plain', `row:${rowIdx}`);
     if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
     ;(this.tableEl.querySelectorAll('tr')[rowIdx] as HTMLElement | undefined)
-      ?.classList.add('opacity-40')
+      ?.classList.add('opacity-40');
   }
 
   // ── Drag: columns ─────────────────────────────────────────────────────────
 
   private onColDragStart(e: DragEvent, colIdx: number): void {
-    this.dragType  = 'col'
-    this.dragIndex = colIdx
-    this.dropIndex = -1
-    e.dataTransfer?.setData('text/plain', `col:${colIdx}`)
-    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+    this.dragType  = 'col';
+    this.dragIndex = colIdx;
+    this.dropIndex = -1;
+    e.dataTransfer?.setData('text/plain', `col:${colIdx}`);
+    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
     
     // Highlight the column being dragged
-    const allRows = Array.from(this.tableEl.querySelectorAll('tr'))
+    const allRows = Array.from(this.tableEl.querySelectorAll('tr'));
     allRows.forEach(tr => {
-      const cells = Array.from(tr.querySelectorAll<HTMLElement>('th, td'))
-      cells[colIdx]?.classList.add('opacity-40')
-    })
-    e.stopPropagation() // don't trigger row drag
+      const cells = Array.from(tr.querySelectorAll<HTMLElement>('th, td'));
+      cells[colIdx]?.classList.add('opacity-40');
+    });
+    e.stopPropagation(); // don't trigger row drag
   }
 
   // ── Drag: shared ──────────────────────────────────────────────────────────
 
   private onTableDragOver(e: DragEvent): void {
-    if (!this.dragType) return
-    e.preventDefault()
-    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+    if (!this.dragType) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
 
-    const target = e.target as Element
+    const target = e.target as Element;
 
     if (this.dragType === 'row') {
-      const tr = target.closest('tr') as HTMLTableRowElement | null
-      if (!tr) return
-      const rowIdx = parseInt(tr.dataset.rowIndex ?? '-1', 10)
-      if (rowIdx < 0) return
+      const tr = target.closest('tr') as HTMLTableRowElement | null;
+      if (!tr) return;
+      const rowIdx = parseInt(tr.dataset.rowIndex ?? '-1', 10);
+      if (rowIdx < 0) return;
 
       // Determine if hovering top or bottom half → insert before or after
-      const rect = tr.getBoundingClientRect()
-      const dropAfter = e.clientY > rect.top + rect.height / 2
-      const newDropIndex = dropAfter ? rowIdx + 1 : rowIdx
-      if (newDropIndex === this.dropIndex) return
+      const rect = tr.getBoundingClientRect();
+      const dropAfter = e.clientY > rect.top + rect.height / 2;
+      const newDropIndex = dropAfter ? rowIdx + 1 : rowIdx;
+      if (newDropIndex === this.dropIndex) return;
 
-      this.clearDropIndicator()
-      this.dropIndex = newDropIndex
+      this.clearDropIndicator();
+      this.dropIndex = newDropIndex;
 
       if (dropAfter) {
-        tr.classList.add('pila-drop-below')
+        tr.classList.add('pila-drop-below');
       } else {
-        tr.classList.add('pila-drop-above')
+        tr.classList.add('pila-drop-above');
       }
 
     } else if (this.dragType === 'col') {
-      const td = target.closest('[data-col-index]') as HTMLElement | null
-      if (!td) return
-      const colIdx = parseInt(td.dataset.colIndex ?? '-1', 10)
-      if (colIdx < 0) return
+      const td = target.closest('[data-col-index]') as HTMLElement | null;
+      if (!td) return;
+      const colIdx = parseInt(td.dataset.colIndex ?? '-1', 10);
+      if (colIdx < 0) return;
 
       // Determine if hovering left or right half → insert before or after
-      const rect = td.getBoundingClientRect()
-      const dropAfter = e.clientX > rect.left + rect.width / 2
-      const newDropIndex = dropAfter ? colIdx + 1 : colIdx
-      if (newDropIndex === this.dropIndex) return
+      const rect = td.getBoundingClientRect();
+      const dropAfter = e.clientX > rect.left + rect.width / 2;
+      const newDropIndex = dropAfter ? colIdx + 1 : colIdx;
+      if (newDropIndex === this.dropIndex) return;
 
-      this.clearDropIndicator()
-      this.dropIndex = newDropIndex
+      this.clearDropIndicator();
+      this.dropIndex = newDropIndex;
 
-      const allRows = Array.from(this.tableEl.querySelectorAll('tr'))
+      const allRows = Array.from(this.tableEl.querySelectorAll('tr'));
       allRows.forEach((tr) => {
-        const cells = Array.from(tr.querySelectorAll<HTMLElement>('th, td'))
+        const cells = Array.from(tr.querySelectorAll<HTMLElement>('th, td'));
         if (dropAfter) {
           // If dropAfter, highlight the right border of the current cell
-          cells[colIdx]?.classList.add('pila-drop-right')
+          cells[colIdx]?.classList.add('pila-drop-right');
         } else {
           // If dropBefore, highlight the left border of the current cell
-          cells[colIdx]?.classList.add('pila-drop-left')
+          cells[colIdx]?.classList.add('pila-drop-left');
         }
-      })
+      });
     }
   }
 
   private onDragEnd(): void {
-    const from = this.dragIndex
-    const to   = this.dropIndex
-    const type = this.dragType
-    this.clearDropIndicator()
-    this.dragType  = null
-    this.dragIndex = -1
-    this.dropIndex = -1
+    const from = this.dragIndex;
+    const to   = this.dropIndex;
+    const type = this.dragType;
+    this.clearDropIndicator();
+    this.dragType  = null;
+    this.dragIndex = -1;
+    this.dropIndex = -1;
 
-    if (to < 0 || to === from || type === null) return
+    if (to < 0 || to === from || type === null) return;
 
-    const rows = this.currentRows()
+    const rows = this.currentRows();
     if (type === 'row') {
-      const [moved] = rows.splice(from, 1)
-      rows.splice(to > from ? to - 1 : to, 0, moved)
-      this.saveRows(rows)
+      const [moved] = rows.splice(from, 1);
+      rows.splice(to > from ? to - 1 : to, 0, moved);
+      this.saveRows(rows);
     } else {
       rows.forEach((row) => {
-        const [moved] = row.cells.splice(from, 1)
-        row.cells.splice(to > from ? to - 1 : to, 0, moved)
-      })
-      this.saveRows(rows)
+        const [moved] = row.cells.splice(from, 1);
+        row.cells.splice(to > from ? to - 1 : to, 0, moved);
+      });
+      this.saveRows(rows);
     }
   }
 
   private clearDropIndicator(): void {
-    const classes = ['pila-drop-above', 'pila-drop-below', 'pila-drop-left', 'pila-drop-right', 'opacity-40']
+    const classes = ['pila-drop-above', 'pila-drop-below', 'pila-drop-left', 'pila-drop-right', 'opacity-40'];
     classes.forEach((cls) => {
-      this.tableEl.querySelectorAll<HTMLElement>(`.${cls}`).forEach((el) => el.classList.remove(cls))
-    })
+      this.tableEl.querySelectorAll<HTMLElement>(`.${cls}`).forEach((el) => el.classList.remove(cls));
+    });
   }
 
   // ── Toolbar actions ───────────────────────────────────────────────────────
 
   private toggleHeaderRow(): void {
-    const rows = this.currentRows()
-    const set  = this.headerRowSet()
-    const idx  = this.focusedRow
-    const next = set.includes(idx) ? set.filter((r) => r !== idx) : [...set, idx].sort((a, b) => a - b)
+    const rows = this.currentRows();
+    const set  = this.headerRowSet();
+    const idx  = this.focusedRow;
+    const next = set.includes(idx) ? set.filter((r) => r !== idx) : [...set, idx].sort((a, b) => a - b);
     this.ctx.manager.update(this.block.id!, {
       attrs: { ...this.block.attrs, rows, headerRows: next, headerRow: undefined },
-    })
+    });
   }
 
   private toggleHeaderCol(): void {
-    const rows = this.currentRows()
-    const set  = this.headerColSet()
-    const idx  = this.focusedCol
-    const next = set.includes(idx) ? set.filter((c) => c !== idx) : [...set, idx].sort((a, b) => a - b)
+    const rows = this.currentRows();
+    const set  = this.headerColSet();
+    const idx  = this.focusedCol;
+    const next = set.includes(idx) ? set.filter((c) => c !== idx) : [...set, idx].sort((a, b) => a - b);
     this.ctx.manager.update(this.block.id!, {
       attrs: { ...this.block.attrs, rows, headerCols: next, headerCol: undefined },
-    })
+    });
   }
 
   private removeCol(): void {
-    const rows     = this.currentRows()
-    const colCount = rows[0]?.cells.length ?? 0
-    if (colCount <= 1) return
-    rows.forEach((row) => row.cells.splice(this.focusedCol, 1))
-    this.focusedCol = Math.max(0, this.focusedCol - 1)
-    this.saveRows(rows)
+    const rows     = this.currentRows();
+    const colCount = rows[0]?.cells.length ?? 0;
+    if (colCount <= 1) return;
+    rows.forEach((row) => row.cells.splice(this.focusedCol, 1));
+    this.focusedCol = Math.max(0, this.focusedCol - 1);
+    this.saveRows(rows);
   }
 
   private addRow(position: 'above' | 'below'): void {
-    const rows     = this.currentRows()
-    const colCount = rows[0]?.cells.length ?? 3
-    const newRow: TableRow = { cells: Array.from({ length: colCount }, () => ({ content: [] })) }
-    const insertAt = position === 'above' ? this.focusedRow : this.focusedRow + 1
-    rows.splice(insertAt, 0, newRow)
-    this.focusedRow = insertAt
-    this.saveRows(rows)
+    const rows     = this.currentRows();
+    const colCount = rows[0]?.cells.length ?? 3;
+    const newRow: TableRow = { cells: Array.from({ length: colCount }, () => ({ content: [] })) };
+    const insertAt = position === 'above' ? this.focusedRow : this.focusedRow + 1;
+    rows.splice(insertAt, 0, newRow);
+    this.focusedRow = insertAt;
+    this.saveRows(rows);
   }
 
   private addCol(position: 'left' | 'right'): void {
-    const rows     = this.currentRows()
-    const insertAt = position === 'left' ? this.focusedCol : this.focusedCol + 1
-    rows.forEach((row) => row.cells.splice(insertAt, 0, { content: [] }))
-    this.focusedCol = insertAt
-    this.saveRows(rows)
+    const rows     = this.currentRows();
+    const insertAt = position === 'left' ? this.focusedCol : this.focusedCol + 1;
+    rows.forEach((row) => row.cells.splice(insertAt, 0, { content: [] }));
+    this.focusedCol = insertAt;
+    this.saveRows(rows);
   }
 
   private removeRow(): void {
-    const rows = this.currentRows()
-    if (rows.length <= 1) return
-    rows.splice(this.focusedRow, 1)
-    this.focusedRow = Math.max(0, this.focusedRow - 1)
-    this.saveRows(rows)
+    const rows = this.currentRows();
+    if (rows.length <= 1) return;
+    rows.splice(this.focusedRow, 1);
+    this.focusedRow = Math.max(0, this.focusedRow - 1);
+    this.saveRows(rows);
   }
 
   // ── Data helpers ──────────────────────────────────────────────────────────
 
   private currentRows(): TableRow[] {
-    const rows: TableRow[] = []
+    const rows: TableRow[] = [];
     this.tableEl.querySelectorAll('tr').forEach((tr) => {
-      const cells = Array.from(tr.querySelectorAll<HTMLElement>('th, td'))
-      if (cells.length === 0) return
+      const cells = Array.from(tr.querySelectorAll<HTMLElement>('th, td'));
+      if (cells.length === 0) return;
       const rowCells: TableCell[] = cells.map((td) => {
-        const cellEl  = td.querySelector('[contenteditable]') as HTMLElement
-        const alignVal = td.dataset.align
+        const cellEl  = td.querySelector('[contenteditable]') as HTMLElement;
+        const alignVal = td.dataset.align;
         const align = (alignVal === 'left' || alignVal === 'center' || alignVal === 'right')
           ? alignVal as 'left' | 'center' | 'right'
-          : undefined
+          : undefined;
         return {
           content: InlineParser.parse(cellEl),
           align,
@@ -753,62 +758,62 @@ export class TableBlock extends PilaBlock {
           width: td.style.width || undefined,
           colspan: td.getAttribute('colspan') ? parseInt(td.getAttribute('colspan')!, 10) : undefined,
           rowspan: td.getAttribute('rowspan') ? parseInt(td.getAttribute('rowspan')!, 10) : undefined
-        }
-      })
-      rows.push({ cells: rowCells })
-    })
-    return rows
+        };
+      });
+      rows.push({ cells: rowCells });
+    });
+    return rows;
   }
 
   private saveRows(rows: TableRow[]): void {
     this.ctx.manager.update(this.block.id!, {
       attrs: { ...this.block.attrs, rows },
-    })
+    });
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   override updateData(block: Block): void {
-    const wasActive = this.contains(document.activeElement)
-    const savedRow  = this.focusedRow
-    const savedCol  = this.focusedCol
-    super.updateData(block)
+    const wasActive = this.contains(document.activeElement);
+    const savedRow  = this.focusedRow;
+    const savedCol  = this.focusedCol;
+    super.updateData(block);
     if (this.tableEl) {
-      const newTable = this.buildTable(block.attrs?.rows ?? [])
-      this.tableEl.replaceWith(newTable)
-      this.tableEl = newTable
+      const newTable = this.buildTable(block.attrs?.rows ?? []);
+      this.tableEl.replaceWith(newTable);
+      this.tableEl = newTable;
     }
-    if (wasActive) this.refocusCell(savedRow, savedCol)
+    if (wasActive) this.refocusCell(savedRow, savedCol);
   }
 
   private refocusCell(rowIdx: number, colIdx: number): void {
-    const rows = Array.from(this.tableEl.querySelectorAll('tr'))
-    const tr   = rows[Math.min(rowIdx, rows.length - 1)]
-    if (!tr) return
-    const cells = Array.from(tr.querySelectorAll<HTMLElement>('[contenteditable]'))
-    const cell  = cells[Math.min(colIdx, cells.length - 1)]
-    cell?.focus()
+    const rows = Array.from(this.tableEl.querySelectorAll('tr'));
+    const tr   = rows[Math.min(rowIdx, rows.length - 1)];
+    if (!tr) return;
+    const cells = Array.from(tr.querySelectorAll<HTMLElement>('[contenteditable]'));
+    const cell  = cells[Math.min(colIdx, cells.length - 1)];
+    cell?.focus();
   }
 
   override destroy(): void {
-    this.rowHandle?.remove()
-    this.colHandle?.remove()
-    super.destroy()
+    this.rowHandle?.remove();
+    this.colHandle?.remove();
+    super.destroy();
   }
 
   getContent(): Block {
     return {
       ...this.block,
       attrs: { ...this.block.attrs, rows: this.currentRows() },
-    }
+    };
   }
 
   focusBlock(): void {
-    const first = this.tableEl.querySelector<HTMLElement>('[contenteditable]')
-    first?.focus()
+    const first = this.tableEl.querySelector<HTMLElement>('[contenteditable]');
+    first?.focus();
   }
 }
 
 if (!customElements.get('pila-table')) {
-  customElements.define('pila-table', TableBlock)
+  customElements.define('pila-table', TableBlock);
 }

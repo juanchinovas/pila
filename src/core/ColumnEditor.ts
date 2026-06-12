@@ -1,12 +1,12 @@
-import { Block, ColumnDef } from '../types'
-import { BlockManager } from './BlockManager'
-import { BlockContext, PilaBlock } from '../blocks/PilaBlock'
-import { SlashMenu } from '../ui/SlashMenu'
-import { DragHandle } from '../ui/DragHandle'
-import { createBlockEl } from './BlockFactory'
+import { Block, ColumnDef } from '../types';
+import { BlockManager } from './BlockManager';
+import { BlockContext, PilaBlock } from '../blocks/PilaBlock';
+import { SlashMenu } from '../ui/SlashMenu';
+import { DragHandle } from '../ui/DragHandle';
+import { createBlockEl } from './BlockFactory';
 
 function generateId(): string {
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
 /**
@@ -15,96 +15,96 @@ function generateId(): string {
  * (including nested headings, lists, code, tables …) works inside it.
  */
 export class ColumnEditor {
-  readonly el: HTMLDivElement
-  readonly manager: BlockManager
+  readonly el: HTMLDivElement;
+  readonly manager: BlockManager;
 
-  onEscapeUp:   (() => void) | null = null
-  onEscapeDown: (() => void) | null = null
+  onEscapeUp:   (() => void) | null = null;
+  onEscapeDown: (() => void) | null = null;
 
-  private placeholder: string
-  private blockInstances = new Map<string, PilaBlock>()
-  private slashMenu!: SlashMenu
-  private dragHandle!: DragHandle
-  private overlayRoot: HTMLElement
-  private unsub: (() => void) | null = null
+  private placeholder: string;
+  private blockInstances = new Map<string, PilaBlock>();
+  private slashMenu!: SlashMenu;
+  private dragHandle!: DragHandle;
+  private portalTo: HTMLElement;
+  private unsub: (() => void) | null = null;
 
-  constructor(def: ColumnDef, placeholder = 'Type / to add a block…', overlayRoot: HTMLElement = document.body) {
-    this.placeholder = placeholder
-    this.overlayRoot = overlayRoot
+  constructor(def: ColumnDef, placeholder = 'Type / to add a block…', portalTo: HTMLElement = document.body) {
+    this.placeholder = placeholder;
+    this.portalTo = portalTo;
 
-    this.el = document.createElement('div')
-    this.el.className = 'pila-column-editor'
+    this.el = document.createElement('div');
+    this.el.className = 'pila-column-editor';
 
     const initial: Block[] =
       def.blocks && def.blocks.length > 0
         ? def.blocks
-        : [{ id: generateId(), type: 'paragraph', content: [] }]
+        : [{ id: generateId(), type: 'paragraph', content: [] }];
 
-    this.manager = new BlockManager(initial)
-    this.unsub    = this.manager.on('blocks:change', () => this.renderAll())
-    this.renderAll()
+    this.manager = new BlockManager(initial);
+    this.unsub    = this.manager.on('blocks:change', () => this.renderAll());
+    this.renderAll();
 
-    this.slashMenu = new SlashMenu(this.el, this.manager, undefined, this.overlayRoot)
-    this.slashMenu.mount()
+    this.slashMenu = new SlashMenu(this.el, this.manager, undefined, this.portalTo);
+    this.slashMenu.mount();
 
-    this.dragHandle = new DragHandle(this.el, this.manager, this.overlayRoot)
-    this.dragHandle.mount()
+    this.dragHandle = new DragHandle(this.el, this.manager, this.portalTo);
+    this.dragHandle.mount();
 
-    this.el.addEventListener('keydown', (e: KeyboardEvent) => this.handleEscape(e))
+    this.el.addEventListener('keydown', (e: KeyboardEvent) => this.handleEscape(e));
   }
 
   // ── Private ────────────────────────────────────────────────────────────────
 
   private get ctx(): BlockContext {
-    return { manager: this.manager, editorEl: this.el, placeholder: this.placeholder, overlayRoot: this.overlayRoot }
+    return { manager: this.manager, editorEl: this.el, placeholder: this.placeholder, portalTo: this.portalTo };
   }
 
   private renderAll(): void {
-    const blocks  = this.manager.getAll()
-    const seenIds = new Set<string>()
+    const blocks  = this.manager.getAll();
+    const seenIds = new Set<string>();
 
     blocks.forEach((block, index) => {
-      seenIds.add(block.id!)
+      seenIds.add(block.id!);
 
-      let instance = this.blockInstances.get(block.id!)
+      let instance = this.blockInstances.get(block.id!);
 
       if (instance && instance.blockType !== block.type) {
-        instance.destroy()
-        this.blockInstances.delete(block.id!)
-        instance = undefined
+        instance.destroy();
+        this.blockInstances.delete(block.id!);
+        instance = undefined;
       }
 
       if (!instance) {
-        instance = createBlockEl(block, this.ctx)
-        this.blockInstances.set(block.id!, instance)
+        instance = createBlockEl(block, this.ctx);
+        this.blockInstances.set(block.id!, instance);
       } else {
-        instance.updateData(block)
+        instance.updateData(block);
       }
 
-      instance.dataset.blockId    = block.id!
-      instance.dataset.blockIndex = String(index)
+      instance.dataset.blockId    = block.id!;
+      instance.dataset.blockIndex = String(index);
 
-      const existingAt = this.el.children[index]
+      const existingAt = this.el.children[index];
       if (existingAt !== instance) {
         if (existingAt) {
-          this.el.insertBefore(instance, existingAt)
+          this.el.insertBefore(instance, existingAt);
         } else {
-          this.el.appendChild(instance)
+          this.el.appendChild(instance);
         }
       }
-    })
+    });
 
     // Remove stale instances
     this.blockInstances.forEach((inst, id) => {
       if (!seenIds.has(id)) {
-        inst.destroy()
-        this.blockInstances.delete(id)
+        inst.destroy();
+        this.blockInstances.delete(id);
       }
-    })
+    });
 
     // Safety: trim extra DOM children
     while (this.el.children.length > blocks.length) {
-      this.el.removeChild(this.el.lastChild!)
+      this.el.removeChild(this.el.lastChild!);
     }
   }
 
@@ -112,22 +112,22 @@ export class ColumnEditor {
 
   private handleEscape(e: KeyboardEvent): void {
     // If the inner block already handled the navigation, skip.
-    if (e.defaultPrevented) return
-    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
+    if (e.defaultPrevented) return;
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
 
-    const blocks  = this.manager.getAll()
-    const focused = (e.target as Element)?.closest<HTMLElement>('[data-block-id]')
-    if (!focused) return
+    const blocks  = this.manager.getAll();
+    const focused = (e.target as Element)?.closest<HTMLElement>('[data-block-id]');
+    if (!focused) return;
 
-    const idx = blocks.findIndex((b) => b.id === focused.dataset.blockId)
-    if (idx === -1) return
+    const idx = blocks.findIndex((b) => b.id === focused.dataset.blockId);
+    if (idx === -1) return;
 
     if (e.key === 'ArrowUp' && idx === 0 && this.onEscapeUp) {
-      e.preventDefault()
-      this.onEscapeUp()
+      e.preventDefault();
+      this.onEscapeUp();
     } else if (e.key === 'ArrowDown' && idx === blocks.length - 1 && this.onEscapeDown) {
-      e.preventDefault()
-      this.onEscapeDown()
+      e.preventDefault();
+      this.onEscapeDown();
     }
   }
 
@@ -136,26 +136,26 @@ export class ColumnEditor {
   /** Collect current block data from live instances. */
   getBlocks(): Block[] {
     return this.manager.getAll().map((b) => {
-      const inst = this.blockInstances.get(b.id!)
-      return inst ? inst.getContent() : b
-    })
+      const inst = this.blockInstances.get(b.id!);
+      return inst ? inst.getContent() : b;
+    });
   }
 
   focusFirst(): void {
-    const first = this.el.querySelector<HTMLElement>('[contenteditable]')
-    first?.focus()
+    const first = this.el.querySelector<HTMLElement>('[contenteditable]');
+    first?.focus();
   }
 
   focusLast(): void {
-    const all = this.el.querySelectorAll<HTMLElement>('[contenteditable]')
-    all[all.length - 1]?.focus()
+    const all = this.el.querySelectorAll<HTMLElement>('[contenteditable]');
+    all[all.length - 1]?.focus();
   }
 
   destroy(): void {
-    this.unsub?.()
-    this.slashMenu?.destroy()
-    this.dragHandle?.destroy()
-    this.blockInstances.forEach((inst) => inst.destroy())
-    this.blockInstances.clear()
+    this.unsub?.();
+    this.slashMenu?.destroy();
+    this.dragHandle?.destroy();
+    this.blockInstances.forEach((inst) => inst.destroy());
+    this.blockInstances.clear();
   }
 }

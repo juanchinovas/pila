@@ -1,11 +1,11 @@
 // ─── Editor ───────────────────────────────────────────────────────────────────
-export { PilaEditor } from './core/Editor'
+export { PilaEditor } from './core/Editor';
 
 // ─── Serializers ──────────────────────────────────────────────────────────────
-export { JsonSerializer } from './serializers/JsonSerializer'
-export { HtmlSerializer } from './serializers/HtmlSerializer'
-export { MarkdownSerializer } from './serializers/MarkdownSerializer'
-export { EmailSerializer } from './serializers/EmailSerializer'
+export { JsonSerializer } from './serializers/JsonSerializer';
+export { HtmlSerializer } from './serializers/HtmlSerializer';
+export { MarkdownSerializer } from './serializers/MarkdownSerializer';
+export { EmailSerializer } from './serializers/EmailSerializer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type {
@@ -25,11 +25,11 @@ export type {
   CustomBlockDescriptor,
   SlashMenuItemDescriptor,
   ToolbarButtonDescriptor,
-} from './types'
+} from './types';
 
 // ─── Icons (for consumer use, e.g. demos / plugins) ──────────────────────────
-export { icon, Icons } from './ui/icons'
-export type { LucideIconNode } from './ui/icons'
+export { icon, Icons } from './ui/icons';
+export type { LucideIconNode } from './ui/icons';
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-import './styles/pila.css'
+import './styles/pila.css';

@@ -79,7 +79,7 @@ Call `editor.destroy()` when the editor is no longer needed to clean up event li
 | `initialContent` | `Block[]`                   | Pre-populate the editor with content                    |
 | `onChange`       | `(blocks: Block[]) => void` | Called whenever blocks change                           |
 | `plugins`        | `PilaPlugin[]`              | Plugins to install on mount                             |
-| `overlayRoot`    | `HTMLElement \| (() => HTMLElement \| null)` | Optional element or getter to append floating UI (menus, popovers) to. Defaults to `document.body`. |
+| `portalTo`    | `HTMLElement \| (() => HTMLElement \| null)` | Optional element or getter to append floating UI (menus, popovers) to. Defaults to `document.body`. |
 
 ### Methods
 

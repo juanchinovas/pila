@@ -16,9 +16,8 @@ const editorEl = ref<HTMLElement | null>(null)
 let editor: PilaEditor | null = null
 
 const initialContent: Block[] = [
-  { type: 'heading1', content: [{ text: 'Pila inside a Modal ✦' }] },
-  { type: 'paragraph', content: [{ text: 'This is a Pila editor running inside a shadcn-vue Dialog component.' }] },
-]
+  { type: 'paragraph', content: [{ text: 'Start writing...' }] },
+];
 
 const handleOpenChange = (open: boolean) => {
   if (open) {
@@ -28,7 +27,7 @@ const handleOpenChange = (open: boolean) => {
         editor = new PilaEditor(editorEl.value, {
           placeholder: 'Type / to add a block…',
           initialContent,
-          overlayRoot: () => editorEl.value?.closest('[role="dialog"]') as HTMLElement,
+          portalTo: () => editorEl.value?.closest('[role="dialog"]') as HTMLElement,
         })
         editor.mount()
       }
@@ -58,9 +57,11 @@ onBeforeUnmount(() => {
           Make changes to your content here using the Pila block editor.
         </DialogDescription>
       </DialogHeader>
-      <div class="flex-1 overflow-y-auto p-4 border rounded-md px-4">
-        <div ref="editorEl"></div>
-      </div>
+
+      <div
+        ref="editorEl"
+        style="padding-inline: 5rem;"
+      />
     </DialogContent>
   </Dialog>
 </template>

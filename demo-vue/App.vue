@@ -70,36 +70,69 @@ const getIcon = (iconNode: any) => icon(iconNode, 14).innerHTML
 <template>
   <div class="demo-wrapper">
     <div class="content-container">
-      <h1>Pila Block Editor</h1>
-      <p class="subtitle">Type <code>/</code> to add a block · Select text for inline formatting · Drag rows to reorder</p>
+      <h1 class="text-center text-2xl font-bold mb-1">
+        Pila Block Editor
+      </h1>
+      <p class="subtitle">
+        Type <code>/</code> to add a block · Select text for inline formatting · Drag rows to reorder
+      </p>
       
       <div class="mb-8 flex justify-center">
         <ModalWithEditor />
       </div>
 
-      <div id="editor" ref="editorEl"></div>
+      <div
+        id="editor"
+        ref="editorEl"
+      />
       
       <div class="toolbar">
-        <button id="btn-json" :class="{ active: activeFormat === 'json' }" @click="updateOutput('json')">
-          <span v-html="getIcon(Icons.FileJson)"></span> Get JSON
+        <button
+          id="btn-json"
+          :class="{ active: activeFormat === 'json' }"
+          @click="updateOutput('json')"
+        >
+          <span v-html="getIcon(Icons.FileJson)" /> Get JSON
         </button>
-        <button id="btn-html" :class="{ active: activeFormat === 'html' }" @click="updateOutput('html')">
-          <span v-html="getIcon(Icons.FileCode)"></span> Get HTML
+        <button
+          id="btn-html"
+          :class="{ active: activeFormat === 'html' }"
+          @click="updateOutput('html')"
+        >
+          <span v-html="getIcon(Icons.FileCode)" /> Get HTML
         </button>
-        <button id="btn-md" :class="{ active: activeFormat === 'markdown' }" @click="updateOutput('markdown')">
-          <span v-html="getIcon(Icons.FileText)"></span> Get Markdown
+        <button
+          id="btn-md"
+          :class="{ active: activeFormat === 'markdown' }"
+          @click="updateOutput('markdown')"
+        >
+          <span v-html="getIcon(Icons.FileText)" /> Get Markdown
         </button>
-        <button id="btn-email" :class="{ active: activeFormat === 'email' }" @click="updateOutput('email')">
-          <span v-html="getIcon(Icons.Mail)"></span> Get Email HTML
+        <button
+          id="btn-email"
+          :class="{ active: activeFormat === 'email' }"
+          @click="updateOutput('email')"
+        >
+          <span v-html="getIcon(Icons.Mail)" /> Get Email HTML
         </button>
-        <button id="btn-clear" @click="updateOutput('clear')">
-          <span v-html="getIcon(Icons.Eraser)"></span> Clear
+        <button
+          id="btn-clear"
+          @click="updateOutput('clear')"
+        >
+          <span v-html="getIcon(Icons.Eraser)" /> Clear
         </button>
       </div>
 
-      <pre v-if="output" id="output">{{ output }}</pre>
+      <pre
+        v-if="output"
+        id="output"
+      >{{ output }}</pre>
       
-      <section v-if="output && activeFormat !== 'json'" id="preview" v-html="output"></section>
+      <section
+        v-if="output && activeFormat !== 'json'"
+        id="preview"
+        v-html="output"
+      />
     </div>
   </div>
 </template>
@@ -132,7 +165,6 @@ body {
   max-width: 720px;
 }
 
-h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; text-align: center; }
 .subtitle { color: #666; margin-bottom: 32px; font-size: 0.9rem; text-align: center; }
 
 #editor {

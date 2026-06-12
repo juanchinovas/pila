@@ -220,244 +220,244 @@ const EMOJIS: EmojiItem[] = [
   { emoji: '❌', name: 'cross' },
   { emoji: '⚠️', name: 'warning' },
   { emoji: '❤️', name: 'heart' },
-]
+];
 
 export class EmojiPopover {
-  private editorEl: HTMLElement
-  private overlayRoot: HTMLElement
+  private editorEl: HTMLElement;
+  private portalTo: HTMLElement;
   private menuEl!: HTMLElement;
   private target!: HTMLElement;
-  private inputEl!: HTMLInputElement
-  private activeBlockId: string | null = null
-  private filter = ''
-  private selectedIndex = 0
-  private filteredItems: EmojiItem[] = []
-  private onClickOutsideBound = this.handleClickOutside.bind(this)
-  private cleanupFunctions: (() => void)[] = []
+  private inputEl!: HTMLInputElement;
+  private activeBlockId: string | null = null;
+  private filter = '';
+  private selectedIndex = 0;
+  private filteredItems: EmojiItem[] = [];
+  private onClickOutsideBound = this.handleClickOutside.bind(this);
+  private cleanupFunctions: (() => void)[] = [];
   
-  constructor(editorEl: HTMLElement, overlayRoot: HTMLElement = document.body) {
-    this.editorEl = editorEl
-    this.overlayRoot = overlayRoot
-    this.mount()
+  constructor(editorEl: HTMLElement, portalTo: HTMLElement = document.body) {
+    this.editorEl = editorEl;
+    this.portalTo = portalTo;
+    this.mount();
   }
 
   private mount(): void {
-    this.menuEl = document.createElement('div')
-    this.menuEl.className = 'pila-slash-menu pila-emoji-popover flex flex-col'
-    this.menuEl.style.display = 'none'
+    this.menuEl = document.createElement('div');
+    this.menuEl.className = 'pila-slash-menu pila-emoji-popover flex flex-col';
+    this.menuEl.style.display = 'none';
     
-    const filterContainer = document.createElement('div')
-    filterContainer.className = 'pila-emoji-filter-container p-2 border-b border-gray-100'
+    const filterContainer = document.createElement('div');
+    filterContainer.className = 'pila-emoji-filter-container p-2 border-b border-gray-100';
     
-    this.inputEl = document.createElement('input')
-    this.inputEl.type = 'text'
-    this.inputEl.placeholder = 'Filter emojis...'
-    this.inputEl.className = 'pila-emoji-filter-input w-full border border-gray-200 rounded px-2 py-1 outline-none text-sm'
+    this.inputEl = document.createElement('input');
+    this.inputEl.type = 'text';
+    this.inputEl.placeholder = 'Filter emojis...';
+    this.inputEl.className = 'pila-emoji-filter-input w-full border border-gray-200 rounded px-2 py-1 outline-none text-sm';
     
-    filterContainer.appendChild(this.inputEl)
-    this.menuEl.appendChild(filterContainer)
+    filterContainer.appendChild(this.inputEl);
+    this.menuEl.appendChild(filterContainer);
 
-    const listEl = document.createElement('div')
-    listEl.className = 'pila-emoji-list max-h-[200px] overflow-y-auto p-1'
-    this.menuEl.appendChild(listEl)
+    const listEl = document.createElement('div');
+    listEl.className = 'pila-emoji-list max-h-[200px] overflow-y-auto p-1';
+    this.menuEl.appendChild(listEl);
 
-    this.overlayRoot.appendChild(this.menuEl)
+    this.portalTo.appendChild(this.menuEl);
 
     const onInput = () => {
-      this.filter = this.inputEl.value.toLowerCase()
-      this.selectedIndex = 0
-      this.renderItems()
-    }
-    this.inputEl.addEventListener('input', onInput)
-    this.cleanupFunctions.push(() => this.inputEl.removeEventListener('input', onInput))
+      this.filter = this.inputEl.value.toLowerCase();
+      this.selectedIndex = 0;
+      this.renderItems();
+    };
+    this.inputEl.addEventListener('input', onInput);
+    this.cleanupFunctions.push(() => this.inputEl.removeEventListener('input', onInput));
 
-    this.inputEl.addEventListener('keydown', this.handleKeyDown.bind(this))
-    this.cleanupFunctions.push(() => this.inputEl.removeEventListener('keydown', this.handleKeyDown.bind(this)))
+    this.inputEl.addEventListener('keydown', this.handleKeyDown.bind(this));
+    this.cleanupFunctions.push(() => this.inputEl.removeEventListener('keydown', this.handleKeyDown.bind(this)));
   }
 
   handleKeyDown(e: KeyboardEvent): boolean {
-    if (!this.isOpen()) return false
+    if (!this.isOpen()) return false;
 
-    if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); this.moveSelection(1); return true }
-    if (e.key === 'ArrowUp')   { e.preventDefault(); e.stopPropagation(); this.moveSelection(-1); return true }
+    if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); this.moveSelection(1); return true; }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); e.stopPropagation(); this.moveSelection(-1); return true; }
     if (e.key === 'Tab')       { 
       e.preventDefault(); 
       e.stopPropagation(); 
       this.moveSelection(e.shiftKey ? -1 : 1); 
-      return true 
+      return true; 
     }
-    if (e.key === 'Enter')     { e.preventDefault(); e.stopPropagation(); this.confirm(); return true }
-    if (e.key === 'Escape')    { e.stopPropagation(); this.close(); return true }
-    if (e.key === ' ')         { this.close(); return false }
+    if (e.key === 'Enter')     { e.preventDefault(); e.stopPropagation(); this.confirm(); return true; }
+    if (e.key === 'Escape')    { e.stopPropagation(); this.close(); return true; }
+    if (e.key === ' ')         { this.close(); return false; }
 
-    return false
+    return false;
   }
 
   handleInput(e: Event): void {
     this.target = e.target as HTMLElement;
-    if (!this.target.hasAttribute('contenteditable')) return
+    if (!this.target.hasAttribute('contenteditable')) return;
 
-    const text = this.target.textContent ?? ''
+    const text = this.target.textContent ?? '';
     const colonIdx = text.lastIndexOf(':');
 
     // Only open if the colon is the last character or followed by filter text with no spaces
     if (colonIdx !== -1 && (colonIdx === 0 || text[colonIdx - 1] === ' ')) {
-      const rest = text.slice(colonIdx + 1)
+      const rest = text.slice(colonIdx + 1);
 
       if (!rest.includes(' ')) {
-        this.activeBlockId = this.target.dataset.blockId ?? null
-        this.filter = rest.toLowerCase()
-        this.selectedIndex = 0
-        this.renderItems()
+        this.activeBlockId = this.target.dataset.blockId ?? null;
+        this.filter = rest.toLowerCase();
+        this.selectedIndex = 0;
+        this.renderItems();
         if (this.filteredItems.length > 0) {
-          const selection = window.getSelection()
+          const selection = window.getSelection();
           if (selection && selection.rangeCount > 0) {
-            this.positionAtRange(selection.getRangeAt(0))
+            this.positionAtRange(selection.getRangeAt(0));
           } else {
-            this.positionAt(this.target)
+            this.positionAt(this.target);
           }
-          this.show()
-          return
+          this.show();
+          return;
         }
       }
     }
     
-    this.close()
+    this.close();
   }
 
   private renderItems(): void {
     this.filteredItems = EMOJIS.filter(item => 
       !this.filter || item.name.includes(this.filter)
-    ).slice(0, 50) // Limit results
+    ).slice(0, 50); // Limit results
 
-    const listEl = this.menuEl.querySelector('.pila-emoji-list') as HTMLElement
-    if (!listEl) return
-    listEl.innerHTML = ''
+    const listEl = this.menuEl.querySelector('.pila-emoji-list') as HTMLElement;
+    if (!listEl) return;
+    listEl.innerHTML = '';
 
     if (this.filteredItems.length === 0) {
-      const empty = document.createElement('div')
-      empty.className = 'px-2 py-4 text-center text-gray-400 text-sm'
-      empty.textContent = 'No emojis found'
-      listEl.appendChild(empty)
-      return
+      const empty = document.createElement('div');
+      empty.className = 'px-2 py-4 text-center text-gray-400 text-sm';
+      empty.textContent = 'No emojis found';
+      listEl.appendChild(empty);
+      return;
     }
 
     this.filteredItems.forEach((item, idx) => {
-      const row = document.createElement('div')
-      row.className = 'flex gap-1 items-center px-2 py-1 rounded cursor-pointer hover:bg-gray-100'
-      row.tabIndex = 0
+      const row = document.createElement('div');
+      row.className = 'flex gap-1 items-center px-2 py-1 rounded cursor-pointer hover:bg-gray-100';
+      row.tabIndex = 0;
       if (idx === this.selectedIndex) {
-        row.classList.add('bg-gray-100')
+        row.classList.add('bg-gray-100');
       }
       
-      const emoji = document.createElement('span')
-      emoji.className = 'pila-slash-icon !bg-transparent text-lg'
-      emoji.textContent = item.emoji
+      const emoji = document.createElement('span');
+      emoji.className = 'pila-slash-icon !bg-transparent text-lg';
+      emoji.textContent = item.emoji;
 
-      const name = document.createElement('span')
-      name.className = 'pila-slash-name'
-      name.textContent = `:${item.name}:`
+      const name = document.createElement('span');
+      name.className = 'pila-slash-name';
+      name.textContent = `:${item.name}:`;
 
-      row.appendChild(emoji)
-      row.appendChild(name)
+      row.appendChild(emoji);
+      row.appendChild(name);
 
       row.addEventListener('mousedown', (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        this.selectedIndex = idx
-        this.confirm()
-      })
+        e.preventDefault();
+        e.stopPropagation();
+        this.selectedIndex = idx;
+        this.confirm();
+      });
 
       row.addEventListener('keydown', this.handleInput);
-      listEl.appendChild(row)
-    })
+      listEl.appendChild(row);
+    });
   }
 
   private moveSelection(delta: number): void {
-    this.selectedIndex = (this.selectedIndex + delta + this.filteredItems.length) % this.filteredItems.length
-    this.renderItems()
-    const listEl = this.menuEl.querySelector('.pila-emoji-list') as HTMLElement
-    const selected = listEl?.children[this.selectedIndex] as HTMLElement
-    selected?.scrollIntoView({ block: 'nearest' })
+    this.selectedIndex = (this.selectedIndex + delta + this.filteredItems.length) % this.filteredItems.length;
+    this.renderItems();
+    const listEl = this.menuEl.querySelector('.pila-emoji-list') as HTMLElement;
+    const selected = listEl?.children[this.selectedIndex] as HTMLElement;
+    selected?.scrollIntoView({ block: 'nearest' });
   }
 
   private confirm(): void {
     const item = this.filteredItems[this.selectedIndex];
-    if (!item) return
+    if (!item) return;
 
     const contentEl = this.editorEl.querySelector(
       `[data-block-id="${this.activeBlockId}"][contenteditable=true]`
     ) as HTMLElement | null ?? this.target;
     
     if (contentEl) {
-      const text = contentEl.textContent ?? ''
-      const colonIdx = text.lastIndexOf(':')
+      const text = contentEl.textContent ?? '';
+      const colonIdx = text.lastIndexOf(':');
       if (colonIdx !== -1) {
         // Replace from the colon to the end of the text
-        const before = text.slice(0, colonIdx)
-        const newText = before + item.emoji
-        contentEl.innerText = newText
+        const before = text.slice(0, colonIdx);
+        const newText = before + item.emoji;
+        contentEl.innerText = newText;
         
         // Position cursor after emoji
-        const firstNode = contentEl.firstChild || contentEl
-        const range = document.createRange()
-        const sel = window.getSelection()
+        const firstNode = contentEl.firstChild || contentEl;
+        const range = document.createRange();
+        const sel = window.getSelection();
         
         try {
-          range.setStart(firstNode, newText.length)
-          range.collapse(true)
-          sel?.removeAllRanges()
-          sel?.addRange(range)
-        } catch (err) {
-          contentEl.focus()
+          range.setStart(firstNode, newText.length);
+          range.collapse(true);
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+        } catch {
+          contentEl.focus();
         }
         
-        contentEl.dispatchEvent(new Event('input', { bubbles: true }))
+        contentEl.dispatchEvent(new Event('input', { bubbles: true }));
       }
     }
 
-    this.close()
+    this.close();
   }
 
   private positionAt(el: HTMLElement): void {
-    const rect = el.getBoundingClientRect()
-    this.menuEl.style.top = `${rect.bottom + window.scrollY + 4}px`
-    this.menuEl.style.left = `${rect.left + window.scrollX}px`
+    const rect = el.getBoundingClientRect();
+    this.menuEl.style.top = `${rect.bottom + window.scrollY + 4}px`;
+    this.menuEl.style.left = `${rect.left + window.scrollX}px`;
   }
 
   private positionAtRange(range: Range): void {
-    const rect = range.getBoundingClientRect()
-    this.menuEl.style.top = `${rect.bottom + window.scrollY + 4}px`
-    this.menuEl.style.left = `${rect.left + window.scrollX}px`
+    const rect = range.getBoundingClientRect();
+    this.menuEl.style.top = `${rect.bottom + window.scrollY + 4}px`;
+    this.menuEl.style.left = `${rect.left + window.scrollX}px`;
   }
 
   private show(): void {
-    this.menuEl.style.display = 'flex'
-    document.addEventListener('mousedown', this.onClickOutsideBound, true)
-    this.inputEl.value = this.filter
-    requestAnimationFrame(() => this.inputEl.focus())
+    this.menuEl.style.display = 'flex';
+    document.addEventListener('mousedown', this.onClickOutsideBound, true);
+    this.inputEl.value = this.filter;
+    requestAnimationFrame(() => this.inputEl.focus());
   }
 
   private close(): void {
-    this.menuEl.style.display = 'none'
-    this.activeBlockId = null
-    this.filter = ''
-    document.removeEventListener('mousedown', this.onClickOutsideBound, true)
+    this.menuEl.style.display = 'none';
+    this.activeBlockId = null;
+    this.filter = '';
+    document.removeEventListener('mousedown', this.onClickOutsideBound, true);
   }
 
   private handleClickOutside(e: MouseEvent): void {
     if (this.menuEl && !this.menuEl.contains(e.target as Node)) {
-      this.close()
+      this.close();
     }
   }
 
   private isOpen(): boolean {
-    return this.menuEl.style.display !== 'none'
+    return this.menuEl.style.display !== 'none';
   }
 
   destroy(): void {
-    this.cleanupFunctions.forEach(fn => fn())
-    this.cleanupFunctions = []
-    this.menuEl?.remove()
+    this.cleanupFunctions.forEach(fn => fn());
+    this.cleanupFunctions = [];
+    this.menuEl?.remove();
   }
 }

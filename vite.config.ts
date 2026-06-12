@@ -1,9 +1,9 @@
-import { defineConfig } from 'vite'
-import dts from 'vite-plugin-dts'
-import { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { defineConfig } from 'vite';
+import dts from 'vite-plugin-dts';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url))
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   root: 'demo',
@@ -33,10 +33,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name === 'style.css') return 'pila.css'
-          return assetInfo.name ?? 'asset'
+          if (assetInfo.name === 'style.css') return 'pila.css';
+          return assetInfo.name ?? 'asset';
         },
       },
     },
   },
-})
+});

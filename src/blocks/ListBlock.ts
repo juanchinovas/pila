@@ -1,109 +1,109 @@
-import { InlineParser } from '../inline/InlineParser'
-import { InlineRenderer } from '../inline/InlineRenderer'
-import { Block } from '../types'
-import { PilaBlock } from './PilaBlock'
+import { InlineParser } from '../inline/InlineParser';
+import { InlineRenderer } from '../inline/InlineRenderer';
+import { Block } from '../types';
+import { PilaBlock } from './PilaBlock';
 
 export class ListBlock extends PilaBlock {
-  private contentEl!: HTMLElement
-  private markerEl!: HTMLElement
-  private indentLevel = 0
+  private contentEl!: HTMLElement;
+  private markerEl!: HTMLElement;
+  private indentLevel = 0;
 
   protected buildDOM(): void {
-    const isBullet = this.block.type === 'bulletList'
+    const isBullet = this.block.type === 'bulletList';
 
-    this.classList.add('flex', 'items-center', 'gap-1', 'py-0.5', 'px-1', 'mt-5')
+    this.classList.add('flex', 'items-center', 'gap-1', 'py-0.5', 'px-1', 'mt-5');
 
     const li = this.makeContentEditable(
       'li',
       this.block.content ?? [],
       'flex-1 outline-none min-h-[1.4em] whitespace-pre-wrap break-words list-none'
-    )
+    );
 
     // Tab / Shift+Tab indentation
     li.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Tab') {
-        e.preventDefault()
+        e.preventDefault();
         if (e.shiftKey) {
-          this.indentLevel = Math.max(0, this.indentLevel - 1)
+          this.indentLevel = Math.max(0, this.indentLevel - 1);
         } else {
-          this.indentLevel = Math.min(6, this.indentLevel + 1)
+          this.indentLevel = Math.min(6, this.indentLevel + 1);
         }
-        this.style.paddingLeft = `${this.indentLevel * 24}px`
+        this.style.paddingLeft = `${this.indentLevel * 24}px`;
       }
-    })
+    });
 
-    const marker = document.createElement('span')
-    marker.className = 'flex-shrink-0 min-w-[20px] text-[color:var(--pila-muted)] text-[0.9em] select-none'
-    marker.setAttribute('aria-hidden', 'true')
-    marker.textContent = isBullet ? '•' : `${this.orderedIndex()}.`
-    marker.dataset.ordered = String(!isBullet)
-    this.markerEl = marker
+    const marker = document.createElement('span');
+    marker.className = 'flex-shrink-0 min-w-[20px] text-[color:var(--pila-muted)] text-[0.9em] select-none';
+    marker.setAttribute('aria-hidden', 'true');
+    marker.textContent = isBullet ? '•' : `${this.orderedIndex()}.`;
+    marker.dataset.ordered = String(!isBullet);
+    this.markerEl = marker;
 
-    this.appendChild(marker)
-    this.appendChild(li)
-    this.contentEl = li
+    this.appendChild(marker);
+    this.appendChild(li);
+    this.contentEl = li;
   }
 
   protected override handleEnter(el: HTMLElement): void {
-    const text = el.textContent ?? ''
+    const text = el.textContent ?? '';
     if (text.trim() === '') {
       // Empty list item: exit list and turn into paragraph
-      this.ctx.manager.update(this.block.id!, { type: 'paragraph', content: [] })
-      return
+      this.ctx.manager.update(this.block.id!, { type: 'paragraph', content: [] });
+      return;
     }
 
-    const { before, after } = this.splitAtCaret(el)
-    this.ctx.manager.update(this.block.id!, { content: before })
+    const { before, after } = this.splitAtCaret(el);
+    this.ctx.manager.update(this.block.id!, { content: before });
 
-    const newBlock = this.ctx.manager.add(this.block.type as any, {
+    const newBlock = this.ctx.manager.add(this.block.type, {
       content: after,
       afterId: this.block.id!,
-    })
+    });
 
     requestAnimationFrame(() => {
       const newEl = this.ctx.editorEl.querySelector(
         `[data-block-id="${newBlock.id!}"][contenteditable]`
-      ) as HTMLElement | null
-      newEl?.focus()
-    })
+      ) as HTMLElement | null;
+      newEl?.focus();
+    });
   }
 
   override updateData(block: Block): void {
-    super.updateData(block)
+    super.updateData(block);
     if (this.contentEl) {
       if (block.type === 'numberedList' && this.markerEl) {
-        this.markerEl.textContent = `${this.orderedIndex()}.`
+        this.markerEl.textContent = `${this.orderedIndex()}.`;
       }
-      InlineRenderer.render(this.contentEl, block.content ?? [])
+      InlineRenderer.render(this.contentEl, block.content ?? []);
     }
   }
 
   /** Returns the 1-based position of this block within its consecutive numbered-list run. */
   private orderedIndex(): number {
-    const all = this.ctx.manager.getAll()
-    const pos = all.findIndex((b) => b.id! === this.block.id!)
-    if (pos === -1) return 1
-    let count = 1
+    const all = this.ctx.manager.getAll();
+    const pos = all.findIndex((b) => b.id! === this.block.id!);
+    if (pos === -1) return 1;
+    let count = 1;
     for (let i = pos - 1; i >= 0; i--) {
-      if (all[i].type !== 'numberedList') break
-      count++
+      if (all[i].type !== 'numberedList') break;
+      count++;
     }
-    return count
+    return count;
   }
 
   getContent(): Block {
     return {
       ...this.block,
       content: InlineParser.parse(this.contentEl),
-    }
+    };
   }
 
   focusBlock(offset?: number): void {
-    this.contentEl.focus()
-    if (offset !== undefined) this.setCaret(this.contentEl, offset)
+    this.contentEl.focus();
+    if (offset !== undefined) this.setCaret(this.contentEl, offset);
   }
 }
 
 if (!customElements.get('pila-list')) {
-  customElements.define('pila-list', ListBlock)
+  customElements.define('pila-list', ListBlock);
 }

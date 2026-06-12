@@ -1,9 +1,9 @@
-import { BlockManager } from '../core/BlockManager'
-import { PluginRegistry } from '../core/PluginRegistry'
-import { BlockAttrs, BlockType } from '../types'
-import { icon as makeIcon, Icons, LucideIconNode } from './icons'
-import { ImagePropsModal } from './ImagePropsModal'
-import { EmojiPopover } from './EmojiPopover'
+import { BlockManager } from '../core/BlockManager';
+import { PluginRegistry } from '../core/PluginRegistry';
+import { BlockAttrs, BlockType } from '../types';
+import { icon as makeIcon, Icons, LucideIconNode } from './icons';
+import { ImagePropsModal } from './ImagePropsModal';
+import { EmojiPopover } from './EmojiPopover';
 
 interface SlashItem {
   type: BlockType
@@ -35,231 +35,231 @@ const ITEMS: SlashItem[] = [
   { type: 'button',        name: 'Button · Primary',  description: 'CTA button (filled)',     iconNode: Icons.MousePointerClick, defaultAttrs: { buttonStyle: 'primary',   alignment: 'left' } },
   { type: 'button',        name: 'Button · Outline',  description: 'CTA button (outlined)',   iconNode: Icons.MousePointerClick, defaultAttrs: { buttonStyle: 'outline',   alignment: 'left' } },
   { type: 'button',        name: 'Button · Secondary', description: 'CTA button (muted)',     iconNode: Icons.MousePointerClick, defaultAttrs: { buttonStyle: 'secondary', alignment: 'left' } },
-]
+];
 
 export class SlashMenu {
-  private editorEl: HTMLElement
-  private manager: BlockManager
-  private plugins: PluginRegistry
-  private overlayRoot: HTMLElement
-  private menuEl!: HTMLElement
-  private activeBlockId: string | null = null
-  private filter = ''
-  private selectedIndex = 0
-  private filteredItems: SlashItem[] = []
-  private onKeyDown!: (e: KeyboardEvent) => void
-  private onInput!: (e: Event) => void
-  private onClickOutsideBound = this.handleClickOutside.bind(this)
-  private imageModal: ImagePropsModal
-  private emojiPopover: EmojiPopover
+  private editorEl: HTMLElement;
+  private manager: BlockManager;
+  private plugins: PluginRegistry;
+  private portalTo: HTMLElement;
+  private menuEl!: HTMLElement;
+  private activeBlockId: string | null = null;
+  private filter = '';
+  private selectedIndex = 0;
+  private filteredItems: SlashItem[] = [];
+  private onKeyDown!: (e: KeyboardEvent) => void;
+  private onInput!: (e: Event) => void;
+  private onClickOutsideBound = this.handleClickOutside.bind(this);
+  private imageModal: ImagePropsModal;
+  private emojiPopover: EmojiPopover;
 
   constructor(
     editorEl: HTMLElement,
     manager: BlockManager,
     plugins = new PluginRegistry(),
-    overlayRoot: HTMLElement = document.body
+    portalTo: HTMLElement = document.body
   ) {
-    this.editorEl = editorEl
-    this.manager = manager
-    this.plugins = plugins
-    this.overlayRoot = overlayRoot
-    this.emojiPopover = new EmojiPopover(editorEl, overlayRoot)
-    this.imageModal = new ImagePropsModal(overlayRoot)
+    this.editorEl = editorEl;
+    this.manager = manager;
+    this.plugins = plugins;
+    this.portalTo = portalTo;
+    this.emojiPopover = new EmojiPopover(editorEl, portalTo);
+    this.imageModal = new ImagePropsModal(portalTo);
   }
 
   mount(): void {
-    this.menuEl = document.createElement('div')
-    this.menuEl.className = 'pila-slash-menu'
-    this.menuEl.style.display = 'none'
-    this.overlayRoot.appendChild(this.menuEl)
+    this.menuEl = document.createElement('div');
+    this.menuEl.className = 'pila-slash-menu';
+    this.menuEl.style.display = 'none';
+    this.portalTo.appendChild(this.menuEl);
 
-    this.onKeyDown = (e: KeyboardEvent) => this.handleKeyDown(e)
-    this.onInput = (e: Event) => this.handleInput(e)
+    this.onKeyDown = (e: KeyboardEvent) => this.handleKeyDown(e);
+    this.onInput = (e: Event) => this.handleInput(e);
 
-    this.editorEl.addEventListener('keydown', this.onKeyDown, true)
-    this.editorEl.addEventListener('input', this.onInput)
+    this.editorEl.addEventListener('keydown', this.onKeyDown, true);
+    this.editorEl.addEventListener('input', this.onInput);
   }
 
   destroy(): void {
-    this.editorEl.removeEventListener('keydown', this.onKeyDown, true)
-    this.editorEl.removeEventListener('input', this.onInput)
-    this.menuEl?.remove()
-    this.imageModal.destroy()
+    this.editorEl.removeEventListener('keydown', this.onKeyDown, true);
+    this.editorEl.removeEventListener('input', this.onInput);
+    this.menuEl?.remove();
+    this.imageModal.destroy();
   }
 
   private handleKeyDown(e: KeyboardEvent): void {
-    if (this.emojiPopover.handleKeyDown(e)) return
+    if (this.emojiPopover.handleKeyDown(e)) return;
 
     if (this.isOpen()) {
-      if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); this.moveSelection(1); return }
-      if (e.key === 'ArrowUp')   { e.preventDefault(); e.stopPropagation(); this.moveSelection(-1); return }
+      if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); this.moveSelection(1); return; }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); e.stopPropagation(); this.moveSelection(-1); return; }
       if (e.key === 'Tab')       { 
         e.preventDefault(); 
         e.stopPropagation(); 
         this.moveSelection(e.shiftKey ? -1 : 1); 
-        return 
+        return; 
       }
-      if (e.key === 'Enter')     { e.preventDefault(); e.stopPropagation(); this.confirm(); return }
-      if (e.key === 'Escape')    { e.stopPropagation(); this.close(); return }
+      if (e.key === 'Enter')     { e.preventDefault(); e.stopPropagation(); this.confirm(); return; }
+      if (e.key === 'Escape')    { e.stopPropagation(); this.close(); return; }
     }
 
     // Detect '/' at start of empty block or after whitespace
     if (e.key === '/') {
-      const target = e.target as HTMLElement
-      const blockId = target.dataset.blockId
+      const target = e.target as HTMLElement;
+      const blockId = target.dataset.blockId;
       if (blockId && this.isAtStartOrEmpty(target)) {
         // Let the keystroke insert '/' first, then open on input
         // For tables, the ID might be "blockId_cell_0_0", so we normalize to base ID
-        this.activeBlockId = blockId.split('_cell_')[0]
+        this.activeBlockId = blockId.split('_cell_')[0];
       }
     }
   }
 
   private handleInput(e: Event): void {
-    const target = e.target as HTMLElement
-    if (!target.hasAttribute('contenteditable')) return
+    const target = e.target as HTMLElement;
+    if (!target.hasAttribute('contenteditable')) return;
 
-    this.emojiPopover.handleInput(e)
+    this.emojiPopover.handleInput(e);
 
-    const text = target.textContent ?? ''
-    const slashIdx = text.indexOf('/')
+    const text = target.textContent ?? '';
+    const slashIdx = text.indexOf('/');
 
-    const blockIdAttr = target.dataset.blockId ?? ''
-    const normalizedId = blockIdAttr.split('_cell_')[0]
+    const blockIdAttr = target.dataset.blockId ?? '';
+    const normalizedId = blockIdAttr.split('_cell_')[0];
 
     if (slashIdx !== -1 && this.activeBlockId === normalizedId) {
-      this.filter = text.slice(slashIdx + 1).toLowerCase()
-      this.selectedIndex = 0
-      this.renderItems()
-      this.positionAt(target)
-      this.show()
+      this.filter = text.slice(slashIdx + 1).toLowerCase();
+      this.selectedIndex = 0;
+      this.renderItems();
+      this.positionAt(target);
+      this.show();
     } else {
-      this.activeBlockId = null
-      this.close()
+      this.activeBlockId = null;
+      this.close();
     }
   }
 
   private isAtStartOrEmpty(el: HTMLElement): boolean {
-    const text = el.textContent ?? ''
-    if (text.trim() === '' || text.trim() === '/') return true
+    const text = el.textContent ?? '';
+    if (text.trim() === '' || text.trim() === '/') return true;
 
-    const sel = window.getSelection()
-    if (!sel || !sel.rangeCount) return false
-    const range = sel.getRangeAt(0)
-    const pre = document.createRange()
-    pre.setStart(el, 0)
-    pre.setEnd(range.startContainer, range.startOffset)
-    return pre.toString().trim() === ''
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return false;
+    const range = sel.getRangeAt(0);
+    const pre = document.createRange();
+    pre.setStart(el, 0);
+    pre.setEnd(range.startContainer, range.startOffset);
+    return pre.toString().trim() === '';
   }
 
   private renderItems(): void {
-    const allItems = [...ITEMS, ...this.plugins.getExtraSlashItems()]
+    const allItems = [...ITEMS, ...this.plugins.getExtraSlashItems()];
     const filtered = allItems.filter(
       (item) =>
         !this.filter ||
         item.name.toLowerCase().includes(this.filter) ||
         item.description.toLowerCase().includes(this.filter)
-    )
+    );
 
-    this.menuEl.innerHTML = ''
+    this.menuEl.innerHTML = '';
 
     if (filtered.length === 0) {
-      const empty = document.createElement('div')
-      empty.className = 'pila-slash-empty'
-      empty.textContent = 'No results'
-      this.menuEl.appendChild(empty)
-      return
+      const empty = document.createElement('div');
+      empty.className = 'pila-slash-empty';
+      empty.textContent = 'No results';
+      this.menuEl.appendChild(empty);
+      return;
     }
 
-    this.filteredItems = filtered as SlashItem[]
+    this.filteredItems = filtered as SlashItem[];
 
     filtered.forEach((item, idx) => {
-      const row = document.createElement('div')
-      row.className = 'pila-slash-item' + (idx === this.selectedIndex ? ' pila-slash-item--selected' : '')
-      row.dataset.type = item.type
+      const row = document.createElement('div');
+      row.className = 'pila-slash-item' + (idx === this.selectedIndex ? ' pila-slash-item--selected' : '');
+      row.dataset.type = item.type;
 
-      const iconEl = document.createElement('span')
-      iconEl.className = 'pila-slash-icon'
+      const iconEl = document.createElement('span');
+      iconEl.className = 'pila-slash-icon';
       if ('iconNode' in item) {
-        iconEl.appendChild(makeIcon((item as SlashItem).iconNode, 18))
+        iconEl.appendChild(makeIcon((item as SlashItem).iconNode, 18));
       } else {
         // plugin-provided string icon
-        iconEl.textContent = (item as { icon: string }).icon
+        iconEl.textContent = (item as { icon: string }).icon;
       }
 
-      const text = document.createElement('span')
-      text.className = 'pila-slash-text'
+      const text = document.createElement('span');
+      text.className = 'pila-slash-text';
 
-      const name = document.createElement('span')
-      name.className = 'pila-slash-name'
-      name.textContent = item.name
+      const name = document.createElement('span');
+      name.className = 'pila-slash-name';
+      name.textContent = item.name;
 
-      const desc = document.createElement('span')
-      desc.className = 'pila-slash-desc'
-      desc.textContent = item.description
+      const desc = document.createElement('span');
+      desc.className = 'pila-slash-desc';
+      desc.textContent = item.description;
 
-      text.appendChild(name)
-      text.appendChild(desc)
-      row.appendChild(iconEl)
-      row.appendChild(text)
+      text.appendChild(name);
+      text.appendChild(desc);
+      row.appendChild(iconEl);
+      row.appendChild(text);
 
       row.addEventListener('mousedown', (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        this.selectedIndex = idx
-        this.confirm()
-      })
+        e.preventDefault();
+        e.stopPropagation();
+        this.selectedIndex = idx;
+        this.confirm();
+      });
 
-      this.menuEl.appendChild(row)
-    })
+      this.menuEl.appendChild(row);
+    });
 
     // Store filtered for confirm
-    this.menuEl.dataset.filteredTypes = filtered.map((i) => i.type).join(',')
+    this.menuEl.dataset.filteredTypes = filtered.map((i) => i.type).join(',');
   }
 
   private moveSelection(delta: number): void {
-    const items = this.menuEl.querySelectorAll('.pila-slash-item')
-    if (!items.length) return
-    this.selectedIndex = (this.selectedIndex + delta + items.length) % items.length
+    const items = this.menuEl.querySelectorAll('.pila-slash-item');
+    if (!items.length) return;
+    this.selectedIndex = (this.selectedIndex + delta + items.length) % items.length;
 
     items.forEach((el, idx) => {
-      el.classList.toggle('pila-slash-item--selected', idx === this.selectedIndex)
-    })
-    const selected = items[this.selectedIndex] as HTMLElement
-    selected.scrollIntoView({ block: 'nearest' })
+      el.classList.toggle('pila-slash-item--selected', idx === this.selectedIndex);
+    });
+    const selected = items[this.selectedIndex] as HTMLElement;
+    selected.scrollIntoView({ block: 'nearest' });
   }
 
   private async confirm(): Promise<void> {
-    if (!this.activeBlockId) return
+    if (!this.activeBlockId) return;
 
-    const types = (this.menuEl.dataset.filteredTypes ?? '').split(',') as BlockType[]
-    const chosen = types[this.selectedIndex]
-    if (!chosen) { this.close(); return }
+    const types = (this.menuEl.dataset.filteredTypes ?? '').split(',') as BlockType[];
+    const chosen = types[this.selectedIndex];
+    if (!chosen) { this.close(); return; }
 
     // Find the actual element being edited
-    const sel = window.getSelection()
-    let contentEl = sel?.anchorNode?.parentElement?.closest('[contenteditable]') as HTMLElement | null
+    const sel = window.getSelection();
+    let contentEl = sel?.anchorNode?.parentElement?.closest('[contenteditable]') as HTMLElement | null;
     
     // Fallback to searching by ID if selection isn't clear
     if (!contentEl || !contentEl.getAttribute('data-block-id')?.startsWith(this.activeBlockId)) {
       contentEl = this.editorEl.querySelector(
         `[data-block-id^="${this.activeBlockId}"] [contenteditable]`
-      ) as HTMLElement | null
+      ) as HTMLElement | null;
     }
 
     if (contentEl) {
-      const text = contentEl.textContent ?? ''
-      const slashIdx = text.indexOf('/')
-      const cleanText = slashIdx !== -1 ? text.slice(0, slashIdx) : ''
+      const text = contentEl.textContent ?? '';
+      const slashIdx = text.indexOf('/');
+      const cleanText = slashIdx !== -1 ? text.slice(0, slashIdx) : '';
 
       if (chosen === 'divider') {
         // Turn current block into divider
-        this.manager.update(this.activeBlockId, { type: 'divider', content: undefined })
+        this.manager.update(this.activeBlockId, { type: 'divider', content: undefined });
       } else if (chosen === 'image') {
-        const blockId = this.activeBlockId
-        this.close()
-        const result = await this.imageModal.openInsert()
-        if (!result || !result.src) return
+        const blockId = this.activeBlockId;
+        this.close();
+        const result = await this.imageModal.openInsert();
+        if (!result || !result.src) return;
         this.manager.update(blockId, {
           type: 'image',
           content: undefined,
@@ -269,64 +269,64 @@ export class SlashMenu {
             width: result.width || undefined,
             height: result.height || undefined
           },
-        })
-        return
+        });
+        return;
       } else if (chosen === 'table') {
-        const rows = this.makeDefaultTableRows()
+        const rows = this.makeDefaultTableRows();
         this.manager.update(this.activeBlockId, {
           type: 'table',
           content: undefined,
           attrs: { rows },
-        })
+        });
       } else if (chosen === 'code') {
         this.manager.update(this.activeBlockId, {
           type: 'code',
           content: cleanText ? [{ text: cleanText }] : [],
           attrs: { language: 'plaintext' },
-        })
+        });
       } else if (chosen === 'callout') {
-        const item = this.filteredItems[this.selectedIndex]
-        const defaultAttrs = item?.defaultAttrs ?? { icon: '💡', flavor: 'info' as const }
+        const item = this.filteredItems[this.selectedIndex];
+        const defaultAttrs = item?.defaultAttrs ?? { icon: '💡', flavor: 'info' as const };
         this.manager.update(this.activeBlockId, {
           type: 'callout',
           content: cleanText ? [{ text: cleanText }] : [],
           attrs: defaultAttrs,
-        })
+        });
       } else if (chosen === 'button') {
-        const item = this.filteredItems[this.selectedIndex]
-        const defaultAttrs = item?.defaultAttrs ?? { buttonStyle: 'primary' as const, alignment: 'left' as const }
+        const item = this.filteredItems[this.selectedIndex];
+        const defaultAttrs = item?.defaultAttrs ?? { buttonStyle: 'primary' as const, alignment: 'left' as const };
         this.manager.update(this.activeBlockId, {
           type: 'button',
           content: undefined,
           attrs: defaultAttrs,
-        })
+        });
       } else if (chosen === 'columns') {
-        const item = this.filteredItems[this.selectedIndex]
-        const columnDefs = item?.defaultAttrs?.columnDefs ?? [{ blocks: [] }, { blocks: [] }]
+        const item = this.filteredItems[this.selectedIndex];
+        const columnDefs = item?.defaultAttrs?.columnDefs ?? [{ blocks: [] }, { blocks: [] }];
         this.manager.update(this.activeBlockId, {
           type: 'columns',
           content: undefined,
           attrs: { columnDefs },
-        })
+        });
       } else {
         this.manager.update(this.activeBlockId, {
           type: chosen,
           content: cleanText ? [{ text: cleanText }] : [],
-        })
+        });
       }
     }
 
-    const id = this.activeBlockId
-    this.close()
+    const id = this.activeBlockId;
+    this.close();
 
     requestAnimationFrame(() => {
       // If we're refocusing, try to find the exact same element first (important for tables/columns)
-      const stillSameEl = contentEl && document.body.contains(contentEl) && contentEl
+      const stillSameEl = contentEl && document.body.contains(contentEl) && contentEl;
       const focusEl = stillSameEl || this.editorEl.querySelector(
         `[data-block-id="${id}"] [contenteditable]`
-      ) as HTMLElement | null
-      focusEl?.focus()
-    })
+      ) as HTMLElement | null;
+      focusEl?.focus();
+    });
   }
 
   private makeDefaultTableRows() {
@@ -334,35 +334,35 @@ export class SlashMenu {
       { cells: [{ content: [{ text: 'Header 1' }] }, { content: [{ text: 'Header 2' }] }, { content: [{ text: 'Header 3' }] }] },
       { cells: [{ content: [{ text: '' }] }, { content: [{ text: '' }] }, { content: [{ text: '' }] }] },
       { cells: [{ content: [{ text: '' }] }, { content: [{ text: '' }] }, { content: [{ text: '' }] }] },
-    ]
+    ];
   }
 
   private positionAt(el: HTMLElement): void {
-    const rect = el.getBoundingClientRect()
-    this.menuEl.style.top = `${rect.bottom + window.scrollY + 4}px`
-    this.menuEl.style.left = `${rect.left + window.scrollX}px`
+    const rect = el.getBoundingClientRect();
+    this.menuEl.style.top = `${rect.bottom + window.scrollY + 4}px`;
+    this.menuEl.style.left = `${rect.left + window.scrollX}px`;
   }
 
   private show(): void {
-    this.menuEl.style.display = 'block'
-    document.addEventListener('mousedown', this.onClickOutsideBound, true)
+    this.menuEl.style.display = 'block';
+    document.addEventListener('mousedown', this.onClickOutsideBound, true);
   }
 
   private close(): void {
-    this.menuEl.style.display = 'none'
-    this.activeBlockId = null
-    this.filter = ''
-    this.selectedIndex = 0
-    document.removeEventListener('mousedown', this.onClickOutsideBound, true)
+    this.menuEl.style.display = 'none';
+    this.activeBlockId = null;
+    this.filter = '';
+    this.selectedIndex = 0;
+    document.removeEventListener('mousedown', this.onClickOutsideBound, true);
   }
 
   private handleClickOutside(e: MouseEvent): void {
     if (this.menuEl && !this.menuEl.contains(e.target as Node)) {
-      this.close()
+      this.close();
     }
   }
 
   private isOpen(): boolean {
-    return this.menuEl.style.display !== 'none'
+    return this.menuEl.style.display !== 'none';
   }
 }

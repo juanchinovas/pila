@@ -1,15 +1,15 @@
-import { LitElement, html } from 'lit'
-import type { TemplateResult } from 'lit'
-import { Block, InlineNode } from '../types'
-import { BlockManager } from '../core/BlockManager'
-import { InlineParser } from '../inline/InlineParser'
-import { InlineRenderer } from '../inline/InlineRenderer'
+import { LitElement, html } from 'lit';
+import type { TemplateResult } from 'lit';
+import { Block, InlineNode } from '../types';
+import { BlockManager } from '../core/BlockManager';
+import { InlineParser } from '../inline/InlineParser';
+import { InlineRenderer } from '../inline/InlineRenderer';
 
 export interface BlockContext {
   manager: BlockManager
   editorEl: HTMLElement
   placeholder?: string
-  overlayRoot?: HTMLElement
+  portalTo?: HTMLElement
 }
 
 /**
@@ -49,20 +49,20 @@ export abstract class PilaBlock extends LitElement {
    * Tailwind classes defined on the host page penetrate into this element.
    */
   override createRenderRoot(): HTMLElement | DocumentFragment {
-    return this as HTMLElement
+    return this as HTMLElement;
   }
 
   // ─── Instance properties (intentionally non-reactive) ────────────────────
 
-  block!: Block
-  ctx!: BlockContext
+  block!: Block;
+  ctx!: BlockContext;
 
   // ─── Lit lifecycle ────────────────────────────────────────────────────────
 
   override connectedCallback(): void {
-    super.connectedCallback()
+    super.connectedCallback();
     // Required by DragHandle which queries `.pila-block[data-block-id]`
-    this.classList.add('pila-block')
+    this.classList.add('pila-block');
   }
 
   /**
@@ -71,19 +71,19 @@ export abstract class PilaBlock extends LitElement {
    * Those that keep `buildDOM()` leave this as-is.
    */
   override render(): TemplateResult {
-    return html``
+    return html``;
   }
 
   override firstUpdated(): void {
-    this._syncHostAttrs()
-    this.buildDOM()
+    this._syncHostAttrs();
+    this.buildDOM();
   }
 
   // ─── Public API (mirrors BaseBlock) ──────────────────────────────────────
 
   /** The block type this instance was created for. */
   get blockType(): string {
-    return this.block?.type ?? ''
+    return this.block?.type ?? '';
   }
 
   /**
@@ -93,15 +93,15 @@ export abstract class PilaBlock extends LitElement {
    * (e.g. alignment).
    */
   updateData(newBlock: Block): void {
-    this.block = { ...newBlock }
-    this._syncHostAttrs()
-    this.applyGlobalStyles()
+    this.block = { ...newBlock };
+    this._syncHostAttrs();
+    this.applyGlobalStyles();
   }
 
   private applyGlobalStyles(): void {
-    const { background, textColor } = this.block.attrs ?? {}
-    this.style.backgroundColor = background ?? ''
-    this.style.color = textColor ?? ''
+    const { background, textColor } = this.block.attrs ?? {};
+    this.style.backgroundColor = background ?? '';
+    this.style.color = textColor ?? '';
   }
 
   /**
@@ -110,36 +110,36 @@ export abstract class PilaBlock extends LitElement {
    * the DOM shape), not for content-only changes caused by user typing.
    */
   requestRerender(): void {
-    this.requestUpdate()
+    this.requestUpdate();
   }
 
-  abstract getContent(): Block
+  abstract getContent(): Block;
 
   /**
    * Move the editing caret into this block.
    * Named `focusBlock` to avoid collision with `HTMLElement.focus(options?)`.
    */
-  abstract focusBlock(offset?: number): void
+  abstract focusBlock(offset?: number): void;
 
   /**
    * Build the block's inner DOM.
    * Called exactly once, after the first Lit render cycle.
    * Subclasses may replace this with a Lit `render()` template in Phase 2+.
    */
-  protected abstract buildDOM(): void
+  protected abstract buildDOM(): void;
 
   /** Remove this element from the DOM and clean up. */
   destroy(): void {
-    this.remove()
+    this.remove();
   }
 
   // ─── Internal ─────────────────────────────────────────────────────────────
 
   private _syncHostAttrs(): void {
     if (this.block?.id) {
-      this.dataset.blockId = this.block.id!
+      this.dataset.blockId = this.block.id!;
     }
-    this.style.textAlign = this.block?.attrs?.alignment ?? ''
+    this.style.textAlign = this.block?.attrs?.alignment ?? '';
   }
 
   // ─── Editing helpers (ported 1:1 from BaseBlock) ─────────────────────────
@@ -153,121 +153,121 @@ export abstract class PilaBlock extends LitElement {
     inlineNodes: InlineNode[],
     extraClass = ''
   ): HTMLElement {
-    const el = document.createElement(tag)
-    el.setAttribute('contenteditable', 'true')
-    el.setAttribute('spellcheck', 'true')
-    if (extraClass) el.className = extraClass
-    el.setAttribute('data-block-id', this.block.id!)
-    InlineRenderer.render(el, inlineNodes)
-    el.addEventListener('keydown', (e) => this.handleKeyDown(e))
-    el.addEventListener('input', () => this.onInput(el))
-    return el
+    const el = document.createElement(tag);
+    el.setAttribute('contenteditable', 'true');
+    el.setAttribute('spellcheck', 'true');
+    if (extraClass) el.className = extraClass;
+    el.setAttribute('data-block-id', this.block.id!);
+    InlineRenderer.render(el, inlineNodes);
+    el.addEventListener('keydown', (e) => this.handleKeyDown(e));
+    el.addEventListener('input', () => this.onInput(el));
+    return el;
   }
 
   protected handleKeyDown(e: KeyboardEvent): void {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      this.handleEnter(e.currentTarget as HTMLElement)
+      e.preventDefault();
+      this.handleEnter(e.currentTarget as HTMLElement);
     } else if (e.key === 'Backspace') {
-      this.handleBackspace(e.currentTarget as HTMLElement, e)
+      this.handleBackspace(e.currentTarget as HTMLElement, e);
     } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-      this.handleArrow(e)
+      this.handleArrow(e);
     }
   }
 
   protected handleEnter(el: HTMLElement): void {
-    const { before, after } = this.splitAtCaret(el)
+    const { before, after } = this.splitAtCaret(el);
 
-    this.ctx.manager.update(this.block.id!, { content: before })
+    this.ctx.manager.update(this.block.id!, { content: before });
 
     const newBlock = this.ctx.manager.add('paragraph', {
       content: after,
       afterId: this.block.id!,
-    })
+    });
 
     requestAnimationFrame(() => {
       const newEl = this.ctx.editorEl.querySelector(
         `[data-block-id="${newBlock.id!}"] [contenteditable]`
-      ) as HTMLElement | null
+      ) as HTMLElement | null;
       if (newEl) {
-        newEl.focus()
-        const range = document.createRange()
-        range.setStart(newEl, 0)
-        range.collapse(true)
-        const sel = window.getSelection()
+        newEl.focus();
+        const range = document.createRange();
+        range.setStart(newEl, 0);
+        range.collapse(true);
+        const sel = window.getSelection();
         if (sel) {
-          sel.removeAllRanges()
-          sel.addRange(range)
+          sel.removeAllRanges();
+          sel.addRange(range);
         }
       }
-    })
+    });
   }
 
   protected handleBackspace(el: HTMLElement, e: KeyboardEvent): void {
-    const sel = window.getSelection()
-    if (!sel || !sel.isCollapsed) return
+    const sel = window.getSelection();
+    if (!sel || !sel.isCollapsed) return;
 
-    const range = sel.getRangeAt(0)
-    if (range.startOffset !== 0) return
+    const range = sel.getRangeAt(0);
+    if (range.startOffset !== 0) return;
 
     // Ensure we are at the very first text node
-    let node: Node | null = range.startContainer
+    let node: Node | null = range.startContainer;
     while (node && node !== el) {
-      if (node.previousSibling) return
-      node = node.parentNode
+      if (node.previousSibling) return;
+      node = node.parentNode;
     }
 
-    e.preventDefault()
+    e.preventDefault();
 
-    const allBlocks = this.ctx.manager.getAll()
-    const idx = allBlocks.findIndex((b) => b.id! === this.block.id!)
-    if (idx <= 0) return
+    const allBlocks = this.ctx.manager.getAll();
+    const idx = allBlocks.findIndex((b) => b.id! === this.block.id!);
+    if (idx <= 0) return;
 
-    const prevBlock = allBlocks[idx - 1]
+    const prevBlock = allBlocks[idx - 1];
     if (!prevBlock.content) {
-      this.ctx.manager.delete(this.block.id!)
-      return
+      this.ctx.manager.delete(this.block.id!);
+      return;
     }
 
-    const currentNodes = InlineParser.parse(el)
-    const mergedContent = [...(prevBlock.content ?? []), ...currentNodes]
-    const mergeOffset = (prevBlock.content ?? []).reduce((s, n) => s + n.text.length, 0)
+    const currentNodes = InlineParser.parse(el);
+    const mergedContent = [...(prevBlock.content ?? []), ...currentNodes];
+    const mergeOffset = (prevBlock.content ?? []).reduce((s, n) => s + n.text.length, 0);
 
-    this.ctx.manager.update(prevBlock.id!, { content: mergedContent })
-    this.ctx.manager.delete(this.block.id!)
+    this.ctx.manager.update(prevBlock.id!, { content: mergedContent });
+    this.ctx.manager.delete(this.block.id!);
 
     requestAnimationFrame(() => {
       const prevEl = this.ctx.editorEl.querySelector(
         `[data-block-id="${prevBlock.id!}"] [contenteditable]`
-      ) as HTMLElement | null
+      ) as HTMLElement | null;
       if (prevEl) {
-        prevEl.focus()
-        this.setCaret(prevEl, mergeOffset)
+        prevEl.focus();
+        this.setCaret(prevEl, mergeOffset);
       }
-    })
+    });
   }
 
   protected handleArrow(e: KeyboardEvent): void {
-    const allBlocks = this.ctx.manager.getAll()
-    const idx = allBlocks.findIndex((b) => b.id! === this.block.id!)
+    const allBlocks = this.ctx.manager.getAll();
+    const idx = allBlocks.findIndex((b) => b.id! === this.block.id!);
 
     if (e.key === 'ArrowUp' && idx > 0) {
-      const targetId = allBlocks[idx - 1].id!
+      const targetId = allBlocks[idx - 1].id!;
       const targetEl = this.ctx.editorEl.querySelector(
         `[data-block-id="${targetId}"] [contenteditable]`
-      ) as HTMLElement | null
+      ) as HTMLElement | null;
       if (targetEl) {
-        e.preventDefault()
-        targetEl.focus()
+        e.preventDefault();
+        targetEl.focus();
       }
     } else if (e.key === 'ArrowDown' && idx < allBlocks.length - 1) {
-      const targetId = allBlocks[idx + 1].id!
+      const targetId = allBlocks[idx + 1].id!;
       const targetEl = this.ctx.editorEl.querySelector(
         `[data-block-id="${targetId}"] [contenteditable]`
-      ) as HTMLElement | null
+      ) as HTMLElement | null;
       if (targetEl) {
-        e.preventDefault()
-        targetEl.focus()
+        e.preventDefault();
+        targetEl.focus();
       }
     }
   }
@@ -279,72 +279,72 @@ export abstract class PilaBlock extends LitElement {
 
   /** Split inline content at the current caret position. */
   protected splitAtCaret(el: HTMLElement): { before: InlineNode[]; after: InlineNode[] } {
-    const sel = window.getSelection()
-    if (!sel || !sel.rangeCount) return { before: InlineParser.parse(el), after: [] }
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return { before: InlineParser.parse(el), after: [] };
 
-    const range = sel.getRangeAt(0)
-    const fullText = el.textContent ?? ''
+    const range = sel.getRangeAt(0);
+    const fullText = el.textContent ?? '';
 
-    const preCaret = document.createRange()
-    preCaret.setStart(el, 0)
-    preCaret.setEnd(range.startContainer, range.startOffset)
-    const offset = preCaret.toString().length
+    const preCaret = document.createRange();
+    preCaret.setStart(el, 0);
+    preCaret.setEnd(range.startContainer, range.startOffset);
+    const offset = preCaret.toString().length;
 
-    const allNodes = InlineParser.parse(el)
-    let cursor = 0
-    const before: InlineNode[] = []
-    const after: InlineNode[] = []
+    const allNodes = InlineParser.parse(el);
+    let cursor = 0;
+    const before: InlineNode[] = [];
+    const after: InlineNode[] = [];
 
     for (const node of allNodes) {
-      const start = cursor
-      const end = cursor + node.text.length
+      const start = cursor;
+      const end = cursor + node.text.length;
       if (end <= offset) {
-        before.push(node)
+        before.push(node);
       } else if (start >= offset) {
-        after.push(node)
+        after.push(node);
       } else {
-        before.push({ ...node, text: node.text.slice(0, offset - start) })
-        const afterText = node.text.slice(offset - start)
-        if (afterText) after.push({ ...node, text: afterText })
+        before.push({ ...node, text: node.text.slice(0, offset - start) });
+        const afterText = node.text.slice(offset - start);
+        if (afterText) after.push({ ...node, text: afterText });
       }
-      cursor = end
+      cursor = end;
     }
 
     if (allNodes.length === 0) {
-      before.push({ text: fullText.slice(0, offset) })
-      const afterStr = fullText.slice(offset)
-      if (afterStr) after.push({ text: afterStr })
+      before.push({ text: fullText.slice(0, offset) });
+      const afterStr = fullText.slice(offset);
+      if (afterStr) after.push({ text: afterStr });
     }
 
-    return { before, after }
+    return { before, after };
   }
 
   /** Place the caret at a character offset within a contenteditable element. */
   protected setCaret(el: HTMLElement, charOffset: number): void {
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT)
-    let remaining = charOffset
-    let textNode: Text | null = null
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let remaining = charOffset;
+    let textNode: Text | null = null;
 
     while (walker.nextNode()) {
-      const n = walker.currentNode as Text
+      const n = walker.currentNode as Text;
       if (remaining <= n.length) {
-        textNode = n
-        break
+        textNode = n;
+        break;
       }
-      remaining -= n.length
+      remaining -= n.length;
     }
 
-    const sel = window.getSelection()
-    if (!sel) return
+    const sel = window.getSelection();
+    if (!sel) return;
 
-    const range = document.createRange()
+    const range = document.createRange();
     if (textNode) {
-      range.setStart(textNode, remaining)
+      range.setStart(textNode, remaining);
     } else {
-      range.setStart(el, el.childNodes.length)
+      range.setStart(el, el.childNodes.length);
     }
-    range.collapse(true)
-    sel.removeAllRanges()
-    sel.addRange(range)
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
   }
 }

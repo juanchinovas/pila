@@ -74,10 +74,10 @@ export type BuiltinBlockType =
   | 'image'
   | 'table'
   | 'columns'
-  | 'button'
+  | 'button';
 
 /** Plugin-registered custom types use plain strings. */
-export type BlockType = BuiltinBlockType | string
+export type BlockType = BuiltinBlockType | string;
 
 // ─── Block ───────────────────────────────────────────────────────────────────
 
@@ -155,7 +155,7 @@ export interface EditorOptions {
    * Useful when the editor is inside a modal or fixed container.
    * Defaults to document.body.
    */
-  overlayRoot?: HTMLElement | (() => HTMLElement | null)
+  portalTo?: HTMLElement | (() => HTMLElement | null)
 }
 
 // ─── Editor Events ───────────────────────────────────────────────────────────
