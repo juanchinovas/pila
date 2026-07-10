@@ -3,6 +3,7 @@ import { PluginRegistry } from '../core/PluginRegistry';
 import { InlineFormatter } from '../inline/InlineFormatter';
 import { InlineParser } from '../inline/InlineParser';
 import { icon, Icons, LucideIconNode } from './icons';
+import { portalViewportBounds, setPortalPosition } from './overlayPosition';
 
 interface ToolbarButton {
   iconNode: LucideIconNode
@@ -295,11 +296,18 @@ export class FloatingToolbar {
     const toolbar = this.toolbarEl;
     toolbar.style.display = 'flex';
     const tbRect = toolbar.getBoundingClientRect();
-    const top = rect.top + window.scrollY - tbRect.height - 8;
-    const left = rect.left + window.scrollX + rect.width / 2 - tbRect.width / 2;
+    const bounds = portalViewportBounds(this.portalTo);
 
-    toolbar.style.top = `${Math.max(8, top)}px`;
-    toolbar.style.left = `${Math.max(8, left)}px`;
+    let topViewport = rect.top - tbRect.height - 8;
+    if (topViewport < bounds.top + 8) {
+      topViewport = rect.bottom + 8;
+    }
+    topViewport = Math.max(bounds.top + 8, topViewport);
+
+    let leftViewport = rect.left + rect.width / 2 - tbRect.width / 2;
+    leftViewport = Math.max(bounds.left + 8, Math.min(leftViewport, bounds.right - tbRect.width - 8));
+
+    setPortalPosition(toolbar, this.portalTo, leftViewport, topViewport);
 
     document.dispatchEvent(new CustomEvent('pila:text-selection', { detail: { active: true } }));
   }

@@ -4,6 +4,7 @@ import { Block, TableCell, TableRow } from '../types';
 import { PilaBlock } from './PilaBlock';
 import { BlockPopover } from '../ui/BlockPopover';
 import { icon, Icons } from '../ui/icons';
+import { setPortalPosition } from '../ui/overlayPosition';
 
 export class TableBlock extends PilaBlock {
   private tableEl!: HTMLTableElement;
@@ -78,8 +79,7 @@ export class TableBlock extends PilaBlock {
     
     this.colHandle.style.display = 'flex';
     // Position at the very top of the table, centered horizontally on the column
-    this.colHandle.style.top = `${tableRect.top - 10}px`;
-    this.colHandle.style.left = `${cellRect.left}px`;
+    setPortalPosition(this.colHandle, this.ctx.portalTo ?? document.body, cellRect.left, tableRect.top - 10);
     this.colHandle.style.width = `${cellRect.width}px`;
     // this.colHandle.style.height = '24px'
 
@@ -106,8 +106,7 @@ export class TableBlock extends PilaBlock {
 
     const rect = tr.getBoundingClientRect();
     this.rowHandle.style.display = 'flex';
-    this.rowHandle.style.top = `${rect.top}px`;
-    this.rowHandle.style.left = `${rect.left - 10}px`;
+    setPortalPosition(this.rowHandle, this.ctx.portalTo ?? document.body, rect.left - 10, rect.top);
     this.rowHandle.style.height = `${rect.height}px`;
 
     this.focusedRow = rowIdx;
@@ -118,7 +117,7 @@ export class TableBlock extends PilaBlock {
     if (!this.cellSettingsBtn) {
       this.cellSettingsBtn = document.createElement('div');
       this.cellSettingsBtn.className = 'pila-table-handle w-5 h-5 !p-0';
-      this.cellSettingsBtn.style.position = 'fixed';
+      this.cellSettingsBtn.style.position = 'absolute';
       this.cellSettingsBtn.style.zIndex = '9001';
       this.cellSettingsBtn.appendChild(icon(Icons.Settings2, 12));
       this.cellSettingsBtn.addEventListener('click', (e) => {
@@ -133,8 +132,7 @@ export class TableBlock extends PilaBlock {
     const rect = td.getBoundingClientRect();
     this.cellSettingsBtn.style.display = 'flex';
     // Position at top-right of cell
-    this.cellSettingsBtn.style.top = `${rect.top + 2}px`;
-    this.cellSettingsBtn.style.left = `${rect.right - 22}px`;
+    setPortalPosition(this.cellSettingsBtn, this.ctx.portalTo ?? document.body, rect.right - 22, rect.top + 2);
     
     this.focusedRow = r;
     this.focusedCol = c;
@@ -359,10 +357,9 @@ export class TableBlock extends PilaBlock {
     input.id = 'color_picker_input_table';
     input.type = 'color';
     input.value = currentColor; // Default to current color
-    input.style.position = 'fixed';
+    input.style.position = 'absolute';
     input.style.opacity = '0';
-    input.style.left = `${e.clientX}px`;
-    input.style.top = `${e.clientY}px`;
+    setPortalPosition(input, this.ctx.portalTo ?? document.body, e.clientX, e.clientY);
     this.ctx.portalTo?.appendChild(input);
     
     input.addEventListener('input', () => {

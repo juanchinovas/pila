@@ -4,6 +4,7 @@ import { BlockAttrs, BlockType } from '../types';
 import { icon as makeIcon, Icons, LucideIconNode } from './icons';
 import { ImagePropsModal } from './ImagePropsModal';
 import { EmojiPopover } from './EmojiPopover';
+import { setPortalPosition } from './overlayPosition';
 
 interface SlashItem {
   type: BlockType
@@ -339,8 +340,7 @@ export class SlashMenu {
 
   private positionAt(el: HTMLElement): void {
     const rect = el.getBoundingClientRect();
-    this.menuEl.style.top = `${rect.bottom + window.scrollY + 4}px`;
-    this.menuEl.style.left = `${rect.left + window.scrollX}px`;
+    setPortalPosition(this.menuEl, this.portalTo, rect.left, rect.bottom + 4);
   }
 
   private show(): void {

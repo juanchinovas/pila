@@ -1,4 +1,5 @@
 import { BlockAttrs } from '../types';
+import { setPortalPosition } from './overlayPosition';
 
 export interface ImagePropsResult {
   src?: string
@@ -41,9 +42,7 @@ export class ImagePropsPopover {
       this.popoverEl = document.createElement('div');
       this.popoverEl.className = 'pila-image-props-popover';
       this.popoverEl.style.cssText = `
-        position: fixed;
-        left: ${x}px;
-        top: ${y}px;
+        position: absolute;
         z-index: 10000;
         width: 240px;
         background: var(--pila-slash-bg);
@@ -55,6 +54,7 @@ export class ImagePropsPopover {
         flex-direction: column;
         gap: 8px;
       `;
+      setPortalPosition(this.popoverEl, this.portalTo, x, y);
 
       // Fields
       const uploadContainer = document.createElement('div');
@@ -164,7 +164,7 @@ export class ImagePropsPopover {
     const uploadBtn = document.createElement('button');
     uploadBtn.type = 'button';
     uploadBtn.textContent = 'Upload Image';
-    uploadBtn.className = 'fixed bg-black/60 rounded px-3 py-1.5 text-xs text-white hover:border-[var(--pila-accent)] hover:bg-black/80';
+    uploadBtn.className = 'absolute bg-black/60 rounded px-3 py-1.5 text-xs text-white hover:border-[var(--pila-accent)] hover:bg-black/80';
     
     const imagePreview = document.createElement('img');
     imagePreview.className = 'max-h-40 object-contain';

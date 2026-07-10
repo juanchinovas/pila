@@ -1,4 +1,5 @@
 import { icon, Icons, LucideIconNode } from './icons';
+import { portalViewportBounds, setPortalPosition } from './overlayPosition';
 
 export interface ColumnsToolbarContext {
   columnCount: number
@@ -43,7 +44,7 @@ export class ColumnsToolbar {
   private buildDOM(): HTMLElement {
     const toolbar = document.createElement('div');
     toolbar.className =
-      'fixed z-[9000] flex items-center gap-px px-1 py-1 rounded-lg shadow-xl ' +
+      'absolute z-[9000] flex items-center gap-px px-1 py-1 rounded-lg shadow-xl ' +
       'bg-[var(--pila-bg)] border border-[var(--pila-border)]';
 
     // Add column left / right
@@ -160,11 +161,14 @@ export class ColumnsToolbar {
   private position(anchor: HTMLElement): void {
     const rect   = anchor.getBoundingClientRect();
     const elRect = this.el.getBoundingClientRect();
-    let top = rect.top - elRect.height - 6;
-    if (top < 4) top = rect.bottom + 6;
-    const left = Math.max(4, Math.min(rect.left, window.innerWidth - elRect.width - 4));
-    this.el.style.top  = `${top}px`;
-    this.el.style.left = `${left}px`;
+    const bounds = portalViewportBounds(this.portalTo);
+
+    let topViewport = rect.top - elRect.height - 6;
+    if (topViewport < bounds.top + 4) topViewport = rect.bottom + 6;
+    topViewport = Math.max(bounds.top + 4, topViewport);
+
+    const leftViewport = Math.max(bounds.left + 4, Math.min(rect.left, bounds.right - elRect.width - 4));
+    setPortalPosition(this.el, this.portalTo, leftViewport, topViewport);
   }
 
   destroy(): void {

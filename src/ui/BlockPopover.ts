@@ -1,4 +1,5 @@
 import { icon, Icons } from './icons';
+import { portalViewportBounds, setPortalPosition, viewportPointToPortal } from './overlayPosition';
 
 export interface BlockAction {
   label: string
@@ -29,9 +30,8 @@ export class BlockPopover {
     this.portalTo.appendChild(this.popoverEl);
     
     // Position
-    this.popoverEl.style.position = 'fixed';
-    this.popoverEl.style.top = `${y}px`;
-    this.popoverEl.style.left = `${x}px`;
+    this.popoverEl.style.position = 'absolute';
+    setPortalPosition(this.popoverEl, this.portalTo, x, y);
     this.popoverEl.style.zIndex = '10000';
 
     // Events
@@ -147,18 +147,19 @@ export class BlockPopover {
     this.portalTo.appendChild(this.activeSubmenu);
     
     // Ensure the submenu stays within the viewport
-    this.activeSubmenu.style.position = 'fixed';
-    this.activeSubmenu.style.top = `${y}px`;
-    this.activeSubmenu.style.left = `${x}px`;
+    this.activeSubmenu.style.position = 'absolute';
+    setPortalPosition(this.activeSubmenu, this.portalTo, x, y);
     this.activeSubmenu.style.zIndex = '10001';
     this.activeSubmenu.style.minWidth = '140px';
     this.activeSubmenu.style.width = 'auto'; // Allow submenu to be narrower than parent
 
     const rect = this.activeSubmenu.getBoundingClientRect();
-    if (rect.right > window.innerWidth) {
+    const bounds = portalViewportBounds(this.portalTo);
+    if (rect.right > bounds.right) {
       // Flip left if it overflows, and ensure a small gap from main menu
       const parentWidth = this.popoverEl?.offsetWidth ?? 240;
-      this.activeSubmenu.style.left = `${x - rect.width - parentWidth - 4}px`; 
+      const leftPos = viewportPointToPortal(this.portalTo, x - rect.width - parentWidth - 4, y);
+      this.activeSubmenu.style.left = `${leftPos.x}px`; 
     }
   }
 

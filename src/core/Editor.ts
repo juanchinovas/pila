@@ -61,9 +61,9 @@ export class PilaEditor {
 
   private resolvePortalTo(root?: HTMLElement | (() => HTMLElement | null)): HTMLElement {
     if (typeof root === 'function') {
-      return root() ?? this.container ?? document.body;
+      return root() ?? document.body;
     }
-    return root ?? this.container ?? document.body;
+    return root ?? document.body;
   }
 
   mount(): void {

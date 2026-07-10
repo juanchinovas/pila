@@ -1,3 +1,5 @@
+import { setPortalPosition } from './overlayPosition';
+
 export interface EmojiItem {
   emoji: string
   name: string
@@ -421,14 +423,12 @@ export class EmojiPopover {
 
   private positionAt(el: HTMLElement): void {
     const rect = el.getBoundingClientRect();
-    this.menuEl.style.top = `${rect.bottom + window.scrollY + 4}px`;
-    this.menuEl.style.left = `${rect.left + window.scrollX}px`;
+    setPortalPosition(this.menuEl, this.portalTo, rect.left, rect.bottom + 4);
   }
 
   private positionAtRange(range: Range): void {
     const rect = range.getBoundingClientRect();
-    this.menuEl.style.top = `${rect.bottom + window.scrollY + 4}px`;
-    this.menuEl.style.left = `${rect.left + window.scrollX}px`;
+    setPortalPosition(this.menuEl, this.portalTo, rect.left, rect.bottom + 4);
   }
 
   private show(): void {

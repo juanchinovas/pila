@@ -1,6 +1,7 @@
 import { BlockManager } from '../core/BlockManager';
 import { icon, Icons } from './icons';
 import { BlockAction, BlockPopover } from './BlockPopover';
+import { setPortalPosition } from './overlayPosition';
 
 export class DragHandle {
   private editorEl: HTMLElement;
@@ -276,9 +277,7 @@ export class DragHandle {
 
   private positionHandle(wrapper: HTMLElement): void {
     const rect = wrapper.getBoundingClientRect();
-    // position:fixed — coords are already viewport-relative, no scrollY needed
-    this.handleEl.style.top  = `${rect.top + rect.height / 2 - 12}px`;
-    this.handleEl.style.left = `${rect.left - 55}px`;
+    setPortalPosition(this.handleEl, this.portalTo, rect.left - 55, rect.top + rect.height / 2 - 12);
   }
 
   private handleMouseOver(e: MouseEvent): void {
@@ -349,11 +348,10 @@ export class DragHandle {
     const rect = wrapper.getBoundingClientRect();
     const insertAfter = e.clientY > rect.top + rect.height / 2;
 
-    // position:fixed — no scroll offset needed
     this.dropIndicator.style.display = 'block';
-    this.dropIndicator.style.left    = `${rect.left}px`;
+    const y = insertAfter ? rect.bottom : rect.top;
+    setPortalPosition(this.dropIndicator, this.portalTo, rect.left, y);
     this.dropIndicator.style.width   = `${rect.width}px`;
-    this.dropIndicator.style.top     = insertAfter ? `${rect.bottom}px` : `${rect.top}px`;
 
     this.dropIndicator.dataset.targetId    = wrapper.dataset.blockId ?? '';
     this.dropIndicator.dataset.insertAfter = String(insertAfter);

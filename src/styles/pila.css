@@ -104,7 +104,7 @@ pila-code {
 /* ─── Table drag-and-drop indicators ─────────────────────────────────────── */
 
 .pila-table-handle {
-  @apply fixed z-[9000] flex items-center justify-center rounded cursor-pointer transition-colors;
+  @apply absolute z-[9000] flex items-center justify-center rounded cursor-pointer transition-colors;
   background: var(--pila-bg);
   border: 1px solid var(--pila-border);
   color: var(--pila-muted);
@@ -376,7 +376,7 @@ code[class*="language-"] {
 /* ─── Drag Handle ─────────────────────────────────────────────────────────── */
 
 .pila-drag-handle {
-  @apply fixed z-[8000] h-6 flex gap-x-0.5 items-center justify-center rounded cursor-grab opacity-60 select-none transition-all;
+  @apply absolute z-[8000] h-6 flex gap-x-0.5 items-center justify-center rounded cursor-grab opacity-60 select-none transition-all;
   color: var(--pila-muted);
   transition: opacity 0.1s, background 0.1s;
 }
@@ -395,7 +395,7 @@ code[class*="language-"] {
 .pila-drag-dots { @apply text-base leading-none select-none; }
 
 .pila-drop-indicator {
-  @apply fixed z-[7999] h-0.5 rounded-sm pointer-events-none;
+  @apply absolute z-[7999] h-0.5 rounded-sm pointer-events-none;
   background: var(--pila-accent);
 }
 
@@ -408,7 +408,7 @@ code[class*="language-"] {
 /* ─── Block Popover ──────────────────────────────────────────────────────── */
 
 .pila-block-popover {
-  @apply fixed z-[10000] w-64 p-1 flex flex-col gap-0.5;
+  @apply absolute z-[10000] w-64 p-1 flex flex-col gap-0.5;
   background: var(--pila-slash-bg);
   border: 1px solid var(--pila-slash-border);
   border-radius: var(--pila-radius);
