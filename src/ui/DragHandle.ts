@@ -1,4 +1,5 @@
 import { BlockManager } from '../core/BlockManager';
+import { InlineParser } from '../inline/InlineParser';
 import { icon, Icons } from './icons';
 import { BlockAction, BlockPopover } from './BlockPopover';
 import { setPortalPosition } from './overlayPosition';
@@ -155,32 +156,30 @@ export class DragHandle {
 
     if (!['code', 'table', 'image', 'callout', 'button'].includes(block?.type ?? '')) {
       const bgColors = [
-        { name: 'Default', bg: 'transparent' },
-        { name: 'Gray',    bg: 'var(--pila-code-bg)' },
-        { name: 'Blue',    bg: 'rgba(59, 130, 246, 0.1)' },
-        { name: 'Green',   bg: 'rgba(34, 197, 94, 0.1)' },
-        { name: 'Yellow',  bg: 'rgba(234, 179, 8, 0.1)' },
-        { name: 'Red',     bg: 'rgba(239, 68, 68, 0.1)' },
+        { name: 'Default', swatch: 'transparent', value: undefined },
+        { name: 'Gray',    swatch: 'var(--pila-code-bg)', value: 'var(--pila-code-bg)' },
+        { name: 'Blue',    swatch: 'rgba(59, 130, 246, 0.1)', value: 'rgba(59, 130, 246, 0.1)' },
+        { name: 'Green',   swatch: 'rgba(34, 197, 94, 0.1)', value: 'rgba(34, 197, 94, 0.1)' },
+        { name: 'Yellow',  swatch: 'rgba(234, 179, 8, 0.1)', value: 'rgba(234, 179, 8, 0.1)' },
+        { name: 'Red',     swatch: 'rgba(239, 68, 68, 0.1)', value: 'rgba(239, 68, 68, 0.1)' },
       ];
 
       const textColors = [
-        { name: 'Default', text: 'inherit' },
-        { name: 'Gray',    text: 'var(--pila-muted)' },
-        { name: 'Blue',    text: 'rgb(37, 99, 235)' },
-        { name: 'Green',   text: 'rgb(21, 128, 61)' },
-        { name: 'Yellow',  text: 'rgb(161, 98, 7)' },
-        { name: 'Red',     text: 'rgb(185, 28, 28)' },
+        { name: 'Default', swatch: 'transparent', value: undefined },
+        { name: 'Gray',    swatch: 'var(--pila-muted)', value: 'var(--pila-muted)' },
+        { name: 'Blue',    swatch: 'rgb(37, 99, 235)', value: 'rgb(37, 99, 235)' },
+        { name: 'Green',   swatch: 'rgb(21, 128, 61)', value: 'rgb(21, 128, 61)' },
+        { name: 'Yellow',  swatch: 'rgb(161, 98, 7)', value: 'rgb(161, 98, 7)' },
+        { name: 'Red',     swatch: 'rgb(185, 28, 28)', value: 'rgb(185, 28, 28)' },
       ];
 
       const bgActions = bgColors.map(c => ({
         label: c.name,
         icon: 'Square',
-        color: c.bg,
+        color: c.swatch,
         handler: (_: MouseEvent) => {
-          this.manager.update(blockId, {
-            attrs: { ...(block?.attrs ?? {}), background: c.bg }
-          });
-          this.changeBlockBackground(blockId, c.bg);
+          this.updateBlockAttrsWithLiveContent(blockId, { background: c.value });
+          this.changeBlockBackground(blockId, c.value ?? '');
         }
       }));
 
@@ -197,9 +196,7 @@ export class DragHandle {
           input.style.opacity = '0';
           input.addEventListener('input', (ev: Event) => {
             const target = ev.target as HTMLInputElement;
-            this.manager.update(blockId, {
-              attrs: { ...(block?.attrs ?? {}), background: target.value }
-            });
+            this.updateBlockAttrsWithLiveContent(blockId, { background: target.value });
             this.changeBlockBackground(blockId, target.value);
 
             this.popover.close();
@@ -213,12 +210,10 @@ export class DragHandle {
       const textActions = textColors.map(c => ({
         label: c.name,
         icon: 'Type',
-        color: c.text === 'inherit' ? 'transparent' : c.text,
+        color: c.swatch,
         handler: (_: MouseEvent) => {
-          this.manager.update(blockId, {
-            attrs: { ...(block?.attrs ?? {}), textColor: c.text }
-          });
-          this.changeBlockTextColor(blockId, c.text);
+          this.updateBlockAttrsWithLiveContent(blockId, { textColor: c.value });
+          this.changeBlockTextColor(blockId, c.value ?? '');
         }
       }));
 
@@ -235,9 +230,7 @@ export class DragHandle {
           input.style.opacity = '0';
           input.addEventListener('input', (ev: Event) => {
             const target = ev.target as HTMLInputElement;
-            this.manager.update(blockId, {
-              attrs: { ...(block?.attrs ?? {}), textColor: target.value }
-            });
+            this.updateBlockAttrsWithLiveContent(blockId, { textColor: target.value });
             this.changeBlockTextColor(blockId, target.value);
 
             this.popover.close();
@@ -260,6 +253,20 @@ export class DragHandle {
       });
     }
     this.popover.open(rect.right + 5, rect.top, blockOptions);
+  }
+
+  private updateBlockAttrsWithLiveContent(blockId: string, attrsPatch: Partial<Record<'background' | 'textColor', string | undefined>>): void {
+    const block = this.manager.getById(blockId);
+    if (!block) return;
+
+    const contentEl = this.editorEl.querySelector(
+      `[data-block-id="${blockId}"] [contenteditable]`
+    ) as HTMLElement | null;
+
+    this.manager.update(blockId, {
+      ...(contentEl ? { content: InlineParser.parse(contentEl) } : {}),
+      attrs: { ...(block.attrs ?? {}), ...attrsPatch },
+    });
   }
 
   private cancelHide(): void {
@@ -402,12 +409,14 @@ export class DragHandle {
     
     if (!wrapper) return;
 
-    wrapper.dataset.pilaBlockBackground = color;
+    if (color) wrapper.dataset.pilaBlockBackground = color;
+    else delete wrapper.dataset.pilaBlockBackground;
 
     if (wrapper.nodeName === 'PILA-QUOTE') {
       wrapper.style.setProperty('--pila-block-background', color);
       wrapper.style.setProperty('--pila-quote-border', `lch(from ${color} l c calc(h + 260))`);
-      wrapper.dataset.pilaBlockBorderColor = `lch(from ${color} l c calc(h + 260))`;
+      if (color) wrapper.dataset.pilaBlockBorderColor = `lch(from ${color} l c calc(h + 260))`;
+      else delete wrapper.dataset.pilaBlockBorderColor;
       return;
     }
 
@@ -427,7 +436,8 @@ export class DragHandle {
 
     if (!wrapper) return;
 
-    wrapper.dataset.pilaBlockTextColor = color;
+    if (color) wrapper.dataset.pilaBlockTextColor = color;
+    else delete wrapper.dataset.pilaBlockTextColor;
     if (wrapper.nodeName === 'PILA-QUOTE') {
       wrapper.style.setProperty('--pila-quote-text', color);
       return;

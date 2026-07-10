@@ -203,8 +203,12 @@ export abstract class BaseBlock {
     }
   }
 
-  protected onInput(_el: HTMLElement): void {
-    // Subclasses can override for live state sync
+  protected onInput(el: HTMLElement): void {
+    // Keep local block snapshot fresh without triggering manager re-renders
+    // on every keystroke.
+    if (this.block.content !== undefined) {
+      this.block = { ...this.block, content: InlineParser.parse(el) };
+    }
   }
 
   /** Split inline content at the current caret position. */

@@ -85,6 +85,18 @@ describe('BlockManager', () => {
       expect(manager.getById(b.id!)?.attrs?.checked).toBe(true);
     });
 
+    it('removes attrs whose updated value is undefined', () => {
+      const b = manager.add('button', { attrs: { href: 'https://example.com', buttonStyle: 'primary' } });
+      manager.update(b.id!, { attrs: { href: undefined } });
+      expect(manager.getById(b.id!)?.attrs).toEqual({ buttonStyle: 'primary' });
+    });
+
+    it('drops attrs entirely when all updated attrs are cleared', () => {
+      const b = manager.add('paragraph', { attrs: { background: '#dbeafe' } });
+      manager.update(b.id!, { attrs: { background: undefined } });
+      expect(manager.getById(b.id!)?.attrs).toBeUndefined();
+    });
+
     it('returns undefined for unknown id', () => {
       expect(manager.update('unknown', {})).toBeUndefined();
     });

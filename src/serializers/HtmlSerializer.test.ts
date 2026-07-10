@@ -316,6 +316,120 @@ describe('HtmlSerializer', () => {
     expect(html).toContain('<td>None</td>');
   });
 
+  it('serializes block background/text colors when present', () => {
+    const html = HtmlSerializer.serialize([
+      {
+        id: '1',
+        type: 'paragraph',
+        content: [{ text: 'Styled paragraph' }],
+        attrs: { background: '#ffeeaa', textColor: '#113355' },
+      },
+    ]);
+    expect(html).toContain('style="background-color:#ffeeaa;color:#113355"');
+  });
+
+  it('preserves tailwind classes and custom style on blocks', () => {
+    const html = HtmlSerializer.serialize([
+      {
+        id: '1',
+        type: 'paragraph',
+        content: [{ text: 'Styled paragraph' }],
+        attrs: {
+          tailwindClasses: 'text-sm md:text-lg font-medium',
+          style: 'letter-spacing:0.02em;line-height:1.7',
+        },
+      },
+    ]);
+    expect(html).toContain('class="text-sm md:text-lg font-medium"');
+    expect(html).toContain('style="letter-spacing:0.02em;line-height:1.7"');
+  });
+
+  it('merges built-in classes with tailwind classes for callout', () => {
+    const html = HtmlSerializer.serialize([
+      {
+        id: '1',
+        type: 'callout',
+        content: [{ text: 'Keep classes' }],
+        attrs: { tailwindClasses: 'rounded-xl shadow-sm' },
+      },
+    ]);
+    expect(html).toContain('class="callout rounded-xl shadow-sm"');
+  });
+
+  it('serializes image object-fit, border-radius, and alignment styles', () => {
+    const html = HtmlSerializer.serialize([
+      {
+        id: '1',
+        type: 'image',
+        attrs: {
+          src: 'https://example.com/img.png',
+          alt: 'sample',
+          alignment: 'center',
+          objectFit: 'cover',
+          borderRadius: '12px',
+        },
+      },
+    ]);
+    expect(html).toContain('<figure style="margin-left:auto;margin-right:auto">');
+    expect(html).toContain('style="object-fit:cover;border-radius:12px"');
+  });
+
+  it('serializes block background/text colors for special block wrappers', () => {
+    const html = HtmlSerializer.serialize([
+      {
+        id: '1',
+        type: 'callout',
+        content: [{ text: 'Styled callout' }],
+        attrs: { icon: '📝', background: '#ecfeff', textColor: '#155e75' },
+      },
+      {
+        id: '2',
+        type: 'button',
+        content: [{ text: 'Styled button' }],
+        attrs: { href: 'https://example.com', background: '#111827', textColor: '#f9fafb' },
+      },
+      {
+        id: '3',
+        type: 'code',
+        content: [{ text: 'const ready = true;' }],
+        attrs: { background: '#0f172a', textColor: '#e2e8f0' },
+      },
+    ]);
+    expect(html).toContain('<div class="callout" style="background-color:#ecfeff;color:#155e75">');
+    expect(html).toContain('<a href="https://example.com" class="pila-button pila-button--primary" target="_blank" rel="noopener noreferrer" style="background-color:#111827;color:#f9fafb">Styled button</a>');
+    expect(html).toContain('<pre style="background-color:#0f172a;color:#e2e8f0"><code class="language-plaintext">const ready = true;</code></pre>');
+  });
+
+  it('serializes table cell background/color/width/colspan/rowspan', () => {
+    const html = HtmlSerializer.serialize([
+      {
+        id: '1',
+        type: 'table',
+        attrs: {
+          rows: [
+            {
+              cells: [
+                {
+                  content: [{ text: 'Styled cell' }],
+                  background: '#eef2ff',
+                  color: '#1e3a8a',
+                  width: '240px',
+                  colspan: 2,
+                  rowspan: 3,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ]);
+    expect(html).toContain('colspan="2"');
+    expect(html).toContain('rowspan="3"');
+    expect(html).toContain('background-color:#eef2ff');
+    expect(html).toContain('color:#1e3a8a');
+    expect(html).toContain('width:240px');
+  });
+
   it('serializes empty table as empty <table>', () => {
     const html = HtmlSerializer.serialize([
       { id: '1', type: 'table', attrs: { rows: [] } },

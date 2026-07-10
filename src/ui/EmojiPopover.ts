@@ -235,7 +235,9 @@ export class EmojiPopover {
   private selectedIndex = 0;
   private filteredItems: EmojiItem[] = [];
   private onClickOutsideBound = this.handleClickOutside.bind(this);
-  private cleanupFunctions: (() => void)[] = [];
+  private onFilterInput!: () => void;
+  private onFilterKeyDown!: (e: KeyboardEvent) => void;
+  private mounted = false;
   
   constructor(editorEl: HTMLElement, portalTo: HTMLElement = document.body) {
     this.editorEl = editorEl;
@@ -244,8 +246,14 @@ export class EmojiPopover {
   }
 
   private mount(): void {
+    if (this.mounted) {
+      if (this.menuEl && !this.menuEl.isConnected) this.portalTo.appendChild(this.menuEl);
+      return;
+    }
+
     this.menuEl = document.createElement('div');
     this.menuEl.className = 'pila-slash-menu pila-emoji-popover flex flex-col';
+    this.menuEl.dataset.pilaUi = 'emoji-popover';
     this.menuEl.style.display = 'none';
     
     const filterContainer = document.createElement('div');
@@ -265,16 +273,16 @@ export class EmojiPopover {
 
     this.portalTo.appendChild(this.menuEl);
 
-    const onInput = () => {
+    this.onFilterInput = () => {
       this.filter = this.inputEl.value.toLowerCase();
       this.selectedIndex = 0;
       this.renderItems();
     };
-    this.inputEl.addEventListener('input', onInput);
-    this.cleanupFunctions.push(() => this.inputEl.removeEventListener('input', onInput));
+    this.inputEl.addEventListener('input', this.onFilterInput);
 
-    this.inputEl.addEventListener('keydown', this.handleKeyDown.bind(this));
-    this.cleanupFunctions.push(() => this.inputEl.removeEventListener('keydown', this.handleKeyDown.bind(this)));
+    this.onFilterKeyDown = (e: KeyboardEvent) => { this.handleKeyDown(e); };
+    this.inputEl.addEventListener('keydown', this.onFilterKeyDown);
+    this.mounted = true;
   }
 
   handleKeyDown(e: KeyboardEvent): boolean {
@@ -370,7 +378,13 @@ export class EmojiPopover {
         this.confirm();
       });
 
-      row.addEventListener('keydown', this.handleInput);
+      row.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.selectedIndex = idx;
+          this.confirm();
+        }
+      });
       listEl.appendChild(row);
     });
   }
@@ -442,6 +456,7 @@ export class EmojiPopover {
     this.menuEl.style.display = 'none';
     this.activeBlockId = null;
     this.filter = '';
+    this.selectedIndex = 0;
     document.removeEventListener('mousedown', this.onClickOutsideBound, true);
   }
 
@@ -456,8 +471,11 @@ export class EmojiPopover {
   }
 
   destroy(): void {
-    this.cleanupFunctions.forEach(fn => fn());
-    this.cleanupFunctions = [];
+    if (!this.mounted) return;
+    this.close();
+    this.inputEl?.removeEventListener('input', this.onFilterInput);
+    this.inputEl?.removeEventListener('keydown', this.onFilterKeyDown);
     this.menuEl?.remove();
+    this.mounted = false;
   }
 }

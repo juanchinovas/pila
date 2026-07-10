@@ -59,6 +59,8 @@ export interface BlockAttrs {
   columnDefs?: ColumnDef[] // columns block
   level?: 1 | 2 | 3     // heading
   alignment?: 'left' | 'center' | 'right' | 'justify'  // text / image
+  tailwindClasses?: string // optional exported class list for HTML serializer
+  style?: string          // optional exported inline style declarations
 }
 
 // ─── Block Types ─────────────────────────────────────────────────────────────

@@ -41,4 +41,33 @@ describe('JsonSerializer', () => {
   it('throws when JSON is not an array', () => {
     expect(() => JsonSerializer.deserialize('{"id":"1"}')).toThrow();
   });
+
+  it('round-trips block and table color attrs', () => {
+    const withColors: Block[] = [
+      {
+        id: 'c1',
+        type: 'paragraph',
+        content: [{ text: 'Colored text' }],
+        attrs: { background: '#fef3c7', textColor: '#92400e' },
+      },
+      {
+        id: 'c2',
+        type: 'table',
+        attrs: {
+          rows: [
+            {
+              cells: [
+                {
+                  content: [{ text: 'Cell' }],
+                  background: '#dbeafe',
+                  color: '#1d4ed8',
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ];
+    expect(JsonSerializer.deserialize(JsonSerializer.serialize(withColors))).toEqual(withColors);
+  });
 });

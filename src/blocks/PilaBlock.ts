@@ -273,8 +273,12 @@ export abstract class PilaBlock extends LitElement {
   }
 
   /** Hook for subclasses — called on every `input` event of a managed element. */
-  protected onInput(_el: HTMLElement): void {
-    // Subclasses override for live state sync
+  protected onInput(el: HTMLElement): void {
+    // Keep instance-local content in sync so attribute-only updates can safely
+    // flush fresh content without forcing manager updates on every keystroke.
+    if (this.block.content !== undefined) {
+      this.block = { ...this.block, content: InlineParser.parse(el) };
+    }
   }
 
   /** Split inline content at the current caret position. */

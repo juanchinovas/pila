@@ -53,6 +53,7 @@ export class SlashMenu {
   private onClickOutsideBound = this.handleClickOutside.bind(this);
   private imageModal: ImagePropsModal;
   private emojiPopover: EmojiPopover;
+  private mounted = false;
 
   constructor(
     editorEl: HTMLElement,
@@ -69,8 +70,14 @@ export class SlashMenu {
   }
 
   mount(): void {
+    if (this.mounted) {
+      if (this.menuEl && !this.menuEl.isConnected) this.portalTo.appendChild(this.menuEl);
+      return;
+    }
+
     this.menuEl = document.createElement('div');
     this.menuEl.className = 'pila-slash-menu';
+    this.menuEl.dataset.pilaUi = 'slash-menu';
     this.menuEl.style.display = 'none';
     this.portalTo.appendChild(this.menuEl);
 
@@ -79,13 +86,18 @@ export class SlashMenu {
 
     this.editorEl.addEventListener('keydown', this.onKeyDown, true);
     this.editorEl.addEventListener('input', this.onInput);
+    this.mounted = true;
   }
 
   destroy(): void {
+    if (!this.mounted) return;
+    this.close();
     this.editorEl.removeEventListener('keydown', this.onKeyDown, true);
     this.editorEl.removeEventListener('input', this.onInput);
     this.menuEl?.remove();
+    this.emojiPopover.destroy();
     this.imageModal.destroy();
+    this.mounted = false;
   }
 
   private handleKeyDown(e: KeyboardEvent): void {

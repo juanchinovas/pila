@@ -22,6 +22,7 @@ export class FloatingToolbar {
   private savedRange: Range | null = null;
   private isLinkMode: boolean = false;
   private focusedBlockId: string | null = null;
+  private mounted = false;
 
   constructor(
     editorEl: HTMLElement,
@@ -36,21 +37,30 @@ export class FloatingToolbar {
   }
 
   mount(): void {
+    if (this.mounted) {
+      if (this.toolbarEl && !this.toolbarEl.isConnected) this.portalTo.appendChild(this.toolbarEl);
+      return;
+    }
+
     this.toolbarEl = this.buildToolbar();
     this.portalTo.appendChild(this.toolbarEl);
 
     this.onSelectionChange = () => this.handleSelectionChange();
     document.addEventListener('selectionchange', this.onSelectionChange);
+    this.mounted = true;
   }
 
   destroy(): void {
+    if (!this.mounted) return;
     document.removeEventListener('selectionchange', this.onSelectionChange);
     this.toolbarEl?.remove();
+    this.mounted = false;
   }
 
   private buildToolbar(): HTMLElement {
     const toolbar = document.createElement('div');
     toolbar.className = 'pila-floating-toolbar';
+    toolbar.dataset.pilaUi = 'floating-toolbar';
     toolbar.style.display = 'none';
 
     const buttons: ToolbarButton[] = [

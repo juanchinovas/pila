@@ -189,6 +189,78 @@ describe('EmailSerializer', () => {
     expect(html).toContain('Alice');
   });
 
+  it('serializes block background/text colors when present', () => {
+    const html = serialize([
+      {
+        id: '1',
+        type: 'paragraph',
+        content: [{ text: 'Styled mail block' }],
+        attrs: { background: '#fff7ed', textColor: '#9a3412' },
+      },
+    ]);
+    expect(html).toContain('background:#fff7ed');
+    expect(html).toContain('color:#9a3412');
+  });
+
+  it('serializes block background/text colors for special email blocks', () => {
+    const html = serialize([
+      {
+        id: '1',
+        type: 'callout',
+        content: [{ text: 'Styled callout' }],
+        attrs: { flavor: 'info', icon: '💡', background: '#ecfeff', textColor: '#155e75' },
+      },
+      {
+        id: '2',
+        type: 'button',
+        content: [{ text: 'Styled button' }],
+        attrs: { href: 'https://example.com', background: '#111827', textColor: '#f9fafb' },
+      },
+      {
+        id: '3',
+        type: 'code',
+        content: [{ text: 'const ready = true' }],
+        attrs: { language: 'typescript', background: '#0f172a', textColor: '#e2e8f0' },
+      },
+    ]);
+    expect(html).toContain('background:#ecfeff');
+    expect(html).toContain('color:#155e75');
+    expect(html).toContain('fillcolor="#111827"');
+    expect(html).toContain('color:#f9fafb');
+    expect(html).toContain('background:#0f172a');
+    expect(html).toContain('font-size:13px;color:#e2e8f0;white-space:pre;');
+  });
+
+  it('serializes table cell background/color/width/colspan/rowspan', () => {
+    const html = serialize([
+      {
+        id: '1',
+        type: 'table',
+        attrs: {
+          rows: [
+            {
+              cells: [
+                {
+                  content: [{ text: 'Styled' }],
+                  background: '#ecfccb',
+                  color: '#166534',
+                  width: '220px',
+                  colspan: 2,
+                  rowspan: 2,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ]);
+    expect(html).toContain('colspan="2"');
+    expect(html).toContain('rowspan="2"');
+    expect(html).toContain('background:#ecfccb');
+    expect(html).toContain('color:#166534');
+    expect(html).toContain('width:220px');
+  });
+
   // ─── Columns → table layout ────────────────────────────────────────────────
 
   it('serializes columns as table-based layout (no flex/grid)', () => {

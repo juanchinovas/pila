@@ -33,12 +33,13 @@ export class ColumnsToolbar {
   private ctx: ColumnsToolbarContext | null = null;
   private deleteColBtn!: HTMLButtonElement;
   private widthBtns: Array<{ btn: HTMLButtonElement; flex: number }> = [];
+  private attached = false;
 
   constructor(portalTo: HTMLElement = document.body) {
     this.portalTo = portalTo;
     this.el = this.buildDOM();
     this.el.style.display = 'none';
-    this.portalTo.appendChild(this.el);
+    this.ensureAttached();
   }
 
   private buildDOM(): HTMLElement {
@@ -46,6 +47,7 @@ export class ColumnsToolbar {
     toolbar.className =
       'absolute z-[9000] flex items-center gap-px px-1 py-1 rounded-lg shadow-xl ' +
       'bg-[var(--pila-bg)] border border-[var(--pila-border)]';
+    toolbar.dataset.pilaUi = 'columns-toolbar';
 
     // Add column left / right
     toolbar.appendChild(
@@ -134,6 +136,7 @@ export class ColumnsToolbar {
   }
 
   show(anchor: HTMLElement, ctx: ColumnsToolbarContext): void {
+    this.ensureAttached();
     this.ctx = ctx;
 
     // Disable delete-col when only one column remains
@@ -174,5 +177,14 @@ export class ColumnsToolbar {
   destroy(): void {
     this.hide();
     this.el.remove();
+    this.attached = false;
+  }
+
+  private ensureAttached(): void {
+    if (this.attached && this.el.isConnected) return;
+    if (!this.el.isConnected) {
+      this.portalTo.appendChild(this.el);
+    }
+    this.attached = true;
   }
 }

@@ -387,7 +387,7 @@ code[class*="language-"] {
 
 .pila-drag-handle svg:hover,
 .pila-drag-handle button:hover {
-  @apply opacity-100 bg-[var(--pila-code-bg)] rounded-sm rounded-full;
+  @apply opacity-100 bg-[var(--pila-code-bg)] rounded-sm;
 }
 
 .pila-drag-handle svg:active { @apply cursor-grabbing; }

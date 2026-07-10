@@ -23,15 +23,18 @@ const BTN =
 const SEP_CLS = 'w-px h-4 bg-[var(--pila-border)] mx-0.5 shrink-0 self-center';
 
 export class TableToolbar {
+  private portalTo: HTMLElement;
   private el: HTMLElement;
   private headerRowBtn!: HTMLButtonElement;
   private headerColBtn!: HTMLButtonElement;
   private ctx: TableToolbarContext | null = null;
+  private attached = false;
 
-  constructor() {
+  constructor(portalTo: HTMLElement = document.body) {
+    this.portalTo = portalTo;
     this.el = this.buildDOM();
     this.el.style.display = 'none';
-    document.body.appendChild(this.el);
+    this.ensureAttached();
   }
 
   private buildDOM(): HTMLElement {
@@ -39,6 +42,7 @@ export class TableToolbar {
     toolbar.className =
       'fixed z-[9000] flex items-center gap-px px-1 py-1 rounded-lg shadow-xl ' +
       'bg-[var(--pila-bg)] border border-[var(--pila-border)]';
+    toolbar.dataset.pilaUi = 'table-toolbar';
 
     // Toggle header row / col
     this.headerRowBtn = this.makeIconBtn(Icons.Rows2,   () => this.ctx?.onToggleHeaderRow(), 'Toggle header row', 'Row');
@@ -106,6 +110,7 @@ export class TableToolbar {
 
   /** Show the toolbar anchored above (or below if near top) `anchor`. */
   show(anchor: HTMLElement, ctx: TableToolbarContext): void {
+    this.ensureAttached();
     this.ctx = ctx;
     this.setActive(this.headerRowBtn, ctx.headerRow);
     this.setActive(this.headerColBtn, ctx.headerCol);
@@ -139,5 +144,14 @@ export class TableToolbar {
   destroy(): void {
     this.hide();
     this.el.remove();
+    this.attached = false;
+  }
+
+  private ensureAttached(): void {
+    if (this.attached && this.el.isConnected) return;
+    if (!this.el.isConnected) {
+      this.portalTo.appendChild(this.el);
+    }
+    this.attached = true;
   }
 }

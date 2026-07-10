@@ -127,6 +127,13 @@ function inlineToHtml(nodes: InlineNode[], theme: Theme): string {
     .join('');
 }
 
+function blockColorStyle(attrs?: BlockAttrs): string {
+  const chunks: string[] = [];
+  if (attrs?.background) chunks.push(`background:${attrs.background};`);
+  if (attrs?.textColor) chunks.push(`color:${attrs.textColor};`);
+  return chunks.join('');
+}
+
 // ─── Callout colour themes ────────────────────────────────────────────────────
 
 function calloutColors(flavor: string | undefined, theme: Theme): { bg: string; border: string } {
@@ -142,7 +149,7 @@ function calloutColors(flavor: string | undefined, theme: Theme): { bg: string; 
 // ─── Table serialization ─────────────────────────────────────────────────────
 
 function tableToHtml(rows: TableRow[], attrs: BlockAttrs, theme: Theme): string {
-  const TABLE_STYLE = 'border-collapse:collapse;width:100%;margin:12px 0;font-size:15px;';
+  const TABLE_STYLE = `border-collapse:collapse;width:100%;margin:12px 0;font-size:15px;${blockColorStyle(attrs)}`;
   const TH_STYLE    = `padding:8px 12px;border:1px solid ${theme.border};background:${theme.inlineCodeBg};font-weight:600;text-align:left;`;
   const TD_STYLE    = `padding:8px 12px;border:1px solid ${theme.border};`;
   const headerRowSet: number[] = attrs.headerRows ?? (attrs.headerRow ? [0] : []);
@@ -157,7 +164,14 @@ function tableToHtml(rows: TableRow[], attrs: BlockAttrs, theme: Theme): string 
     const tag       = useHeader ? 'th' : 'td';
     const style     = useHeader ? TH_STYLE : TD_STYLE;
     const alignStyle = cell.align ? `text-align:${cell.align};` : '';
-    return `<${tag} style="${style}${alignStyle}">${inlineToHtml(cell.content, theme)}</${tag}>`;
+    const bgStyle = cell.background ? `background:${cell.background};` : '';
+    const textStyle = cell.color ? `color:${cell.color};` : '';
+    const widthStyle = cell.width ? `width:${cell.width};` : '';
+    const spanAttrs = [
+      cell.colspan ? ` colspan="${cell.colspan}"` : '',
+      cell.rowspan ? ` rowspan="${cell.rowspan}"` : '',
+    ].join('');
+    return `<${tag}${spanAttrs} style="${style}${alignStyle}${bgStyle}${textStyle}${widthStyle}">${inlineToHtml(cell.content, theme)}</${tag}>`;
   };
 
   const buildRow = (row: TableRow, isHeader: boolean, _rowIdx: number): string => {
@@ -182,7 +196,7 @@ function tableToHtml(rows: TableRow[], attrs: BlockAttrs, theme: Theme): string 
 
 // ─── Columns → table-based layout ────────────────────────────────────────────
 
-function columnsToHtml(defs: BlockAttrs['columnDefs'], theme: Theme): string {
+function columnsToHtml(defs: BlockAttrs['columnDefs'], theme: Theme, attrs?: BlockAttrs): string {
   if (!defs?.length) return '';
 
   const totalWeight = defs.reduce((s, d) => s + (d.width ?? 1), 0);
@@ -196,7 +210,7 @@ function columnsToHtml(defs: BlockAttrs['columnDefs'], theme: Theme): string {
     .join('\n');
 
   return (
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;margin:12px 0;">\n' +
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;width:100%;margin:12px 0;${blockColorStyle(attrs)}">\n` +
     `<tr>\n${cells}\n</tr>\n</table>`
   );
 }
@@ -205,57 +219,68 @@ function columnsToHtml(defs: BlockAttrs['columnDefs'], theme: Theme): string {
 
 function blockToHtml(block: Block, theme: Theme): string {
   const BASE = `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:${theme.text};`;
+  const BLOCK_COLORS = blockColorStyle(block.attrs);
   const content = block.content ?? [];
 
   switch (block.type) {
     case 'paragraph':
-      return `<p style="${BASE}margin:0 0 12px;font-size:15px;line-height:1.6;">${inlineToHtml(content, theme) || '&nbsp;'}</p>`;
+      return `<p style="${BASE}${BLOCK_COLORS}margin:0 0 12px;font-size:15px;line-height:1.6;">${inlineToHtml(content, theme) || '&nbsp;'}</p>`;
 
     case 'heading1':
-      return `<h1 style="${BASE}margin:24px 0 8px;font-size:28px;font-weight:700;line-height:1.25;">${inlineToHtml(content, theme)}</h1>`;
+      return `<h1 style="${BASE}${BLOCK_COLORS}margin:24px 0 8px;font-size:28px;font-weight:700;line-height:1.25;">${inlineToHtml(content, theme)}</h1>`;
     case 'heading2':
-      return `<h2 style="${BASE}margin:20px 0 6px;font-size:22px;font-weight:700;line-height:1.3;">${inlineToHtml(content, theme)}</h2>`;
+      return `<h2 style="${BASE}${BLOCK_COLORS}margin:20px 0 6px;font-size:22px;font-weight:700;line-height:1.3;">${inlineToHtml(content, theme)}</h2>`;
     case 'heading3':
-      return `<h3 style="${BASE}margin:16px 0 4px;font-size:18px;font-weight:600;line-height:1.35;">${inlineToHtml(content, theme)}</h3>`;
+      return `<h3 style="${BASE}${BLOCK_COLORS}margin:16px 0 4px;font-size:18px;font-weight:600;line-height:1.35;">${inlineToHtml(content, theme)}</h3>`;
 
     case 'bulletList':
-      return `<ul style="margin:0 0 12px;padding-left:24px;"><li style="${BASE}font-size:15px;line-height:1.6;">${inlineToHtml(content, theme)}</li></ul>`;
+      return `<ul style="${BLOCK_COLORS}margin:0 0 12px;padding-left:24px;"><li style="${BASE}${BLOCK_COLORS}font-size:15px;line-height:1.6;">${inlineToHtml(content, theme)}</li></ul>`;
     case 'numberedList':
-      return `<ol style="margin:0 0 12px;padding-left:24px;"><li style="${BASE}font-size:15px;line-height:1.6;">${inlineToHtml(content, theme)}</li></ol>`;
+      return `<ol style="${BLOCK_COLORS}margin:0 0 12px;padding-left:24px;"><li style="${BASE}${BLOCK_COLORS}font-size:15px;line-height:1.6;">${inlineToHtml(content, theme)}</li></ol>`;
 
     case 'todo': {
       const checked = block.attrs?.checked;
       const box     = checked ? '&#x2611;' : '&#x2610;';  // ☑ / ☐
       const strike  = checked ? `text-decoration:line-through;color:${theme.muted};` : '';
-      return `<p style="${BASE}margin:0 0 8px;font-size:15px;line-height:1.6;">${box}&nbsp;<span style="${strike}">${inlineToHtml(content, theme)}</span></p>`;
+      return `<p style="${BASE}${BLOCK_COLORS}margin:0 0 8px;font-size:15px;line-height:1.6;">${box}&nbsp;<span style="${strike}">${inlineToHtml(content, theme)}</span></p>`;
     }
 
     case 'code': {
       const lang = escapeAttr(block.attrs?.language ?? 'plaintext');
       const code = escapeHtml(content.map((n) => n.text).join(''));
+      const bg = block.attrs?.background ?? '#1e1e1e';
+      const fg = block.attrs?.textColor ?? '#d4d4d4';
+      const labelColor = block.attrs?.textColor ?? '#9ca3af';
       return (
-        '<div style="margin:12px 0;background:#1e1e1e;border-radius:6px;overflow:auto;">' +
-        `<p style="margin:0;padding:4px 12px;font-size:11px;color:#9ca3af;font-family:monospace;border-bottom:1px solid #374151;">${lang}</p>` +
-        `<pre style="margin:0;padding:12px;overflow-x:auto;"><code style="font-family:Consolas,'Courier New',monospace;font-size:13px;color:#d4d4d4;white-space:pre;">${code}</code></pre>` +
+        `<div style="margin:12px 0;background:${bg};border-radius:6px;overflow:auto;">` +
+        `<p style="margin:0;padding:4px 12px;font-size:11px;color:${labelColor};font-family:monospace;border-bottom:1px solid #374151;">${lang}</p>` +
+        `<pre style="margin:0;padding:12px;overflow-x:auto;"><code style="font-family:Consolas,'Courier New',monospace;font-size:13px;color:${fg};white-space:pre;">${code}</code></pre>` +
         '</div>'
       );
     }
 
     case 'quote':
+      {
+        const quoteBg = block.attrs?.background ? `background:${block.attrs.background};` : '';
+        const quoteColor = block.attrs?.textColor ?? theme.quoteText;
       return (
-        `<blockquote style="${BASE}margin:12px 0;padding:8px 16px;border-left:4px solid ${theme.quoteBorder};` +
-        `color:${theme.quoteText};font-style:italic;font-size:15px;line-height:1.6;">${inlineToHtml(content, theme)}</blockquote>`
+        `<blockquote style="${BASE}${quoteBg}margin:12px 0;padding:8px 16px;border-left:4px solid ${theme.quoteBorder};` +
+        `color:${quoteColor};font-style:italic;font-size:15px;line-height:1.6;">${inlineToHtml(content, theme)}</blockquote>`
       );
+      }
 
     case 'callout': {
       const icon   = escapeHtml(block.attrs?.icon ?? '💡');
       const colors = calloutColors(block.attrs?.flavor, theme);
+      const bg = block.attrs?.background ?? colors.bg;
+      const fg = block.attrs?.textColor;
+      const fgStyle = fg ? `color:${fg};` : '';
       return (
         '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" ' +
-        `style="margin:12px 0;background:${colors.bg};border-left:4px solid ${colors.border};border-radius:0 6px 6px 0;">` +
+        `style="margin:12px 0;background:${bg};border-left:4px solid ${colors.border};border-radius:0 6px 6px 0;">` +
         '<tr>' +
-        `<td style="padding:12px 16px;font-size:18px;vertical-align:top;width:28px;">${icon}</td>` +
-        `<td style="${BASE}padding:12px 16px 12px 0;font-size:15px;line-height:1.6;vertical-align:top;">${inlineToHtml(content, theme)}</td>` +
+        `<td style="padding:12px 16px;font-size:18px;vertical-align:top;width:28px;${fgStyle}">${icon}</td>` +
+        `<td style="${BASE}padding:12px 16px 12px 0;font-size:15px;line-height:1.6;vertical-align:top;${fgStyle}">${inlineToHtml(content, theme)}</td>` +
         '</tr></table>'
       );
     }
@@ -268,7 +293,7 @@ function blockToHtml(block: Block, theme: Theme): string {
       const alt    = escapeAttr(block.attrs?.alt ?? '');
       const width  = block.attrs?.width  ? ` width="${escapeAttr(block.attrs.width)}"`  : ' style="max-width:100%;height:auto;"';
       const height = block.attrs?.height ? ` height="${escapeAttr(block.attrs.height)}"` : '';
-      return `<figure style="margin:12px 0;padding:0;"><img src="${escapeAttr(src)}" alt="${alt}"${width}${height} /></figure>`;
+      return `<figure style="margin:12px 0;padding:0;${BLOCK_COLORS}"><img src="${escapeAttr(src)}" alt="${alt}"${width}${height} /></figure>`;
     }
 
     case 'table': {
@@ -277,7 +302,7 @@ function blockToHtml(block: Block, theme: Theme): string {
     }
 
     case 'columns':
-      return columnsToHtml(block.attrs?.columnDefs, theme);
+      return columnsToHtml(block.attrs?.columnDefs, theme, block.attrs);
 
     case 'button': {
       const label   = inlineToHtml(content, theme);
@@ -287,8 +312,8 @@ function blockToHtml(block: Block, theme: Theme): string {
       const tdAlign = align === 'center' ? 'center' : align === 'right' ? 'right' : 'left';
 
       // Colours per variant — primary/outline use --pila-accent, secondary uses --pila-border
-      const bg     = style === 'primary'   ? theme.accent  : style === 'secondary' ? theme.border : theme.bg;
-      const fg     = style === 'primary'   ? '#ffffff'     : style === 'secondary' ? theme.text   : theme.accent;
+      const bg     = block.attrs?.background ?? (style === 'primary'   ? theme.accent  : style === 'secondary' ? theme.border : theme.bg);
+      const fg     = block.attrs?.textColor ?? (style === 'primary'   ? '#ffffff'     : style === 'secondary' ? theme.text   : theme.accent);
       const border = style === 'outline'   ? theme.accent  : bg;
 
       // MSO VML fallback + modern <a> for other clients

@@ -5,6 +5,15 @@ function generateId(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
+function compactAttrs(attrs: BlockAttrs | undefined): BlockAttrs | undefined {
+  if (!attrs) return undefined;
+
+  const entries = Object.entries(attrs).filter(([, value]) => value !== undefined);
+  if (entries.length === 0) return undefined;
+
+  return Object.fromEntries(entries) as BlockAttrs;
+}
+
 export class BlockManager extends EventEmitter<EditorEvents> {
   private blocks: Block[] = [];
 
@@ -56,14 +65,15 @@ export class BlockManager extends EventEmitter<EditorEvents> {
     if (index === -1) return undefined;
 
     const existing = this.blocks[index];
+    const nextAttrs =
+      changes.attrs !== undefined
+        ? compactAttrs({ ...existing.attrs, ...changes.attrs })
+        : existing.attrs;
     const updated: Block = {
       ...existing,
       ...changes,
       id,
-      attrs:
-        changes.attrs !== undefined
-          ? { ...existing.attrs, ...changes.attrs }
-          : existing.attrs,
+      attrs: nextAttrs,
     };
 
     this.blocks[index] = updated;

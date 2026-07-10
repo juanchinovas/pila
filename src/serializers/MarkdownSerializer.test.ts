@@ -137,4 +137,16 @@ describe('MarkdownSerializer', () => {
     ]);
     expect(md).toBe('[Go](#)');
   });
+
+  it('ignores color attrs and preserves plain markdown text', () => {
+    const md = MarkdownSerializer.serialize([
+      {
+        id: '1',
+        type: 'paragraph',
+        content: [{ text: 'Color attrs are ignored' }],
+        attrs: { background: '#111111', textColor: '#eeeeee' },
+      },
+    ]);
+    expect(md).toBe('Color attrs are ignored');
+  });
 });
