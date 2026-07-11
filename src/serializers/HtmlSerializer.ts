@@ -62,6 +62,15 @@ function blockStyleCss(attrs?: BlockAttrs): string {
   return styles.join(';');
 }
 
+function listStyleAttr(attrs: BlockAttrs | undefined, kind: 'bulletList' | 'numberedList'): string {
+  const styles = splitStyleDeclarations(blockStyleCss(attrs));
+  styles.push(
+    kind === 'bulletList' ? 'list-style-type:disc' : 'list-style-type:decimal',
+    'list-style-position:outside',
+  );
+  return styleAttrFromList(styles);
+}
+
 function mergeClassNames(...values: Array<string | undefined>): string {
   return values
     .flatMap((value) => (value ?? '').split(/\s+/))
@@ -150,9 +159,43 @@ function tableToHtml(rows: TableRow[], attrs: BlockAttrs): string {
 
 export class HtmlSerializer {
   static serialize(blocks: Block[]): string {
-    return blocks
-      .map((block) => HtmlSerializer.blockToHtml(block))
-      .join('\n');
+    const html: string[] = [];
+
+    for (let index = 0; index < blocks.length; index += 1) {
+      const block = blocks[index];
+
+      if (block.type === 'bulletList' || block.type === 'numberedList') {
+        const listType = block.type;
+        const listBlocks = [block];
+
+        while (index + 1 < blocks.length && blocks[index + 1].type === listType) {
+          listBlocks.push(blocks[index + 1]);
+          index += 1;
+        }
+
+        html.push(HtmlSerializer.listToHtml(listBlocks, listType));
+        continue;
+      }
+
+      html.push(HtmlSerializer.blockToHtml(block));
+    }
+
+    return html.join('\n');
+  }
+
+  private static listToHtml(blocks: Block[], type: 'bulletList' | 'numberedList'): string {
+    const [firstBlock] = blocks;
+    const tag = type === 'bulletList' ? 'ul' : 'ol';
+    const items = blocks
+      .map((block) => {
+        const itemStyle = splitStyleDeclarations(blockStyleCss(block.attrs));
+        itemStyle.push('display:list-item');
+        const styleAttr = styleAttrFromList(itemStyle);
+        return `<li${styleAttr}>${inlineToHtml(block.content ?? [])}</li>`;
+      })
+      .join('');
+
+    return `<${tag}${classAttr(firstBlock.attrs?.tailwindClasses)}${listStyleAttr(firstBlock.attrs, type)}>${items}</${tag}>`;
   }
 
   private static blockToHtml(block: Block): string {
@@ -169,9 +212,9 @@ export class HtmlSerializer {
       case 'heading3':
         return `<h3${classAttr(block.attrs?.tailwindClasses)}${styleAttr}>${inlineToHtml(content)}</h3>`;
       case 'bulletList':
-        return `<ul${classAttr(block.attrs?.tailwindClasses)}${styleAttr}><li>${inlineToHtml(content)}</li></ul>`;
+        return HtmlSerializer.listToHtml([block], 'bulletList');
       case 'numberedList':
-        return `<ol${classAttr(block.attrs?.tailwindClasses)}${styleAttr}><li>${inlineToHtml(content)}</li></ol>`;
+        return HtmlSerializer.listToHtml([block], 'numberedList');
       case 'todo': {
         const checked = block.attrs?.checked ? ' checked' : '';
         return `<div${classAttr('todo', block.attrs?.tailwindClasses)}${styleAttr}><input type="checkbox"${checked} disabled /> ${inlineToHtml(content)}</div>`;

@@ -85,13 +85,27 @@ describe('EmailSerializer', () => {
   it('serializes bulletList', () => {
     const html = serialize([{ id: '1', type: 'bulletList', content: [{ text: 'item' }] }]);
     expect(html).toContain('<ul style=');
+    expect(html).toContain('list-style-type:disc');
     expect(html).toContain('<li style=');
+    expect(html).toContain('display:list-item');
     expect(html).toContain('item</li>');
   });
 
   it('serializes numberedList', () => {
     const html = serialize([{ id: '1', type: 'numberedList', content: [{ text: 'item' }] }]);
     expect(html).toContain('<ol style=');
+    expect(html).toContain('list-style-type:decimal');
+    expect(html).toContain('display:list-item');
+  });
+
+  it('groups consecutive numberedList blocks into one ordered list', () => {
+    const html = serialize([
+      { id: '1', type: 'numberedList', content: [{ text: 'first' }] },
+      { id: '2', type: 'numberedList', content: [{ text: 'second' }] },
+      { id: '3', type: 'numberedList', content: [{ text: 'third' }] },
+    ]);
+    expect(html.match(/<ol /g)).toHaveLength(1);
+    expect(html).toContain('<li style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;color:#1a1a1a;display:list-item;font-size:15px;line-height:1.6;">first</li><li style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;color:#1a1a1a;display:list-item;font-size:15px;line-height:1.6;">second</li><li style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;color:#1a1a1a;display:list-item;font-size:15px;line-height:1.6;">third</li>');
   });
 
   it('renders unchecked todo with ☐ character', () => {

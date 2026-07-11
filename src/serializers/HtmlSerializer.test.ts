@@ -20,14 +20,23 @@ describe('HtmlSerializer', () => {
     const html = HtmlSerializer.serialize([
       { id: '1', type: 'bulletList', content: [{ text: 'item' }] },
     ]);
-    expect(html).toBe('<ul><li>item</li></ul>');
+    expect(html).toBe('<ul style="list-style-type:disc;list-style-position:outside"><li style="display:list-item">item</li></ul>');
   });
 
   it('serializes numbered list', () => {
     const html = HtmlSerializer.serialize([
       { id: '1', type: 'numberedList', content: [{ text: 'one' }] },
     ]);
-    expect(html).toBe('<ol><li>one</li></ol>');
+    expect(html).toBe('<ol style="list-style-type:decimal;list-style-position:outside"><li style="display:list-item">one</li></ol>');
+  });
+
+  it('groups consecutive numbered list blocks into one ordered list', () => {
+    const html = HtmlSerializer.serialize([
+      { id: '1', type: 'numberedList', content: [{ text: 'one' }] },
+      { id: '2', type: 'numberedList', content: [{ text: 'two' }] },
+      { id: '3', type: 'numberedList', content: [{ text: 'three' }] },
+    ]);
+    expect(html).toBe('<ol style="list-style-type:decimal;list-style-position:outside"><li style="display:list-item">one</li><li style="display:list-item">two</li><li style="display:list-item">three</li></ol>');
   });
 
   it('serializes unchecked todo', () => {

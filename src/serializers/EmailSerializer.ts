@@ -131,6 +131,7 @@ function blockColorStyle(attrs?: BlockAttrs): string {
   const chunks: string[] = [];
   if (attrs?.background) chunks.push(`background:${attrs.background};`);
   if (attrs?.textColor) chunks.push(`color:${attrs.textColor};`);
+  if (attrs?.alignment) chunks.push(`text-align:${attrs.alignment};`);
   return chunks.join('');
 }
 
@@ -215,6 +216,21 @@ function columnsToHtml(defs: BlockAttrs['columnDefs'], theme: Theme, attrs?: Blo
   );
 }
 
+function listToHtml(blocks: Block[], type: 'bulletList' | 'numberedList', theme: Theme): string {
+  const [firstBlock] = blocks;
+  const base = `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:${theme.text};`;
+  const listTag = type === 'bulletList' ? 'ul' : 'ol';
+  const listStyleType = type === 'bulletList' ? 'disc' : 'decimal';
+  const items = blocks
+    .map((block) => {
+      const content = block.content ?? [];
+      return `<li style="${base}${blockColorStyle(block.attrs)}display:list-item;font-size:15px;line-height:1.6;">${inlineToHtml(content, theme)}</li>`;
+    })
+    .join('');
+
+  return `<${listTag} style="${blockColorStyle(firstBlock.attrs)}margin:0 0 12px;padding-left:24px;list-style-type:${listStyleType};list-style-position:outside;">${items}</${listTag}>`;
+}
+
 // ─── Block serializer ─────────────────────────────────────────────────────────
 
 function blockToHtml(block: Block, theme: Theme): string {
@@ -234,9 +250,9 @@ function blockToHtml(block: Block, theme: Theme): string {
       return `<h3 style="${BASE}${BLOCK_COLORS}margin:16px 0 4px;font-size:18px;font-weight:600;line-height:1.35;">${inlineToHtml(content, theme)}</h3>`;
 
     case 'bulletList':
-      return `<ul style="${BLOCK_COLORS}margin:0 0 12px;padding-left:24px;"><li style="${BASE}${BLOCK_COLORS}font-size:15px;line-height:1.6;">${inlineToHtml(content, theme)}</li></ul>`;
+      return listToHtml([block], 'bulletList', theme);
     case 'numberedList':
-      return `<ol style="${BLOCK_COLORS}margin:0 0 12px;padding-left:24px;"><li style="${BASE}${BLOCK_COLORS}font-size:15px;line-height:1.6;">${inlineToHtml(content, theme)}</li></ol>`;
+      return listToHtml([block], 'numberedList', theme);
 
     case 'todo': {
       const checked = block.attrs?.checked;
@@ -344,7 +360,28 @@ export class EmailSerializer {
    */
   static serialize(blocks: Block[]): string {
     const theme = buildTheme();
-    const body = blocks.map((b) => blockToHtml(b, theme)).join('\n');
+    const html: string[] = [];
+
+    for (let index = 0; index < blocks.length; index += 1) {
+      const block = blocks[index];
+
+      if (block.type === 'bulletList' || block.type === 'numberedList') {
+        const listType = block.type;
+        const listBlocks = [block];
+
+        while (index + 1 < blocks.length && blocks[index + 1].type === listType) {
+          listBlocks.push(blocks[index + 1]);
+          index += 1;
+        }
+
+        html.push(listToHtml(listBlocks, listType, theme));
+        continue;
+      }
+
+      html.push(blockToHtml(block, theme));
+    }
+
+    const body = html.join('\n');
 
     return [
       '<!DOCTYPE html>',
