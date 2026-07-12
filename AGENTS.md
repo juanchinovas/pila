@@ -18,6 +18,30 @@ src/
 └── index.ts        # Main entry point
 ```
 
+## Development Environment
+
+This project includes a **VS Code Dev Container** for consistent environments.
+
+### Using Dev Containers
+1. Install the [Dev Containers extension](vscode:extension/ms-vscode-remote.remote-containers)
+2. Open the project in VS Code
+3. Click "Reopen in Container" (or Command Palette → `Dev Containers: Reopen in Container`)
+
+The container includes:
+- Node 20
+- Playwright + Chromium (for E2E tests)
+- GitHub CLI
+- ESLint, Prettier, Tailwind extensions
+
+First build takes a few minutes; subsequent opens are fast.
+
+### Alternative: Manual Setup
+If not using Dev Containers:
+```bash
+npm install
+npx playwright install --with-deps chromium
+```
+
 ## Development Commands
 
 ```bash

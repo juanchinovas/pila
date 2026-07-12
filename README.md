@@ -1,5 +1,9 @@
 # Pila
 
+[![npm version](https://img.shields.io/npm/v/@sunacchi/pila)](https://www.npmjs.com/package/@sunacchi/pila)
+[![npm downloads](https://img.shields.io/npm/dm/@sunacchi/pila)](https://www.npmjs.com/package/@sunacchi/pila)
+[![CI](https://github.com/juanchinovas/pila/actions/workflows/ci.yml/badge.svg)](https://github.com/juanchinovas/pila/actions/workflows/ci.yml)
+
 **Pluggable Inline Layout Authoring** — a framework-agnostic, Notion-style block editor written in TypeScript.
 
 Pila is built on plain Web Components and requires no framework. It works in vanilla HTML as well as React, Vue, Svelte, or any other environment that can provide a DOM element.
@@ -10,10 +14,11 @@ Pila is built on plain Web Components and requires no framework. It works in van
 
 ## Features
 
-- **Block-based editing** — paragraphs, headings, lists, todos, code, quotes, callouts, dividers, images, tables, and multi-column layouts
+- **Block-based editing** — paragraphs, headings, lists, todos, code, quotes, callouts, dividers, images, tables, multi-column layouts, and buttons
 - **Block Customization** — change background and text color of any block directly from the drag handle popover
 - **Image Editing** — upload local images, resize them manually, and configure object-fit and border-radius via an intuitive popover
 - **Inline formatting** — bold, italic, underline, inline code, links via floating toolbar or keyboard shortcuts
+- **Emoji picker** — type `:` to search and insert emojis; extensible via plugin API
 - **Slash menu** — type `/` to insert any block type
 - **Drag & drop** — drag the handle beside any block to reorder
 - **Syntax highlighting** — code blocks with Prism.js (14 languages)
@@ -79,7 +84,7 @@ Call `editor.destroy()` when the editor is no longer needed to clean up event li
 | `initialContent` | `Block[]`                   | Pre-populate the editor with content                    |
 | `onChange`       | `(blocks: Block[]) => void` | Called whenever blocks change                           |
 | `plugins`        | `PilaPlugin[]`              | Plugins to install on mount                             |
-| `portalTo`    | `HTMLElement \| (() => HTMLElement \| null)` | Optional element or getter to append floating UI (menus, popovers) to. Defaults to `document.body`. |
+| `portalTo`       | `HTMLElement \| (() => HTMLElement \| null)` | Optional element or getter to append floating UI (menus, popovers) to. Defaults to `document.body`. |
 
 ### Methods
 
@@ -345,7 +350,8 @@ const myPlugin: PilaPlugin = {
       type: 'my-block',
       factory(block) {
         const el = document.createElement('div')
-        el.textContent = 'My custom block!'
+        el.className = 'my-card'
+        el.textContent = block.attrs?.title ?? 'Untitled'
         return el
       },
       slashItem: {
@@ -357,8 +363,8 @@ const myPlugin: PilaPlugin = {
 
     // Add a toolbar button
     api.addToolbarButton({
-      label: 'Hi',
-      title: 'Say hi',
+      label: '🖍',
+      title: 'Highlight',
       command() { alert('Hello from plugin!') },
     })
 

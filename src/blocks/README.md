@@ -1,6 +1,9 @@
 # Blocks
 
-Pila ships 13 built-in block types. Each block is a Web Component that extends `PilaBlock` and is registered in the browser's Custom Elements registry.
+[![npm version](https://img.shields.io/npm/v/@sunacchi/pila)](https://www.npmjs.com/package/@sunacchi/pila)
+[![CI](https://github.com/juanchinovas/pila/actions/workflows/ci.yml/badge.svg)](https://github.com/juanchinovas/pila/actions/workflows/ci.yml)
+
+Pila ships 14 built-in block types. Each block is a Web Component that extends `PilaBlock` and is registered in the browser's Custom Elements registry.
 
 All blocks share the same base `Block` interface:
 
@@ -67,7 +70,7 @@ Section headings rendered as `<h1>`, `<h2>`, `<h3>`.
 
 **`content`:** `InlineNode[]`
 
-**`attrs`:** none
+**`attrs`:** none (heading level is encoded in the block type)
 
 **Example:**
 
@@ -305,7 +308,7 @@ An image block with an optional caption, hover overlay with an Edit button to op
 
 ## table
 
-A data table with configurable header rows and columns. Supports per-cell alignment.
+A data table with configurable header rows and columns. Supports per-cell alignment, background color, text color, width, colspan, and rowspan.
 
 **Custom element:** `<pila-table>`
 
@@ -331,6 +334,11 @@ interface TableRow {
 interface TableCell {
   content: InlineNode[]
   align?: 'left' | 'center' | 'right'
+  colspan?: number
+  rowspan?: number
+  background?: string
+  color?: string
+  width?: string
 }
 ```
 
@@ -404,6 +412,50 @@ The columns toolbar (shown when a column is active) allows adding/removing colum
 
 ---
 
+## button
+
+A styled button link block with configurable style variant, alignment, and editable label.
+
+**Custom element:** `<pila-button>`
+
+**`content`:** `InlineNode[]` — button label (supports inline formatting)
+
+**`attrs`:**
+
+| Property      | Type                                    | Default    | Description                               |
+|---------------|-----------------------------------------|------------|-------------------------------------------|
+| `href`        | `string`                                | `'#'`      | Link destination                          |
+| `buttonStyle` | `'primary' \| 'secondary' \| 'outline'` | `'primary'`| Visual style variant                      |
+| `alignment`   | `'left' \| 'center' \| 'right'`         | `'left'`   | Horizontal alignment within the block     |
+
+**Features:**
+- **Editable label** — click to edit button text (supports bold, italic, etc.)
+- **Style variants** — Primary (filled), Secondary (bordered), Outline
+- **Alignment** — Left, center, or right
+- **URL editor** — Click the edit icon to change the link destination
+- **Email-safe export** — Includes VML fallback for Outlook compatibility
+
+**Example:**
+
+```json
+{
+  "id": "13",
+  "type": "button",
+  "content": [{ "text": "Get Started", "bold": true }],
+  "attrs": {
+    "href": "https://example.com/signup",
+    "buttonStyle": "primary",
+    "alignment": "center"
+  }
+}
+```
+
+**Keyboard behaviour:**
+- `Enter` — create a paragraph below
+- `Backspace` on empty label — delete the block
+
+---
+
 ## Custom Block Types
 
 Register your own block types via the Plugin API:
@@ -425,4 +477,4 @@ api.registerBlockType({
 })
 ```
 
-See the [Plugin API section in the main README](../../README.md#plugin-api) for full details.
+See the [Plugin API section in the main README](../README.md#plugin-api) for full details.
