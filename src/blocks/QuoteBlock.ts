@@ -6,6 +6,10 @@ import { PilaBlock } from './PilaBlock';
 export class QuoteBlock extends PilaBlock {
   private contentEl!: HTMLElement;
 
+  protected get contentEditableEl(): HTMLElement {
+    return this.contentEl;
+  }
+
   protected buildDOM(): void {
     this.classList.add('pila-quote', '!my-5');
 

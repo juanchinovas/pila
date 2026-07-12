@@ -6,6 +6,10 @@ import { PilaBlock } from './PilaBlock';
 export class ParagraphBlock extends PilaBlock {
   private contentEl!: HTMLElement;
 
+  protected get contentEditableEl(): HTMLElement {
+    return this.contentEl;
+  }
+
   protected buildDOM(): void {
     this.contentEl = this.makeContentEditable(
       'p',

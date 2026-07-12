@@ -8,6 +8,10 @@ export class ListBlock extends PilaBlock {
   private markerEl!: HTMLElement;
   private indentLevel = 0;
 
+  protected get contentEditableEl(): HTMLElement {
+    return this.contentEl;
+  }
+
   protected buildDOM(): void {
     const isBullet = this.block.type === 'bulletList';
 

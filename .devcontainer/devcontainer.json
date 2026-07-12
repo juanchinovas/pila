@@ -4,12 +4,15 @@
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "onCreateCommand": "npm install",
+  "onCreateCommand": "npm install && cd demo-vue && rm -rf node_modules package-lock.json && npm install",
   "postCreateCommand": "npx playwright install --with-deps chromium",
-  "forwardPorts": [5173],
+  "forwardPorts": [5173, 5174],
   "portsAttributes": {
     "5173": {
-      "label": "Vite Dev Server"
+      "label": "Vite Dev Server (Vanilla)"
+    },
+    "5174": {
+      "label": "Vite Dev Server (Vue)"
     }
   },
   "customizations": {
@@ -17,7 +20,8 @@
       "extensions": [
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "bradlc.vscode-tailwindcss"
+        "bradlc.vscode-tailwindcss",
+        "Vue.volar"
       ],
       "settings": {
         "editor.formatOnSave": true,

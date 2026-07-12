@@ -4,12 +4,13 @@ import { Block, InlineNode } from '../types';
 import { BlockManager } from '../core/BlockManager';
 import { InlineParser } from '../inline/InlineParser';
 import { InlineRenderer } from '../inline/InlineRenderer';
+import { MarkdownShortcuts } from '../inline/MarkdownShortcuts';
 
 export interface BlockContext {
-  manager: BlockManager
-  editorEl: HTMLElement
-  placeholder?: string
-  portalTo?: HTMLElement
+  manager: BlockManager;
+  editorEl: HTMLElement;
+  placeholder?: string;
+  portalTo?: HTMLElement;
 }
 
 /**
@@ -88,6 +89,11 @@ export abstract class PilaBlock extends LitElement {
     return this.block?.type ?? '';
   }
 
+  /** Override to return the contenteditable element for live content parsing. */
+  protected get contentEditableEl(): HTMLElement | null {
+    return null;
+  }
+
   /**
    * Sync new block data without triggering a full Lit re-render.
    * Called by Editor.ts on every `blocks:change` event.
@@ -95,7 +101,9 @@ export abstract class PilaBlock extends LitElement {
    * (e.g. alignment).
    */
   updateData(newBlock: Block): void {
-    this.block = { ...newBlock };
+    // Preserve live content from DOM if available (manager may have stale data)
+    const liveContent = this.contentEditableEl ? InlineParser.parse(this.contentEditableEl) : null;
+    this.block = { ...newBlock, content: liveContent ?? newBlock.content };
     this._syncHostAttrs();
     this.applyGlobalStyles();
   }
@@ -153,7 +161,7 @@ export abstract class PilaBlock extends LitElement {
   protected makeContentEditable(
     tag: string,
     inlineNodes: InlineNode[],
-    extraClass = ''
+    extraClass = '',
   ): HTMLElement {
     const el = document.createElement(tag);
     el.setAttribute('contenteditable', 'true');
@@ -168,8 +176,23 @@ export abstract class PilaBlock extends LitElement {
 
   protected handleKeyDown(e: KeyboardEvent): void {
     if (e.key === 'Enter' && !e.shiftKey) {
+      // Check for markdown shortcut before splitting into new block
+      if (this.tryMarkdownShortcut(e.currentTarget as HTMLElement)) {
+        e.preventDefault();
+        return;
+      }
       e.preventDefault();
       this.handleEnter(e.currentTarget as HTMLElement);
+    } else if (e.key === ' ' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      // First check if we should exit formatting (double-space at end of formatted node)
+      if (this.tryExitFormatting(e.currentTarget as HTMLElement)) {
+        return;
+      }
+      // Then check for markdown shortcut conversion
+      if (this.tryMarkdownShortcut(e.currentTarget as HTMLElement, true)) {
+        e.preventDefault();
+        return;
+      }
     } else if (e.key === 'Backspace') {
       this.handleBackspace(e.currentTarget as HTMLElement, e);
     } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -189,7 +212,7 @@ export abstract class PilaBlock extends LitElement {
 
     requestAnimationFrame(() => {
       const newEl = this.ctx.editorEl.querySelector(
-        `[data-block-id="${newBlock.id!}"] [contenteditable]`
+        `[data-block-id="${newBlock.id!}"] [contenteditable]`,
       ) as HTMLElement | null;
       if (newEl) {
         newEl.focus();
@@ -240,7 +263,7 @@ export abstract class PilaBlock extends LitElement {
 
     requestAnimationFrame(() => {
       const prevEl = this.ctx.editorEl.querySelector(
-        `[data-block-id="${prevBlock.id!}"] [contenteditable]`
+        `[data-block-id="${prevBlock.id!}"] [contenteditable]`,
       ) as HTMLElement | null;
       if (prevEl) {
         prevEl.focus();
@@ -256,7 +279,7 @@ export abstract class PilaBlock extends LitElement {
     if (e.key === 'ArrowUp' && idx > 0) {
       const targetId = allBlocks[idx - 1].id!;
       const targetEl = this.ctx.editorEl.querySelector(
-        `[data-block-id="${targetId}"] [contenteditable]`
+        `[data-block-id="${targetId}"] [contenteditable]`,
       ) as HTMLElement | null;
       if (targetEl) {
         e.preventDefault();
@@ -265,13 +288,210 @@ export abstract class PilaBlock extends LitElement {
     } else if (e.key === 'ArrowDown' && idx < allBlocks.length - 1) {
       const targetId = allBlocks[idx + 1].id!;
       const targetEl = this.ctx.editorEl.querySelector(
-        `[data-block-id="${targetId}"] [contenteditable]`
+        `[data-block-id="${targetId}"] [contenteditable]`,
       ) as HTMLElement | null;
       if (targetEl) {
         e.preventDefault();
         targetEl.focus();
       }
     }
+  }
+
+  /**
+   * Check if the text before the cursor ends with a markdown shortcut pattern.
+   * If so, replace only the affected nodes with formatted ones and return true.
+   */
+  protected tryMarkdownShortcut(el: HTMLElement, addTrailingSpace = false): boolean {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || !sel.isCollapsed) return false;
+
+    const range = sel.getRangeAt(0);
+    const preCaret = document.createRange();
+    preCaret.setStart(el, 0);
+    preCaret.setEnd(range.startContainer, range.startOffset);
+    const cursorOffset = preCaret.toString().length;
+
+    // Parse current DOM to get existing nodes (preserves formatting)
+    const currentNodes = InlineParser.parse(el);
+    if (currentNodes.length === 0) return false;
+
+    // Find which node contains the cursor and character offset within that node
+    let accumulated = 0;
+    let targetNodeIndex = -1;
+    let offsetInNode = 0;
+
+    for (let i = 0; i < currentNodes.length; i++) {
+      const node = currentNodes[i];
+      const nextAccumulated = accumulated + node.text.length;
+      if (cursorOffset <= nextAccumulated) {
+        targetNodeIndex = i;
+        offsetInNode = cursorOffset - accumulated;
+        break;
+      }
+      accumulated = nextAccumulated;
+    }
+
+    if (targetNodeIndex === -1) return false;
+
+    // Build nodes before cursor (including partial target node)
+    const nodesBeforeCursor = currentNodes.slice(0, targetNodeIndex);
+    const targetNode = currentNodes[targetNodeIndex];
+    if (offsetInNode > 0) {
+      nodesBeforeCursor.push({ ...targetNode, text: targetNode.text.slice(0, offsetInNode) });
+    }
+
+    const converted = MarkdownShortcuts.matchBeforeCursor(nodesBeforeCursor);
+    if (!converted) return false;
+
+    // When triggered by Space, append trailing space to the last formatted node
+    // so the cursor stays inside the formatting (user can continue typing in bold)
+    if (addTrailingSpace) {
+      for (let i = converted.length - 1; i >= 0; i--) {
+        const n = converted[i];
+        if (Object.keys(PilaBlock.extractMarks(n)).length > 0 && !n.text.endsWith(' ')) {
+          converted[i] = { ...n, text: n.text + ' ' };
+          break;
+        }
+      }
+    }
+
+    // Build new nodes: converted (includes everything before cursor) + remainder of target node + rest
+    const afterCursorInTarget = targetNode.text.slice(offsetInNode);
+    const newNodes: InlineNode[] = [...converted];
+
+    if (afterCursorInTarget) {
+      const marks = PilaBlock.extractMarks(targetNode);
+      if (Object.keys(marks).length > 0) {
+        newNodes.push({ text: afterCursorInTarget, ...marks });
+      } else {
+        newNodes.push({ text: afterCursorInTarget });
+      }
+    }
+
+    newNodes.push(...currentNodes.slice(targetNodeIndex + 1));
+
+    InlineRenderer.render(el, newNodes);
+    this.block = { ...this.block, content: newNodes };
+
+    // Place caret at end of converted content
+    const newOffset = converted.reduce((sum, n) => sum + n.text.length, 0);
+    this.setCaret(el, newOffset);
+    return true;
+  }
+
+  /** Extract formatting marks from an InlineNode. */
+  private static extractMarks(node: InlineNode): Partial<InlineNode> {
+    const marks: Partial<InlineNode> = {};
+    if (node.bold) marks.bold = node.bold;
+    if (node.italic) marks.italic = node.italic;
+    if (node.code) marks.code = node.code;
+    if (node.underline) marks.underline = node.underline;
+    if (node.link) marks.link = node.link;
+    return marks;
+  }
+
+  /**
+   * Check if cursor is at the end of a formatted node (bold, italic, code, etc.)
+   * If so, split the node to allow plain text after it (exit formatting mode).
+   * Returns true if formatting was exited.
+   */
+  protected tryExitFormatting(el: HTMLElement): boolean {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || !sel.isCollapsed) return false;
+
+    const range = sel.getRangeAt(0);
+    const preCaret = document.createRange();
+    preCaret.setStart(el, 0);
+    preCaret.setEnd(range.startContainer, range.startOffset);
+    const cursorOffset = preCaret.toString().length;
+
+    // Parse current nodes
+    const currentNodes = InlineParser.parse(el);
+    if (currentNodes.length === 0) return false;
+
+    // Find node containing cursor
+    let accumulated = 0;
+    let targetNodeIndex = -1;
+    let offsetInNode = 0;
+
+    for (let i = 0; i < currentNodes.length; i++) {
+      const node = currentNodes[i];
+      const nextAccumulated = accumulated + node.text.length;
+      if (cursorOffset <= nextAccumulated) {
+        targetNodeIndex = i;
+        offsetInNode = cursorOffset - accumulated;
+        break;
+      }
+      accumulated = nextAccumulated;
+    }
+
+    if (targetNodeIndex === -1) return false;
+
+    const targetNode = currentNodes[targetNodeIndex];
+    const marks = PilaBlock.extractMarks(targetNode);
+
+    // Only exit if cursor is at the END of a formatted node
+    if (Object.keys(marks).length === 0) return false;
+    if (offsetInNode !== targetNode.text.length) return false;
+
+    // Guard: if cursor is at offset 0 of a text node that is NOT inside
+    // a formatting element, it's at a node boundary (e.g., inside a ZWSP
+    // placed by a previous exit), not truly at the end of the formatted node.
+    if (range.startOffset === 0) {
+      let parent = range.startContainer.parentNode;
+      let inFormatted = false;
+      while (parent && parent !== el) {
+        const tag = (parent as HTMLElement).tagName.toLowerCase();
+        if (['strong', 'b', 'em', 'i', 'code', 'u', 'a'].includes(tag)) {
+          inFormatted = true;
+          break;
+        }
+        parent = parent.parentNode;
+      }
+      if (!inFormatted) return false;
+    }
+
+    // Build nodes: insert a ZWSP after the formatted node for cursor anchoring.
+    // We don't prevent default, so the browser will insert the visible space
+    // at the cursor position we set synchronously below.
+    const newNodes: InlineNode[] = [];
+
+    for (let i = 0; i < targetNodeIndex; i++) {
+      newNodes.push({ ...currentNodes[i] });
+    }
+
+    newNodes.push({ ...targetNode });
+    newNodes.push({ text: '' });
+
+    for (let i = targetNodeIndex + 1; i < currentNodes.length; i++) {
+      newNodes.push({ ...currentNodes[i] });
+    }
+
+    InlineRenderer.render(el, newNodes);
+    this.block = { ...this.block, content: newNodes };
+
+    // Place cursor synchronously at ZWSP start so the browser's default
+    // space insertion (not prevented) puts a visible space before the ZWSP.
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let zwspNode: Text | null = null;
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      if (node.textContent === '') {
+        zwspNode = node;
+        break;
+      }
+    }
+    if (zwspNode) {
+      const newRange = document.createRange();
+      newRange.setStart(zwspNode, 0);
+      newRange.collapse(true);
+      const newSel = window.getSelection();
+      if (newSel) {
+        newSel.removeAllRanges();
+        newSel.addRange(newRange);
+      }
+    }
+    return true;
   }
 
   /** Hook for subclasses — called on every `input` event of a managed element. */
@@ -323,6 +543,23 @@ export abstract class PilaBlock extends LitElement {
     }
 
     return { before, after };
+  }
+
+  /** Save the current caret position as a character offset. */
+  protected saveCaret(el: HTMLElement): number | null {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return null;
+
+    const range = sel.getRangeAt(0);
+    const preCaret = document.createRange();
+    preCaret.setStart(el, 0);
+    preCaret.setEnd(range.startContainer, range.startOffset);
+    return preCaret.toString().length;
+  }
+
+  /** Restore caret to a previously saved character offset. */
+  protected restoreCaret(el: HTMLElement, charOffset: number): void {
+    this.setCaret(el, charOffset);
   }
 
   /** Place the caret at a character offset within a contenteditable element. */

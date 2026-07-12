@@ -7,6 +7,10 @@ export class TodoBlock extends PilaBlock {
   private contentEl!: HTMLElement;
   private checkbox!: HTMLInputElement;
 
+  protected get contentEditableEl(): HTMLElement {
+    return this.contentEl;
+  }
+
   protected buildDOM(): void {
     this.classList.add('flex', 'items-center', 'gap-x-2', 'px-0.5', 'py-[3px]');
 

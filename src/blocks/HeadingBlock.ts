@@ -18,6 +18,10 @@ const HEADING_SIZE_CLASSES: Record<1 | 2 | 3, string> = {
 export class HeadingBlock extends PilaBlock {
   private contentEl!: HTMLElement;
 
+  protected get contentEditableEl(): HTMLElement {
+    return this.contentEl;
+  }
+
   protected buildDOM(): void {
     const level = (LEVEL_MAP[this.block.type] ?? 1) as 1 | 2 | 3;
     this.contentEl = this.makeContentEditable(

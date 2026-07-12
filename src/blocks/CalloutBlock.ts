@@ -4,8 +4,12 @@ import { Block } from '../types';
 import { PilaBlock } from './PilaBlock';
 
 export class CalloutBlock extends PilaBlock {
-  private contentEl!: HTMLElement;
   private iconEl!: HTMLElement;
+  private contentEl!: HTMLElement;
+
+  protected get contentEditableEl(): HTMLElement {
+    return this.contentEl;
+  }
 
   protected buildDOM(): void {
     const flavor = this.block.attrs?.flavor ?? 'info';

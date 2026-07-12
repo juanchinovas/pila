@@ -21,6 +21,12 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
+  server: {
+    host: '0.0.0.0',
+    watch: {
+      usePolling: true,
+    },
+  },
   build: {
     outDir: resolve(__dirname, 'dist'),
     emptyOutDir: true,
