@@ -15,8 +15,7 @@
     "./styles": {
       "import": "./dist/pila.css",
       "types": "./dist/styles.d.ts"
-    },
-    "./styles/source": "./src/styles/pila.css"
+    }
   },
   "files": [
     "dist"
