@@ -58,7 +58,9 @@ export class MarkdownSerializer {
         return `- [${check}] ${inlineToMd(content)}`;
       }
       case 'code': {
-        const lang = block.attrs?.language ?? '';
+        const rawLang = block.attrs?.language ?? '';
+        // Normalize Prism's 'markup' to 'html' for better Markdown fence compatibility
+        const lang = rawLang === 'markup' ? 'html' : rawLang;
         const code = content.map((n) => n.text).join('');
         return `\`\`\`${lang}\n${code}\n\`\`\``;
       }

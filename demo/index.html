@@ -108,6 +108,76 @@
     addIcon('btn-email', Icons.Mail)
     addIcon('btn-clear', Icons.Eraser)
 
+    const demoPluginState = { toolbarClicks: 0 }
+    window.__pilaDemoPluginState = demoPluginState
+
+    const demoPlugin = {
+      name: 'demo-plugin',
+      install(api) {
+        api.registerBlockType({
+          type: 'badge',
+          slashItem: {
+            name: 'Badge',
+            description: 'Plugin demo badge block',
+            icon: '★',
+          },
+          factory: (block) => {
+            const el = document.createElement('div')
+            el.className = 'pila-plugin-badge rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700'
+            el.tabIndex = 0
+            el.textContent = block.content?.map((node) => node.text).join('') || 'Plugin badge'
+            return el
+          },
+        })
+
+        api.addToolbarButton({
+          label: '★',
+          title: 'Plugin Marker',
+          command: () => {
+            demoPluginState.toolbarClicks += 1
+
+            const active = document.activeElement?.closest('[data-block-id]')
+            const blockId = active?.getAttribute('data-block-id')?.split('_cell_')[0] || null
+            if (!blockId) return
+
+            const block = api.manager.getById(blockId)
+            if (!block) return
+
+            const existing = (block.attrs?.tailwindClasses || '').trim()
+            const nextClasses = existing.includes('plugin-marked')
+              ? existing
+              : `${existing} plugin-marked`.trim()
+
+            api.manager.update(blockId, {
+              attrs: {
+                ...(block.attrs || {}),
+                tailwindClasses: nextClasses,
+              },
+            })
+          },
+        })
+
+        api.registerEmojiProvider({
+          key: 'demo-emoji',
+          priority: 20,
+          search: (query) => {
+            const normalized = query.trim().toLowerCase()
+            if (!normalized) return []
+            if (!'rocket_plugin ship launch plugin'.includes(normalized) && !'rocket_plugin'.includes(normalized)) {
+              return []
+            }
+
+            return [{
+              emoji: '🚀',
+              name: 'rocket_plugin',
+              insertText: '[[rocket]]',
+              keywords: ['ship', 'launch', 'plugin'],
+            }]
+          },
+        })
+      },
+    }
+
     const initialContent = [
       { type: 'heading1', content: [{ text: 'Welcome to Pila ✦' }] },
       { type: 'paragraph', content: [{ text: 'A framework-agnostic block editor. Type ' }, { text: '/', code: true }, { text: ' to open the slash menu.' }] },
@@ -153,8 +223,10 @@
 
     const editor = new PilaEditor(document.getElementById('editor'), {
       placeholder: 'Type / to add a block…',
-      initialContent
+      initialContent,
+      plugins: [demoPlugin],
     })
+    window.__pilaEditor = editor
 
     editor.mount()
 

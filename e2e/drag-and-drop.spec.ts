@@ -111,16 +111,14 @@ test.describe('Drag and drop blocks', () => {
 
     // Hover block 2 to arm the handle with its blockId
     await page.hover(block2Sel)
-    await page.waitForTimeout(50)
+    await expect(page.locator(handle).first()).toBeVisible()
 
     // Drag block 2 onto block 1, insert BEFORE it
     await html5DragTo(page, handle, block1Sel, false)
-    await page.waitForTimeout(100)
-
-    const idsAfter = await blockIds(page)
-    // block that was at index 1 should now be at index 0
-    expect(idsAfter[0]).toBe(idsBefore[1])
-    expect(idsAfter[1]).toBe(idsBefore[0])
+    await expect.poll(async () => {
+      const idsAfter = await blockIds(page)
+      return [idsAfter[0], idsAfter[1]]
+    }).toEqual([idsBefore[1], idsBefore[0]])
   })
 
   test('move first block to third position (insert after block 3)', async ({ page }) => {
@@ -132,17 +130,14 @@ test.describe('Drag and drop blocks', () => {
 
     // Hover block 1 to arm the handle
     await page.hover(block1Sel)
-    await page.waitForTimeout(50)
+    await expect(page.locator(handle).first()).toBeVisible()
 
     // Drag block 1 onto block 3, insert AFTER it
     await html5DragTo(page, handle, block3Sel, true)
-    await page.waitForTimeout(100)
-
-    const idsAfter = await blockIds(page)
-    // Original block 0 should now appear after original block 2
-    expect(idsAfter[0]).toBe(idsBefore[1])
-    expect(idsAfter[1]).toBe(idsBefore[2])
-    expect(idsAfter[2]).toBe(idsBefore[0])
+    await expect.poll(async () => {
+      const idsAfter = await blockIds(page)
+      return [idsAfter[0], idsAfter[1], idsAfter[2]]
+    }).toEqual([idsBefore[1], idsBefore[2], idsBefore[0]])
   })
 
   test('drop indicator shows while dragging over editor', async ({ page }) => {
@@ -151,7 +146,7 @@ test.describe('Drag and drop blocks', () => {
     const handle = '.pila-drag-handle'
 
     await page.hover(block1Sel)
-    await page.waitForTimeout(50)
+    await expect(page.locator(handle).first()).toBeVisible()
 
     await page.evaluate(
       ({ src, tgt }) => {
@@ -181,9 +176,8 @@ test.describe('Drag and drop blocks', () => {
     const handle = '.pila-drag-handle'
 
     await page.hover(block1Sel)
-    await page.waitForTimeout(50)
+    await expect(page.locator(handle).first()).toBeVisible()
     await html5DragTo(page, handle, block2Sel, true)
-    await page.waitForTimeout(100)
 
     await expect(page.locator('.pila-drag-handle').first()).toBeHidden()
   })
@@ -196,14 +190,12 @@ test.describe('Drag and drop blocks', () => {
     const textsBefore = await blockTexts(page)
 
     await page.hover(block1Sel)
-    await page.waitForTimeout(50)
+    await expect(page.locator(handle).first()).toBeVisible()
     await html5DragTo(page, handle, block3Sel, true)
-    await page.waitForTimeout(100)
 
-    const textsAfter = await blockTexts(page)
-    // All original text content should still be present (just reordered)
-    const sortedBefore = [...textsBefore].sort()
-    const sortedAfter  = [...textsAfter].sort()
-    expect(sortedAfter).toEqual(sortedBefore)
+    await expect.poll(async () => {
+      const textsAfter = await blockTexts(page)
+      return [...textsAfter].sort()
+    }).toEqual([...textsBefore].sort())
   })
 })

@@ -1,6 +1,6 @@
 import { InlineParser } from '../inline/InlineParser';
 import { InlineRenderer } from '../inline/InlineRenderer';
-import { Block, TableCell, TableRow } from '../types';
+import { Block, BlockAttrs, TableCell, TableRow } from '../types';
 import { PilaBlock } from './PilaBlock';
 import { BlockPopover } from '../ui/BlockPopover';
 import { icon, Icons } from '../ui/icons';
@@ -26,6 +26,7 @@ export class TableBlock extends PilaBlock {
   private selectionEnd: { r: number, c: number } | null = null;
   private isSelecting = false;
   private cellSettingsBtn: HTMLDivElement | null = null;
+  private suppressBlurSave = false;
 
   protected buildDOM(): void {
     this.classList.add('overflow-x-auto', '!my-5');
@@ -318,7 +319,7 @@ export class TableBlock extends PilaBlock {
     targetCell.colspan = colspan;
     targetCell.rowspan = rowspan;
 
-    this.saveRows(rows);
+    this.persistStructuralRows(rows);
     this.selectionStart = null;
     this.selectionEnd = null;
     this.updateSelectionUI();
@@ -343,7 +344,7 @@ export class TableBlock extends PilaBlock {
       }
     }
 
-    this.saveRows(rows);
+    this.persistStructuralRows(rows);
   }
 
   private showColorPicker(e: MouseEvent, target: 'row' | 'col' | 'cell', type: 'background' | 'color'): void {
@@ -533,6 +534,7 @@ export class TableBlock extends PilaBlock {
 
       cellEl.addEventListener('blur', () => {
         // High frequency save to keep FloatingToolbar and Serializers in sync
+        if (this.suppressBlurSave) return;
         this.saveRows(this.currentRows());
       });
 
@@ -684,9 +686,7 @@ export class TableBlock extends PilaBlock {
     const set  = this.headerRowSet();
     const idx  = this.focusedRow;
     const next = set.includes(idx) ? set.filter((r) => r !== idx) : [...set, idx].sort((a, b) => a - b);
-    this.ctx.manager.update(this.block.id!, {
-      attrs: { ...this.block.attrs, rows, headerRows: next, headerRow: undefined },
-    });
+    this.persistStructuralRows(rows, { headerRows: next, headerRow: undefined });
   }
 
   private toggleHeaderCol(): void {
@@ -694,9 +694,7 @@ export class TableBlock extends PilaBlock {
     const set  = this.headerColSet();
     const idx  = this.focusedCol;
     const next = set.includes(idx) ? set.filter((c) => c !== idx) : [...set, idx].sort((a, b) => a - b);
-    this.ctx.manager.update(this.block.id!, {
-      attrs: { ...this.block.attrs, rows, headerCols: next, headerCol: undefined },
-    });
+    this.persistStructuralRows(rows, { headerCols: next, headerCol: undefined });
   }
 
   private removeCol(): void {
@@ -705,7 +703,7 @@ export class TableBlock extends PilaBlock {
     if (colCount <= 1) return;
     rows.forEach((row) => row.cells.splice(this.focusedCol, 1));
     this.focusedCol = Math.max(0, this.focusedCol - 1);
-    this.saveRows(rows);
+    this.persistStructuralRows(rows);
   }
 
   private addRow(position: 'above' | 'below'): void {
@@ -715,7 +713,7 @@ export class TableBlock extends PilaBlock {
     const insertAt = position === 'above' ? this.focusedRow : this.focusedRow + 1;
     rows.splice(insertAt, 0, newRow);
     this.focusedRow = insertAt;
-    this.saveRows(rows);
+    this.persistStructuralRows(rows);
   }
 
   private addCol(position: 'left' | 'right'): void {
@@ -723,7 +721,7 @@ export class TableBlock extends PilaBlock {
     const insertAt = position === 'left' ? this.focusedCol : this.focusedCol + 1;
     rows.forEach((row) => row.cells.splice(insertAt, 0, { content: [] }));
     this.focusedCol = insertAt;
-    this.saveRows(rows);
+    this.persistStructuralRows(rows);
   }
 
   private removeRow(): void {
@@ -731,7 +729,7 @@ export class TableBlock extends PilaBlock {
     if (rows.length <= 1) return;
     rows.splice(this.focusedRow, 1);
     this.focusedRow = Math.max(0, this.focusedRow - 1);
-    this.saveRows(rows);
+    this.persistStructuralRows(rows);
   }
 
   // ── Data helpers ──────────────────────────────────────────────────────────
@@ -765,6 +763,17 @@ export class TableBlock extends PilaBlock {
   private saveRows(rows: TableRow[]): void {
     this.ctx.manager.update(this.block.id!, {
       attrs: { ...this.block.attrs, rows },
+    });
+  }
+
+  private persistStructuralRows(rows: TableRow[], attrOverrides: Partial<BlockAttrs> = {}): void {
+    this.suppressBlurSave = true;
+    this.ctx.manager.update(this.block.id!, {
+      attrs: { ...this.block.attrs, rows, ...attrOverrides },
+    });
+
+    requestAnimationFrame(() => {
+      this.suppressBlurSave = false;
     });
   }
 

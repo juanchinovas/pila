@@ -22,10 +22,10 @@ const __VLS_5 = {}.DialogOverlay;
 /** @type {[typeof __VLS_components.DialogOverlay, typeof __VLS_components.DialogOverlay, ]} */ ;
 // @ts-ignore
 const __VLS_6 = __VLS_asFunctionalComponent(__VLS_5, new __VLS_5({
-    ...{ class: "fixed inset-0 z-[9999] grid place-items-center overflow-y-auto bg-black/80 p-4 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" },
+    ...{ class: "fixed inset-0 grid place-items-center overflow-y-auto bg-black/80 p-4 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" },
 }));
 const __VLS_7 = __VLS_6({
-    ...{ class: "fixed inset-0 z-[9999] grid place-items-center overflow-y-auto bg-black/80 p-4 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" },
+    ...{ class: "fixed inset-0 grid place-items-center overflow-y-auto bg-black/80 p-4 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_6));
 __VLS_8.slots.default;
 const __VLS_9 = {}.DialogContent;
@@ -33,11 +33,11 @@ const __VLS_9 = {}.DialogContent;
 // @ts-ignore
 const __VLS_10 = __VLS_asFunctionalComponent(__VLS_9, new __VLS_9({
     ...(__VLS_ctx.forwarded),
-    ...{ class: (__VLS_ctx.cn('relative z-[10000] grid w-[calc(100vw-2rem)] max-w-lg gap-4 border border-border bg-background p-6 shadow-lg duration-200 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg', props.class)) },
+    ...{ class: (__VLS_ctx.cn('relative grid w-[calc(100vw-2rem)] max-w-lg gap-4 border border-border bg-background p-6 shadow-lg duration-200 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg', props.class)) },
 }));
 const __VLS_11 = __VLS_10({
     ...(__VLS_ctx.forwarded),
-    ...{ class: (__VLS_ctx.cn('relative z-[10000] grid w-[calc(100vw-2rem)] max-w-lg gap-4 border border-border bg-background p-6 shadow-lg duration-200 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg', props.class)) },
+    ...{ class: (__VLS_ctx.cn('relative grid w-[calc(100vw-2rem)] max-w-lg gap-4 border border-border bg-background p-6 shadow-lg duration-200 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg', props.class)) },
 }, ...__VLS_functionalComponentArgsRest(__VLS_10));
 __VLS_12.slots.default;
 var __VLS_13 = {};
@@ -69,7 +69,6 @@ var __VLS_8;
 var __VLS_3;
 /** @type {__VLS_StyleScopedClasses['fixed']} */ ;
 /** @type {__VLS_StyleScopedClasses['inset-0']} */ ;
-/** @type {__VLS_StyleScopedClasses['z-[9999]']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['place-items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['overflow-y-auto']} */ ;

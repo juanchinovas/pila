@@ -7,8 +7,7 @@ import { Button } from './ui/button';
 const editorEl = ref(null);
 let editor = null;
 const initialContent = [
-    { type: 'heading1', content: [{ text: 'Pila inside a Modal ✦' }] },
-    { type: 'paragraph', content: [{ text: 'This is a Pila editor running inside a shadcn-vue Dialog component.' }] },
+    { type: 'paragraph', content: [{ text: 'Start writing...' }] },
 ];
 const handleOpenChange = (open) => {
     if (open) {
@@ -18,6 +17,7 @@ const handleOpenChange = (open) => {
                 editor = new PilaEditor(editorEl.value, {
                     placeholder: 'Type / to add a block…',
                     initialContent,
+                    portalTo: () => editorEl.value?.closest('[role="dialog"]'),
                 });
                 editor.mount();
             }
@@ -78,10 +78,10 @@ const __VLS_17 = {}.DialogContent;
 /** @type {[typeof __VLS_components.DialogContent, typeof __VLS_components.DialogContent, ]} */ ;
 // @ts-ignore
 const __VLS_18 = __VLS_asFunctionalComponent(__VLS_17, new __VLS_17({
-    ...{ class: "sm:max-w-[800px] h-[80vh] flex flex-col" },
+    ...{ class: "sm:max-w-200 h-[80vh] flex flex-col" },
 }));
 const __VLS_19 = __VLS_18({
-    ...{ class: "sm:max-w-[800px] h-[80vh] flex flex-col" },
+    ...{ class: "sm:max-w-200 h-[80vh] flex flex-col" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_18));
 __VLS_20.slots.default;
 const __VLS_21 = {}.DialogHeader;
@@ -105,24 +105,17 @@ const __VLS_31 = __VLS_30({}, ...__VLS_functionalComponentArgsRest(__VLS_30));
 __VLS_32.slots.default;
 var __VLS_32;
 var __VLS_24;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex-1 overflow-y-auto p-4 border rounded-md" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div)({
     ref: "editorEl",
+    ...{ style: {} },
 });
 /** @type {typeof __VLS_ctx.editorEl} */ ;
 var __VLS_20;
 var __VLS_3;
-/** @type {__VLS_StyleScopedClasses['sm:max-w-[800px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:max-w-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-[80vh]']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['overflow-y-auto']} */ ;
-/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {

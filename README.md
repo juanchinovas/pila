@@ -18,7 +18,7 @@ Pila is built on plain Web Components and requires no framework. It works in van
 - **Drag & drop** — drag the handle beside any block to reorder
 - **Syntax highlighting** — code blocks with Prism.js (14 languages)
 - **Export** — JSON, HTML, Markdown, and **Email HTML** serializers built in
-- **Plugin API** — register custom block types, slash-menu items, and toolbar buttons
+- **Plugin API** — register custom block types, slash-menu items, toolbar buttons, and emoji providers
 - **Framework-agnostic** — pure DOM / Web Components, no React/Vue/Svelte dependency
 - **TypeScript** — full type declarations included
 
@@ -362,6 +362,17 @@ const myPlugin: PilaPlugin = {
       command() { alert('Hello from plugin!') },
     })
 
+    // Add custom emoji results or override insertion behavior
+    api.registerEmojiProvider({
+      key: 'custom-emoji',
+      priority: 10,
+      search(query) {
+        return query.includes('rocket')
+          ? [{ emoji: '🚀', name: 'rocket_plugin', insertText: '[[rocket]]' }]
+          : []
+      },
+    })
+
     // Subscribe to editor events
     api.on('blocks:change', ({ blocks }) => {
       console.log('blocks changed', blocks)
@@ -380,8 +391,18 @@ editor.mount()
 | `editorEl`                         | Root editor DOM element                                |
 | `manager`                          | `BlockManager` — read/write access to block state      |
 | `registerBlockType(descriptor)`    | Register a custom block type with an optional slash item |
+| `registerEmojiProvider(descriptor)` | Add or prioritize results in the `:emoji` popover      |
 | `addToolbarButton(descriptor)`     | Add a button to the floating formatting toolbar        |
 | `on(event, handler)`               | Subscribe to editor events; returns an unsubscribe fn  |
+
+### Emoji Provider Types
+
+`EmojiProviderDescriptor.search(query, context)` may return plain `EmojiItem[]` or a `Promise<EmojiItem[]>`.
+
+- `EmojiItem.emoji`: the glyph shown in the menu
+- `EmojiItem.name`: the searchable token shown as `:name:`
+- `EmojiItem.insertText`: optional replacement text inserted instead of the glyph
+- `EmojiItem.keywords`: optional extra search terms
 
 ### Editor Events
 

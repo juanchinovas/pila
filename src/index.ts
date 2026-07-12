@@ -17,6 +17,9 @@ export type {
   TableCell,
   TableRow,
   ColumnDef,
+  EmojiItem,
+  EmojiProviderDescriptor,
+  EmojiQueryContext,
   EditorOptions,
   EditorEvents,
   // Plugin API

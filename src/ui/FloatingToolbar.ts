@@ -61,6 +61,8 @@ export class FloatingToolbar {
     const toolbar = document.createElement('div');
     toolbar.className = 'pila-floating-toolbar';
     toolbar.dataset.pilaUi = 'floating-toolbar';
+    toolbar.setAttribute('role', 'toolbar');
+    toolbar.setAttribute('aria-label', 'Text formatting toolbar');
     toolbar.style.display = 'none';
 
     const buttons: ToolbarButton[] = [
@@ -74,6 +76,7 @@ export class FloatingToolbar {
       const btn = document.createElement('button');
       btn.className = 'pila-toolbar-btn';
       btn.title = title;
+      btn.setAttribute('aria-label', title);
       btn.appendChild(icon(iconNode));
       btn.dataset.mark = mark;
       btn.addEventListener('mousedown', (e) => {
@@ -92,6 +95,7 @@ export class FloatingToolbar {
     const linkBtn = document.createElement('button');
     linkBtn.className = 'pila-toolbar-btn';
     linkBtn.title = 'Link';
+    linkBtn.setAttribute('aria-label', 'Link');
     linkBtn.appendChild(icon(Icons.Link));
     linkBtn.addEventListener('mousedown', (e) => {
       e.preventDefault();
@@ -115,6 +119,7 @@ export class FloatingToolbar {
       const btn = document.createElement('button');
       btn.className = 'pila-toolbar-btn';
       btn.title = title;
+      btn.setAttribute('aria-label', title);
       btn.dataset.align = value;
       btn.appendChild(icon(iconNode));
       btn.addEventListener('mousedown', (e) => {
@@ -135,6 +140,7 @@ export class FloatingToolbar {
         const btn = document.createElement('button');
         btn.className = 'pila-toolbar-btn';
         btn.title = desc.title;
+        btn.setAttribute('aria-label', desc.title);
         btn.innerHTML = desc.label;
         if (desc.markName) btn.dataset.mark = desc.markName;
         btn.addEventListener('mousedown', (e) => {

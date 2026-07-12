@@ -76,7 +76,9 @@ export abstract class PilaBlock extends LitElement {
 
   override firstUpdated(): void {
     this._syncHostAttrs();
-    this.buildDOM();
+    if (this.block) {
+      this.buildDOM();
+    }
   }
 
   // ─── Public API (mirrors BaseBlock) ──────────────────────────────────────

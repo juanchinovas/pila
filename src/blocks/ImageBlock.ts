@@ -176,6 +176,8 @@ export class ImageBlock extends PilaBlock {
       borderRadius:    result.borderRadius,
     };
 
+    this.caption.textContent = result.alt;
+    this.img.alt = result.alt;
     this.ctx.manager.update(this.block.id!, { attrs: newAttrs });
     this.applyImageStyles();
   }

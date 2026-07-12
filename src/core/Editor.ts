@@ -22,7 +22,9 @@ class CustomBlock extends PilaBlock {
   innerEl!: HTMLElement;
 
   protected buildDOM(): void {
-    if (this.innerEl) this.appendChild(this.innerEl);
+    // Guard against early lifecycle firing before properties are set
+    if (!this.block || !this.innerEl) return;
+    this.appendChild(this.innerEl);
   }
 
   getContent(): Block { return { ...this.block }; }

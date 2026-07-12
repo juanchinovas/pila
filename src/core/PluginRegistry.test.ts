@@ -143,6 +143,40 @@ describe('PluginRegistry', () => {
     expect(buttons[0].title).toBe('Highlight');
   });
 
+  it('collects emoji providers and prioritizes plugin results over built-ins', async () => {
+    const registry = new PluginRegistry();
+    const el = makeEditorEl();
+    const manager = makeManager();
+
+    registry.install(
+      {
+        name: 'emoji-override',
+        install(api) {
+          api.registerEmojiProvider({
+            key: 'custom-emoji',
+            priority: 10,
+            search: (query) => query.includes('rocket')
+              ? [{ emoji: '🚀', name: 'rocket_plugin', insertText: '[[rocket]]' }]
+              : [],
+          });
+        },
+      },
+      el,
+      manager,
+      () => () => {}
+    );
+
+    const items = await registry.queryEmoji('rocket', {
+      editorEl: el,
+      activeBlockId: null,
+      target: el,
+      textBeforeCaret: ':rocket',
+    });
+
+    expect(items[0]?.name).toBe('rocket_plugin');
+    expect(items.some((item) => item.name === 'rocket')).toBe(true);
+  });
+
   it('warns when registering a duplicate block type', () => {
     const registry = new PluginRegistry();
     const el = makeEditorEl();

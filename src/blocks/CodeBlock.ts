@@ -62,9 +62,9 @@ export class CodeBlock extends PilaBlock {
     header.className = 'flex items-center justify-between px-3 py-[6px] border-b border-[var(--pila-code-border,var(--pila-border))] bg-[var(--pila-code-header-bg,rgba(0,0,0,.03))]';
 
     const LANGUAGES = [
-      'plaintext', 'bash', 'css', 'csharp', 'java', 'javascript',
+      'plaintext', 'bash', 'css', 'csharp', 'html', 'java', 'javascript',
       'json', 'jsx', 'markdown', 'markup', 'python', 'sql',
-      'tsx', 'typescript', 'yaml',
+      'tsx', 'typescript', 'xml', 'yaml',
     ];
 
     this.langEl = document.createElement('select');

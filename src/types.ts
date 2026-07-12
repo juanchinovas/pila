@@ -33,6 +33,28 @@ export interface ColumnDef {
   blocks: Block[]
 }
 
+// ─── Emoji Plugin Surface ───────────────────────────────────────────────────
+
+export interface EmojiItem {
+  emoji: string
+  name: string
+  keywords?: string[]
+  insertText?: string
+}
+
+export interface EmojiQueryContext {
+  editorEl: HTMLElement
+  activeBlockId: string | null
+  target: HTMLElement | null
+  textBeforeCaret: string
+}
+
+export interface EmojiProviderDescriptor {
+  key: string
+  priority?: number
+  search(query: string, context: EmojiQueryContext): EmojiItem[] | Promise<EmojiItem[]>
+}
+
 // ─── Block Attrs ─────────────────────────────────────────────────────────────
 
 export interface BlockAttrs {
@@ -98,6 +120,7 @@ export interface SlashMenuItemDescriptor {
   name: string
   description: string
   icon: string
+  defaultAttrs?: Partial<BlockAttrs>
 }
 
 export interface ToolbarButtonDescriptor {
@@ -118,6 +141,8 @@ export interface PilaPluginAPI {
    * must return an HTMLElement that will be placed inside `.pila-block`.
    */
   registerBlockType(descriptor: CustomBlockDescriptor): void
+  /** Add an emoji result provider consumed by the inline emoji popover. */
+  registerEmojiProvider(descriptor: EmojiProviderDescriptor): void
   /** Add a button to the floating toolbar. */
   addToolbarButton(descriptor: ToolbarButtonDescriptor): void
   /** Subscribe to editor events. Returns an unsubscribe function. */

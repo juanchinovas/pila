@@ -65,7 +65,7 @@ export class SlashMenu {
     this.manager = manager;
     this.plugins = plugins;
     this.portalTo = portalTo;
-    this.emojiPopover = new EmojiPopover(editorEl, portalTo);
+    this.emojiPopover = new EmojiPopover(editorEl, plugins, portalTo);
     this.imageModal = new ImagePropsModal(portalTo);
   }
 
@@ -78,6 +78,8 @@ export class SlashMenu {
     this.menuEl = document.createElement('div');
     this.menuEl.className = 'pila-slash-menu';
     this.menuEl.dataset.pilaUi = 'slash-menu';
+    this.menuEl.setAttribute('role', 'listbox');
+    this.menuEl.setAttribute('aria-label', 'Slash command menu');
     this.menuEl.style.display = 'none';
     this.portalTo.appendChild(this.menuEl);
 
@@ -190,6 +192,8 @@ export class SlashMenu {
       const row = document.createElement('div');
       row.className = 'pila-slash-item' + (idx === this.selectedIndex ? ' pila-slash-item--selected' : '');
       row.dataset.type = item.type;
+      row.setAttribute('role', 'option');
+      row.setAttribute('aria-selected', idx === this.selectedIndex ? 'true' : 'false');
 
       const iconEl = document.createElement('span');
       iconEl.className = 'pila-slash-icon';
@@ -237,6 +241,7 @@ export class SlashMenu {
 
     items.forEach((el, idx) => {
       el.classList.toggle('pila-slash-item--selected', idx === this.selectedIndex);
+      (el as HTMLElement).setAttribute('aria-selected', idx === this.selectedIndex ? 'true' : 'false');
     });
     const selected = items[this.selectedIndex] as HTMLElement;
     selected.scrollIntoView({ block: 'nearest' });
