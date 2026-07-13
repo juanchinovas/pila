@@ -252,7 +252,8 @@ export class HtmlSerializer {
       case 'code': {
         const lang = escapeAttr(block.attrs?.language ?? 'plaintext');
         const code = escapeHtml(content.map((n) => n.text).join(''));
-        return `<pre${classAttr(block.attrs?.tailwindClasses)}${styleAttr}><code class="language-${lang}">${code}</code></pre>`;
+        const wrapperStyleAttr = blockStyleAttr(block.attrs);
+        return `<div${classAttr('pila-code-block', block.attrs?.tailwindClasses)}${wrapperStyleAttr}><div class="pila-code-lang">${lang}</div><pre><code class="language-${lang}">${code}</code></pre></div>`;
       }
       case 'quote':
         return `<blockquote${classAttr(block.attrs?.tailwindClasses)}${styleAttr}>${inlineToHtml(content)}</blockquote>`;

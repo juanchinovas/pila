@@ -450,7 +450,7 @@ describe('HtmlSerializer', () => {
     ]);
     expect(html).toContain('<div class="callout callout--info" style="background-color:#ecfeff;color:#155e75">');
     expect(html).toContain('<a href="https://example.com" class="pila-button pila-button--primary" target="_blank" rel="noopener noreferrer" style="background-color:#111827;color:#f9fafb">Styled button</a>');
-    expect(html).toContain('<pre style="background-color:#0f172a;color:#e2e8f0"><code class="language-plaintext">const ready = true;</code></pre>');
+    expect(html).toContain('<div class="pila-code-block" style="background-color:#0f172a;color:#e2e8f0"><div class="pila-code-lang">plaintext</div><pre><code class="language-plaintext">const ready = true;</code></pre></div>');
   });
 
   it('serializes table cell background/color/width/colspan/rowspan', () => {
