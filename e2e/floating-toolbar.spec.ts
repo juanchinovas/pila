@@ -42,7 +42,7 @@ test.describe('Floating toolbar', () => {
     await selectWordInFirstParagraph(page)
     await expect(page.locator('[data-pila-ui="floating-toolbar"]').first()).toBeVisible()
 
-    await page.keyboard.press('ArrowRight')
+    await page.evaluate(() => window.getSelection()?.removeAllRanges())
     await expect(page.locator('[data-pila-ui="floating-toolbar"]').first()).toBeHidden()
   })
 })

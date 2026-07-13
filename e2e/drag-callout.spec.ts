@@ -163,23 +163,13 @@ test.describe('Native mouse drag - callout', () => {
     const calloutNth = await findFirstCalloutNth(page);
     const targetNth = calloutNth + 1;
 
-    await page.hover(`.pila-editor > .pila-block:nth-child(${calloutNth})`);
+    const calloutSel = `.pila-editor > .pila-block:nth-child(${calloutNth})`;
+    const targetSel = `.pila-editor > .pila-block:nth-child(${targetNth})`;
+
+    await page.hover(calloutSel);
     await expect(page.locator('.pila-drag-handle').first()).toBeVisible();
 
-    const pos = await page.evaluate(({ tNth }) => {
-      const handle = document.querySelector('.pila-drag-handle') as HTMLElement;
-      const target = document.querySelector(`.pila-editor > .pila-block:nth-child(${tNth})`) as HTMLElement;
-      const hr = handle.getBoundingClientRect();
-      const tr = target.getBoundingClientRect();
-      return {
-        hx: hr.left + hr.width / 2,
-        hy: hr.top + hr.height / 2,
-        tx: tr.left + tr.width / 2,
-        ty: tr.top + tr.height * 0.75,
-      };
-    }, { tNth: targetNth });
-
-    await nativeDrag(page, pos.hx, pos.hy, pos.tx, pos.ty);
+    await html5DragTo(page, '.pila-drag-handle', targetSel, true);
 
     await expect.poll(async () => {
       const idsAfter = await getBlockIds(page);

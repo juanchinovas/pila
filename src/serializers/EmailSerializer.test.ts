@@ -384,4 +384,46 @@ describe('EmailSerializer', () => {
     expect(html).toContain('<!--[if mso]>');
     expect(html).toContain('<v:roundrect');
   });
+
+  // ─── fullDocument option ──────────────────────────────────────────────────
+
+  it('returns full document by default when fullDocument is not set', () => {
+    const html = EmailSerializer.serialize([]);
+    expect(html).toContain('<!DOCTYPE html>');
+    expect(html).toContain('<html lang="en">');
+    expect(html).toContain('</html>');
+  });
+
+  it('returns full document when fullDocument is true', () => {
+    const html = EmailSerializer.serialize([], { fullDocument: true });
+    expect(html).toContain('<!DOCTYPE html>');
+    expect(html).toContain('<html lang="en">');
+    expect(html).toContain('<body');
+    expect(html).toContain('</body>');
+  });
+
+  it('returns body-only when fullDocument is false', () => {
+    const html = EmailSerializer.serialize([], { fullDocument: false });
+    expect(html).not.toContain('<!DOCTYPE html>');
+    expect(html).not.toContain('<html');
+    expect(html).not.toContain('<body');
+    expect(html).not.toContain('<!--[if mso]>');
+  });
+
+  it('body-only still renders blocks content', () => {
+    const html = EmailSerializer.serialize(
+      [{ id: '1', type: 'paragraph', content: [{ text: 'hello' }] }],
+      { fullDocument: false },
+    );
+    expect(html).toContain('hello');
+    expect(html).not.toContain('<!DOCTYPE html>');
+  });
+
+  it('body-only preserves inline styles on elements', () => {
+    const html = EmailSerializer.serialize(
+      [{ id: '1', type: 'paragraph', content: [{ text: 'bold text', bold: true }] }],
+      { fullDocument: false },
+    );
+    expect(html).toContain('<strong style="font-weight:700;">bold text</strong>');
+  });
 });

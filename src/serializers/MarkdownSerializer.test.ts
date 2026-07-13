@@ -27,6 +27,23 @@ describe('MarkdownSerializer', () => {
     expect(MarkdownSerializer.serialize([{ id: '1', type: 'numberedList', content: [{ text: 'first' }] }])).toBe('1. first');
   });
 
+  it('groups consecutive bullet list blocks into one list', () => {
+    const md = MarkdownSerializer.serialize([
+      { id: '1', type: 'bulletList', content: [{ text: 'one' }] },
+      { id: '2', type: 'bulletList', content: [{ text: 'two' }] },
+      { id: '3', type: 'bulletList', content: [{ text: 'three' }] },
+    ]);
+    expect(md).toBe('- one\n- two\n- three');
+  });
+
+  it('groups consecutive numbered list blocks into one list', () => {
+    const md = MarkdownSerializer.serialize([
+      { id: '1', type: 'numberedList', content: [{ text: 'first' }] },
+      { id: '2', type: 'numberedList', content: [{ text: 'second' }] },
+    ]);
+    expect(md).toBe('1. first\n1. second');
+  });
+
   it('serializes unchecked todo', () => {
     expect(MarkdownSerializer.serialize([
       { id: '1', type: 'todo', content: [{ text: 'task' }], attrs: { checked: false } },

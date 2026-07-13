@@ -17,9 +17,37 @@ export default defineConfig({
       },
     },
     {
+      name: 'vanilla-firefox',
+      use: {
+        browserName: 'firefox',
+        baseURL: 'http://localhost:5173',
+      },
+    },
+    {
+      name: 'vanilla-webkit',
+      use: {
+        browserName: 'webkit',
+        baseURL: 'http://localhost:5173',
+      },
+    },
+    {
       name: 'vue-chromium',
       use: {
         browserName: 'chromium',
+        baseURL: 'http://localhost:4173',
+      },
+    },
+    {
+      name: 'vue-firefox',
+      use: {
+        browserName: 'firefox',
+        baseURL: 'http://localhost:4173',
+      },
+    },
+    {
+      name: 'vue-webkit',
+      use: {
+        browserName: 'webkit',
         baseURL: 'http://localhost:4173',
       },
     },

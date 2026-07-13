@@ -17,45 +17,45 @@ import { Block, BlockAttrs, InlineNode, TableRow } from '../types';
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
 interface Theme {
-  accent:               string
-  text:                 string
-  muted:                string
-  border:               string
-  bg:                   string
-  inlineCodeBg:         string
-  quoteBorder:          string
-  quoteText:            string
-  calloutInfoBg:        string
-  calloutInfoBorder:    string
-  calloutWarningBg:     string
-  calloutWarningBorder: string
-  calloutErrorBg:       string
-  calloutErrorBorder:   string
-  calloutSuccessBg:     string
-  calloutSuccessBorder: string
-  calloutTipBg:         string
-  calloutTipBorder:     string
+  accent: string;
+  text: string;
+  muted: string;
+  border: string;
+  bg: string;
+  inlineCodeBg: string;
+  quoteBorder: string;
+  quoteText: string;
+  calloutInfoBg: string;
+  calloutInfoBorder: string;
+  calloutWarningBg: string;
+  calloutWarningBorder: string;
+  calloutErrorBg: string;
+  calloutErrorBorder: string;
+  calloutSuccessBg: string;
+  calloutSuccessBorder: string;
+  calloutTipBg: string;
+  calloutTipBorder: string;
 }
 
 const THEME_DEFAULTS: Theme = {
-  accent:               '#2563eb',
-  text:                 '#1a1a1a',
-  muted:                '#9b9b9b',
-  border:               '#e2e8f0',
-  bg:                   '#ffffff',
-  inlineCodeBg:         '#f1f5f9',
-  quoteBorder:          '#94a3b8',
-  quoteText:            '#4b5563',
-  calloutInfoBg:        '#eff6ff',
-  calloutInfoBorder:    '#2563eb',
-  calloutWarningBg:     '#fffbeb',
+  accent: '#2563eb',
+  text: '#1a1a1a',
+  muted: '#9b9b9b',
+  border: '#e2e8f0',
+  bg: '#ffffff',
+  inlineCodeBg: '#f1f5f9',
+  quoteBorder: '#94a3b8',
+  quoteText: '#4b5563',
+  calloutInfoBg: '#eff6ff',
+  calloutInfoBorder: '#2563eb',
+  calloutWarningBg: '#fffbeb',
   calloutWarningBorder: '#d97706',
-  calloutErrorBg:       '#fef2f2',
-  calloutErrorBorder:   '#dc2626',
-  calloutSuccessBg:     '#f0fdf4',
+  calloutErrorBg: '#fef2f2',
+  calloutErrorBorder: '#dc2626',
+  calloutSuccessBg: '#f0fdf4',
   calloutSuccessBorder: '#16a34a',
-  calloutTipBg:         '#faf5ff',
-  calloutTipBorder:     '#9333ea',
+  calloutTipBg: '#faf5ff',
+  calloutTipBorder: '#9333ea',
 };
 
 function readCssVar(name: string, fallback: string): string {
@@ -68,24 +68,33 @@ function readCssVar(name: string, fallback: string): string {
 
 function buildTheme(): Theme {
   return {
-    accent:               readCssVar('--pila-accent',                THEME_DEFAULTS.accent),
-    text:                 readCssVar('--pila-text',                  THEME_DEFAULTS.text),
-    muted:                readCssVar('--pila-muted',                 THEME_DEFAULTS.muted),
-    border:               readCssVar('--pila-border',                THEME_DEFAULTS.border),
-    bg:                   readCssVar('--pila-bg',                    THEME_DEFAULTS.bg),
-    inlineCodeBg:         readCssVar('--pila-inline-code-bg',        THEME_DEFAULTS.inlineCodeBg),
-    quoteBorder:          readCssVar('--pila-quote-border',          THEME_DEFAULTS.quoteBorder),
-    quoteText:            readCssVar('--pila-quote-text',            THEME_DEFAULTS.quoteText),
-    calloutInfoBg:        readCssVar('--pila-callout-info-bg',       THEME_DEFAULTS.calloutInfoBg),
-    calloutInfoBorder:    readCssVar('--pila-callout-info-border',   THEME_DEFAULTS.calloutInfoBorder),
-    calloutWarningBg:     readCssVar('--pila-callout-warning-bg',    THEME_DEFAULTS.calloutWarningBg),
-    calloutWarningBorder: readCssVar('--pila-callout-warning-border',THEME_DEFAULTS.calloutWarningBorder),
-    calloutErrorBg:       readCssVar('--pila-callout-error-bg',      THEME_DEFAULTS.calloutErrorBg),
-    calloutErrorBorder:   readCssVar('--pila-callout-error-border',  THEME_DEFAULTS.calloutErrorBorder),
-    calloutSuccessBg:     readCssVar('--pila-callout-success-bg',    THEME_DEFAULTS.calloutSuccessBg),
-    calloutSuccessBorder: readCssVar('--pila-callout-success-border',THEME_DEFAULTS.calloutSuccessBorder),
-    calloutTipBg:         readCssVar('--pila-callout-tip-bg',        THEME_DEFAULTS.calloutTipBg),
-    calloutTipBorder:     readCssVar('--pila-callout-tip-border',    THEME_DEFAULTS.calloutTipBorder),
+    accent: readCssVar('--pila-accent', THEME_DEFAULTS.accent),
+    text: readCssVar('--pila-text', THEME_DEFAULTS.text),
+    muted: readCssVar('--pila-muted', THEME_DEFAULTS.muted),
+    border: readCssVar('--pila-border', THEME_DEFAULTS.border),
+    bg: readCssVar('--pila-bg', THEME_DEFAULTS.bg),
+    inlineCodeBg: readCssVar('--pila-inline-code-bg', THEME_DEFAULTS.inlineCodeBg),
+    quoteBorder: readCssVar('--pila-quote-border', THEME_DEFAULTS.quoteBorder),
+    quoteText: readCssVar('--pila-quote-text', THEME_DEFAULTS.quoteText),
+    calloutInfoBg: readCssVar('--pila-callout-info-bg', THEME_DEFAULTS.calloutInfoBg),
+    calloutInfoBorder: readCssVar('--pila-callout-info-border', THEME_DEFAULTS.calloutInfoBorder),
+    calloutWarningBg: readCssVar('--pila-callout-warning-bg', THEME_DEFAULTS.calloutWarningBg),
+    calloutWarningBorder: readCssVar(
+      '--pila-callout-warning-border',
+      THEME_DEFAULTS.calloutWarningBorder,
+    ),
+    calloutErrorBg: readCssVar('--pila-callout-error-bg', THEME_DEFAULTS.calloutErrorBg),
+    calloutErrorBorder: readCssVar(
+      '--pila-callout-error-border',
+      THEME_DEFAULTS.calloutErrorBorder,
+    ),
+    calloutSuccessBg: readCssVar('--pila-callout-success-bg', THEME_DEFAULTS.calloutSuccessBg),
+    calloutSuccessBorder: readCssVar(
+      '--pila-callout-success-border',
+      THEME_DEFAULTS.calloutSuccessBorder,
+    ),
+    calloutTipBg: readCssVar('--pila-callout-tip-bg', THEME_DEFAULTS.calloutTipBg),
+    calloutTipBorder: readCssVar('--pila-callout-tip-border', THEME_DEFAULTS.calloutTipBorder),
   };
 }
 
@@ -115,8 +124,8 @@ function inlineToHtml(nodes: InlineNode[], theme: Theme): string {
       if (node.code) {
         html = `<code style="font-family:Consolas,'Courier New',monospace;background:${theme.inlineCodeBg};padding:1px 4px;border-radius:3px;font-size:0.875em;">${html}</code>`;
       }
-      if (node.bold)      html = `<strong style="font-weight:700;">${html}</strong>`;
-      if (node.italic)    html = `<em style="font-style:italic;">${html}</em>`;
+      if (node.bold) html = `<strong style="font-weight:700;">${html}</strong>`;
+      if (node.italic) html = `<em style="font-style:italic;">${html}</em>`;
       if (node.underline) html = `<u style="text-decoration:underline;">${html}</u>`;
       if (node.link) {
         const href = escapeAttr(sanitizeHref(node.link));
@@ -139,11 +148,16 @@ function blockColorStyle(attrs?: BlockAttrs): string {
 
 function calloutColors(flavor: string | undefined, theme: Theme): { bg: string; border: string } {
   switch (flavor) {
-    case 'warning': return { bg: theme.calloutWarningBg, border: theme.calloutWarningBorder };
-    case 'error':   return { bg: theme.calloutErrorBg,   border: theme.calloutErrorBorder };
-    case 'success': return { bg: theme.calloutSuccessBg, border: theme.calloutSuccessBorder };
-    case 'tip':     return { bg: theme.calloutTipBg,     border: theme.calloutTipBorder };
-    default:        return { bg: theme.calloutInfoBg,    border: theme.calloutInfoBorder };
+    case 'warning':
+      return { bg: theme.calloutWarningBg, border: theme.calloutWarningBorder };
+    case 'error':
+      return { bg: theme.calloutErrorBg, border: theme.calloutErrorBorder };
+    case 'success':
+      return { bg: theme.calloutSuccessBg, border: theme.calloutSuccessBorder };
+    case 'tip':
+      return { bg: theme.calloutTipBg, border: theme.calloutTipBorder };
+    default:
+      return { bg: theme.calloutInfoBg, border: theme.calloutInfoBorder };
   }
 }
 
@@ -151,8 +165,8 @@ function calloutColors(flavor: string | undefined, theme: Theme): { bg: string; 
 
 function tableToHtml(rows: TableRow[], attrs: BlockAttrs, theme: Theme): string {
   const TABLE_STYLE = `border-collapse:collapse;width:100%;margin:12px 0;font-size:15px;${blockColorStyle(attrs)}`;
-  const TH_STYLE    = `padding:8px 12px;border:1px solid ${theme.border};background:${theme.inlineCodeBg};font-weight:600;text-align:left;`;
-  const TD_STYLE    = `padding:8px 12px;border:1px solid ${theme.border};`;
+  const TH_STYLE = `padding:8px 12px;border:1px solid ${theme.border};background:${theme.inlineCodeBg};font-weight:600;text-align:left;`;
+  const TD_STYLE = `padding:8px 12px;border:1px solid ${theme.border};`;
   const headerRowSet: number[] = attrs.headerRows ?? (attrs.headerRow ? [0] : []);
   const headerColSet: number[] = attrs.headerCols ?? (attrs.headerCol ? [0] : []);
 
@@ -162,8 +176,8 @@ function tableToHtml(rows: TableRow[], attrs: BlockAttrs, theme: Theme): string 
     colIdx: number,
   ): string => {
     const useHeader = forceHeader || headerColSet.includes(colIdx);
-    const tag       = useHeader ? 'th' : 'td';
-    const style     = useHeader ? TH_STYLE : TD_STYLE;
+    const tag = useHeader ? 'th' : 'td';
+    const style = useHeader ? TH_STYLE : TD_STYLE;
     const alignStyle = cell.align ? `text-align:${cell.align};` : '';
     const bgStyle = cell.background ? `background:${cell.background};` : '';
     const textStyle = cell.color ? `color:${cell.color};` : '';
@@ -204,7 +218,7 @@ function columnsToHtml(defs: BlockAttrs['columnDefs'], theme: Theme, attrs?: Blo
 
   const cells = defs
     .map((def) => {
-      const pct   = Math.round(((def.width ?? 1) / totalWeight) * 100);
+      const pct = Math.round(((def.width ?? 1) / totalWeight) * 100);
       const inner = (def.blocks ?? []).map((b) => blockToHtml(b, theme)).join('\n');
       return `<td valign="top" style="width:${pct}%;padding:0 8px;vertical-align:top;">${inner}</td>`;
     })
@@ -256,8 +270,8 @@ function blockToHtml(block: Block, theme: Theme): string {
 
     case 'todo': {
       const checked = block.attrs?.checked;
-      const box     = checked ? '&#x2611;' : '&#x2610;';  // ☑ / ☐
-      const strike  = checked ? `text-decoration:line-through;color:${theme.muted};` : '';
+      const box = checked ? '&#x2611;' : '&#x2610;'; // ☑ / ☐
+      const strike = checked ? `text-decoration:line-through;color:${theme.muted};` : '';
       return `<p style="${BASE}${BLOCK_COLORS}margin:0 0 8px;font-size:15px;line-height:1.6;">${box}&nbsp;<span style="${strike}">${inlineToHtml(content, theme)}</span></p>`;
     }
 
@@ -275,18 +289,17 @@ function blockToHtml(block: Block, theme: Theme): string {
       );
     }
 
-    case 'quote':
-      {
-        const quoteBg = block.attrs?.background ? `background:${block.attrs.background};` : '';
-        const quoteColor = block.attrs?.textColor ?? theme.quoteText;
+    case 'quote': {
+      const quoteBg = block.attrs?.background ? `background:${block.attrs.background};` : '';
+      const quoteColor = block.attrs?.textColor ?? theme.quoteText;
       return (
         `<blockquote style="${BASE}${quoteBg}margin:12px 0;padding:8px 16px;border-left:4px solid ${theme.quoteBorder};` +
         `color:${quoteColor};font-style:italic;font-size:15px;line-height:1.6;">${inlineToHtml(content, theme)}</blockquote>`
       );
-      }
+    }
 
     case 'callout': {
-      const icon   = escapeHtml(block.attrs?.icon ?? '💡');
+      const icon = escapeHtml(block.attrs?.icon ?? '💡');
       const colors = calloutColors(block.attrs?.flavor, theme);
       const bg = block.attrs?.background ?? colors.bg;
       const fg = block.attrs?.textColor;
@@ -305,9 +318,11 @@ function blockToHtml(block: Block, theme: Theme): string {
       return `<hr style="border:none;border-top:1px solid ${theme.border};margin:20px 0;" />`;
 
     case 'image': {
-      const src    = sanitizeHref(block.attrs?.src ?? '');
-      const alt    = escapeAttr(block.attrs?.alt ?? '');
-      const width  = block.attrs?.width  ? ` width="${escapeAttr(block.attrs.width)}"`  : ' style="max-width:100%;height:auto;"';
+      const src = sanitizeHref(block.attrs?.src ?? '');
+      const alt = escapeAttr(block.attrs?.alt ?? '');
+      const width = block.attrs?.width
+        ? ` width="${escapeAttr(block.attrs.width)}"`
+        : ' style="max-width:100%;height:auto;"';
       const height = block.attrs?.height ? ` height="${escapeAttr(block.attrs.height)}"` : '';
       return `<figure style="margin:12px 0;padding:0;${BLOCK_COLORS}"><img src="${escapeAttr(src)}" alt="${alt}"${width}${height} /></figure>`;
     }
@@ -321,16 +336,20 @@ function blockToHtml(block: Block, theme: Theme): string {
       return columnsToHtml(block.attrs?.columnDefs, theme, block.attrs);
 
     case 'button': {
-      const label   = inlineToHtml(content, theme);
-      const href    = escapeAttr(sanitizeHref(block.attrs?.href ?? '#'));
-      const style   = block.attrs?.buttonStyle ?? 'primary';
-      const align   = block.attrs?.alignment ?? 'left';
+      const label = inlineToHtml(content, theme);
+      const href = escapeAttr(sanitizeHref(block.attrs?.href ?? '#'));
+      const style = block.attrs?.buttonStyle ?? 'primary';
+      const align = block.attrs?.alignment ?? 'left';
       const tdAlign = align === 'center' ? 'center' : align === 'right' ? 'right' : 'left';
 
       // Colours per variant — primary/outline use --pila-accent, secondary uses --pila-border
-      const bg     = block.attrs?.background ?? (style === 'primary'   ? theme.accent  : style === 'secondary' ? theme.border : theme.bg);
-      const fg     = block.attrs?.textColor ?? (style === 'primary'   ? '#ffffff'     : style === 'secondary' ? theme.text   : theme.accent);
-      const border = style === 'outline'   ? theme.accent  : bg;
+      const bg =
+        block.attrs?.background ??
+        (style === 'primary' ? theme.accent : style === 'secondary' ? theme.border : theme.bg);
+      const fg =
+        block.attrs?.textColor ??
+        (style === 'primary' ? '#ffffff' : style === 'secondary' ? theme.text : theme.accent);
+      const border = style === 'outline' ? theme.accent : bg;
 
       // MSO VML fallback + modern <a> for other clients
       return (
@@ -353,12 +372,26 @@ function blockToHtml(block: Block, theme: Theme): string {
 
 export class EmailSerializer {
   /**
-   * Serializes blocks to a complete, standalone HTML email document.
+   * Serializes blocks to HTML email.
+   * By default returns a complete, standalone HTML email document.
    * All styles are inline; the output is ready to set as the HTML body of an email.
    * Colors are read from CSS custom properties at call time, so any --pila-* overrides
    * set by the consumer are automatically reflected in the exported email.
+   *
+   * Pass `{ fullDocument: false }` to get only the inner body content (no document wrapper).
    */
-  static serialize(blocks: Block[]): string {
+  static serialize(blocks: Block[], options?: { fullDocument?: boolean }): string {
+    const { fullDocument = true } = options ?? {};
+    const body = EmailSerializer.serializeBody(blocks);
+
+    if (fullDocument) {
+      return EmailSerializer.wrapDocument(body);
+    }
+
+    return body;
+  }
+
+  private static serializeBody(blocks: Block[]): string {
     const theme = buildTheme();
     const html: string[] = [];
 
@@ -381,7 +414,11 @@ export class EmailSerializer {
       html.push(blockToHtml(block, theme));
     }
 
-    const body = html.join('\n');
+    return html.join('\n');
+  }
+
+  private static wrapDocument(body: string): string {
+    const theme = buildTheme();
 
     return [
       '<!DOCTYPE html>',

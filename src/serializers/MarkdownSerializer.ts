@@ -32,9 +32,35 @@ function tablesToMd(rows: TableRow[]): string {
 
 export class MarkdownSerializer {
   static serialize(blocks: Block[]): string {
+    const lines: string[] = [];
+
+    for (let index = 0; index < blocks.length; index += 1) {
+      const block = blocks[index];
+
+      if (block.type === 'bulletList' || block.type === 'numberedList') {
+        const listType = block.type;
+        const listBlocks = [block];
+
+        while (index + 1 < blocks.length && blocks[index + 1].type === listType) {
+          listBlocks.push(blocks[index + 1]);
+          index += 1;
+        }
+
+        lines.push(MarkdownSerializer.listToMd(listBlocks, listType));
+        continue;
+      }
+
+      lines.push(MarkdownSerializer.blockToMd(block));
+    }
+
+    return lines.join('\n\n');
+  }
+
+  private static listToMd(blocks: Block[], type: 'bulletList' | 'numberedList'): string {
+    const prefix = type === 'bulletList' ? '-' : '1.';
     return blocks
-      .map((block) => MarkdownSerializer.blockToMd(block))
-      .join('\n\n');
+      .map((block) => `${prefix} ${inlineToMd(block.content ?? [])}`)
+      .join('\n');
   }
 
   private static blockToMd(block: Block): string {

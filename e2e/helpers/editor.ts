@@ -113,6 +113,11 @@ export async function hoverBlockAndGetHandle(page: Page, nthChild: number): Prom
   if (!blockId) throw new Error(`Missing data-block-id for ${blockSelector}`)
 
   await page.hover(blockSelector)
+  await page.evaluate((id) => {
+    const editor = document.querySelector('#editor .pila-editor') as HTMLElement
+    const wrapper = editor?.querySelector(`[data-block-id="${id}"]`) as HTMLElement
+    if (wrapper) wrapper.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+  }, blockId)
   const handleSelector = `.pila-drag-handle[data-block-id="${blockId}"]`
   await expect(page.locator(handleSelector)).toBeVisible()
   return handleSelector

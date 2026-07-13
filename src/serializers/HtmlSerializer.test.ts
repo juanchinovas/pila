@@ -3,10 +3,33 @@ import { HtmlSerializer } from './HtmlSerializer';
 import { Block } from '../types';
 
 describe('HtmlSerializer', () => {
-  it('serializes paragraph', () => {
+  // ── Embedded CSS ──────────────────────────────────────────────────────────
+
+  it('includes embedded CSS in full document output', () => {
     const html = HtmlSerializer.serialize([
       { id: '1', type: 'paragraph', content: [{ text: 'hello' }] },
     ]);
+    expect(html).toContain('<style>');
+    expect(html).toContain('--pila-font');
+    expect(html).toContain('--pila-accent');
+    expect(html).toContain('.pila-button--primary');
+    expect(html).toContain('.callout');
+    expect(html).toContain('</style>');
+  });
+
+  it('does not include embedded CSS when fullDocument is false', () => {
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'paragraph', content: [{ text: 'hello' }] }],
+      { fullDocument: false },
+    );
+    expect(html).not.toContain('<style>');
+    expect(html).not.toContain('--pila-font');
+  });
+  it('serializes paragraph', () => {
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'paragraph', content: [{ text: 'hello' }] }],
+      { fullDocument: false },
+    );
     expect(html).toBe('<p>hello</p>');
   });
 
@@ -17,25 +40,30 @@ describe('HtmlSerializer', () => {
   });
 
   it('serializes bullet list', () => {
-    const html = HtmlSerializer.serialize([
-      { id: '1', type: 'bulletList', content: [{ text: 'item' }] },
-    ]);
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'bulletList', content: [{ text: 'item' }] }],
+      { fullDocument: false },
+    );
     expect(html).toBe('<ul style="list-style-type:disc;list-style-position:outside"><li style="display:list-item">item</li></ul>');
   });
 
   it('serializes numbered list', () => {
-    const html = HtmlSerializer.serialize([
-      { id: '1', type: 'numberedList', content: [{ text: 'one' }] },
-    ]);
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'numberedList', content: [{ text: 'one' }] }],
+      { fullDocument: false },
+    );
     expect(html).toBe('<ol style="list-style-type:decimal;list-style-position:outside"><li style="display:list-item">one</li></ol>');
   });
 
   it('groups consecutive numbered list blocks into one ordered list', () => {
-    const html = HtmlSerializer.serialize([
-      { id: '1', type: 'numberedList', content: [{ text: 'one' }] },
-      { id: '2', type: 'numberedList', content: [{ text: 'two' }] },
-      { id: '3', type: 'numberedList', content: [{ text: 'three' }] },
-    ]);
+    const html = HtmlSerializer.serialize(
+      [
+        { id: '1', type: 'numberedList', content: [{ text: 'one' }] },
+        { id: '2', type: 'numberedList', content: [{ text: 'two' }] },
+        { id: '3', type: 'numberedList', content: [{ text: 'three' }] },
+      ],
+      { fullDocument: false },
+    );
     expect(html).toBe('<ol style="list-style-type:decimal;list-style-position:outside"><li style="display:list-item">one</li><li style="display:list-item">two</li><li style="display:list-item">three</li></ol>');
   });
 
@@ -52,6 +80,20 @@ describe('HtmlSerializer', () => {
       { id: '1', type: 'todo', content: [{ text: 'done' }], attrs: { checked: true } },
     ]);
     expect(html).toContain(' checked');
+  });
+
+  it('checked todo applies strikethrough style', () => {
+    const html = HtmlSerializer.serialize([
+      { id: '1', type: 'todo', content: [{ text: 'done' }], attrs: { checked: true } },
+    ]);
+    expect(html).toContain('text-decoration:line-through');
+  });
+
+  it('unchecked todo does not have strikethrough', () => {
+    const html = HtmlSerializer.serialize([
+      { id: '1', type: 'todo', content: [{ text: 'task' }], attrs: { checked: false } },
+    ]);
+    expect(html).not.toContain('text-decoration:line-through');
   });
 
   it('serializes code block with language class', () => {
@@ -71,9 +113,10 @@ describe('HtmlSerializer', () => {
   });
 
   it('serializes quote', () => {
-    const html = HtmlSerializer.serialize([
-      { id: '1', type: 'quote', content: [{ text: 'wise words' }] },
-    ]);
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'quote', content: [{ text: 'wise words' }] }],
+      { fullDocument: false },
+    );
     expect(html).toBe('<blockquote>wise words</blockquote>');
   });
 
@@ -86,7 +129,7 @@ describe('HtmlSerializer', () => {
   });
 
   it('serializes divider', () => {
-    expect(HtmlSerializer.serialize([{ id: '1', type: 'divider' }])).toBe('<hr />');
+    expect(HtmlSerializer.serialize([{ id: '1', type: 'divider' }], { fullDocument: false })).toBe('<hr />');
   });
 
   it('serializes image with safe src', () => {
@@ -190,9 +233,10 @@ describe('HtmlSerializer', () => {
   });
 
   it('omits width/height attributes when not set', () => {
-    const html = HtmlSerializer.serialize([
-      { id: '1', type: 'image', attrs: { src: 'https://example.com/img.png', alt: '' } },
-    ]);
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'image', attrs: { src: 'https://example.com/img.png', alt: '' } }],
+      { fullDocument: false },
+    );
     expect(html).not.toContain('width=');
     expect(html).not.toContain('height=');
   });
@@ -362,7 +406,7 @@ describe('HtmlSerializer', () => {
         attrs: { tailwindClasses: 'rounded-xl shadow-sm' },
       },
     ]);
-    expect(html).toContain('class="callout rounded-xl shadow-sm"');
+    expect(html).toContain('class="callout callout--info rounded-xl shadow-sm"');
   });
 
   it('serializes image object-fit, border-radius, and alignment styles', () => {
@@ -404,7 +448,7 @@ describe('HtmlSerializer', () => {
         attrs: { background: '#0f172a', textColor: '#e2e8f0' },
       },
     ]);
-    expect(html).toContain('<div class="callout" style="background-color:#ecfeff;color:#155e75">');
+    expect(html).toContain('<div class="callout callout--info" style="background-color:#ecfeff;color:#155e75">');
     expect(html).toContain('<a href="https://example.com" class="pila-button pila-button--primary" target="_blank" rel="noopener noreferrer" style="background-color:#111827;color:#f9fafb">Styled button</a>');
     expect(html).toContain('<pre style="background-color:#0f172a;color:#e2e8f0"><code class="language-plaintext">const ready = true;</code></pre>');
   });
@@ -440,9 +484,10 @@ describe('HtmlSerializer', () => {
   });
 
   it('serializes empty table as empty <table>', () => {
-    const html = HtmlSerializer.serialize([
-      { id: '1', type: 'table', attrs: { rows: [] } },
-    ]);
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'table', attrs: { rows: [] } }],
+      { fullDocument: false },
+    );
     expect(html).toBe('<table>\n\n</table>');
   });
 
@@ -511,5 +556,54 @@ describe('HtmlSerializer', () => {
       { id: '2', type: 'button', content: [{ text: 'Go' }], attrs: { href: 'https://example.com', alignment: 'right' } },
     ]);
     expect(rightHtml).toContain('text-align:right');
+  });
+
+  // ─── fullDocument option ──────────────────────────────────────────────────
+
+  it('returns full document by default when fullDocument is not set', () => {
+    const html = HtmlSerializer.serialize([
+      { id: '1', type: 'paragraph', content: [{ text: 'hello' }] },
+    ]);
+    expect(html).toContain('<!DOCTYPE html>');
+    expect(html).toContain('<html lang="en">');
+    expect(html).toContain('<body>');
+    expect(html).toContain('<p>hello</p>');
+  });
+
+  it('returns body-only when fullDocument is false', () => {
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'paragraph', content: [{ text: 'hello' }] }],
+      { fullDocument: false },
+    );
+    expect(html).toBe('<p>hello</p>');
+    expect(html).not.toContain('<!DOCTYPE html>');
+  });
+
+  it('returns full HTML document when fullDocument is true', () => {
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'paragraph', content: [{ text: 'hello' }] }],
+      { fullDocument: true },
+    );
+    expect(html).toContain('<!DOCTYPE html>');
+    expect(html).toContain('<html lang="en">');
+    expect(html).toContain('<head>');
+    expect(html).toContain('</head>');
+    expect(html).toContain('<body>');
+    expect(html).toContain('</body>');
+    expect(html).toContain('</html>');
+    expect(html).toContain('<p>hello</p>');
+  });
+
+  it('fullDocument wraps multiple blocks correctly', () => {
+    const html = HtmlSerializer.serialize(
+      [
+        { id: '1', type: 'heading1', content: [{ text: 'Title' }] },
+        { id: '2', type: 'paragraph', content: [{ text: 'Content' }] },
+      ],
+      { fullDocument: true },
+    );
+    expect(html).toContain('<h1>Title</h1>');
+    expect(html).toContain('<p>Content</p>');
+    expect(html).toContain('<!DOCTYPE html>');
   });
 });
