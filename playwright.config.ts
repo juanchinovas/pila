@@ -59,7 +59,7 @@ export default defineConfig({
       reuseExistingServer: true,
     },
     {
-      command: 'cd demo-vue && npm run dev -- --port 4173',
+      command: 'cd demo-vue && npm install && npm run dev -- --port 4173',
       port: 4173,
       reuseExistingServer: true,
     },
