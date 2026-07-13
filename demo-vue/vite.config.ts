@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
+  base: process.env.CI ? '/pila/' : '/',
   plugins: [vue(), tailwindcss()],
   resolve: {
     alias: {

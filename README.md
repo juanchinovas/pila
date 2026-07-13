@@ -3,10 +3,13 @@
 [![npm version](https://img.shields.io/npm/v/@sunacchi/pila)](https://www.npmjs.com/package/@sunacchi/pila)
 [![npm downloads](https://img.shields.io/npm/dm/@sunacchi/pila)](https://www.npmjs.com/package/@sunacchi/pila)
 [![CI](https://github.com/juanchinovas/pila/actions/workflows/ci.yml/badge.svg)](https://github.com/juanchinovas/pila/actions/workflows/ci.yml)
+[![Demo](https://img.shields.io/badge/demo-live-2563eb)](https://juanchinovas.github.io/pila)
 
 **Pluggable Inline Layout Authoring** — a framework-agnostic, Notion-style block editor written in TypeScript.
 
 Pila is built on plain Web Components and requires no framework. It works in vanilla HTML as well as React, Vue, Svelte, or any other environment that can provide a DOM element.
+
+[**→ Live Demo**](https://juanchinovas.github.io/pila)
 
 ![Pila Block Editor demo](assets/demo.gif)
 

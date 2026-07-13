@@ -1,47 +1,7 @@
-import Prism from 'prismjs';
 import { Block } from '../types';
 import { icon, Icons } from '../ui/icons';
 import { PilaBlock } from './PilaBlock';
-
-/** Static dynamic-import loaders — Vite analyses these and code-splits each grammar */
-const GRAMMAR_LOADERS: Record<string, Array<() => Promise<unknown>>> = {
-  markup:     [() => import('prismjs/components/prism-markup')],
-  css:        [() => import('prismjs/components/prism-css')],
-  javascript: [() => import('prismjs/components/prism-javascript')],
-  typescript: [() => import('prismjs/components/prism-javascript'), () => import('prismjs/components/prism-typescript')],
-  jsx:        [() => import('prismjs/components/prism-markup'), () => import('prismjs/components/prism-javascript'), () => import('prismjs/components/prism-jsx')],
-  tsx:        [() => import('prismjs/components/prism-markup'), () => import('prismjs/components/prism-javascript'), () => import('prismjs/components/prism-typescript'), () => import('prismjs/components/prism-jsx'), () => import('prismjs/components/prism-tsx')],
-  json:       [() => import('prismjs/components/prism-json')],
-  python:     [() => import('prismjs/components/prism-python')],
-  bash:       [() => import('prismjs/components/prism-bash')],
-  markdown:   [() => import('prismjs/components/prism-markup'), () => import('prismjs/components/prism-markdown')],
-  sql:        [() => import('prismjs/components/prism-sql')],
-  yaml:       [() => import('prismjs/components/prism-yaml')],
-  csharp:     [() => import('prismjs/components/prism-csharp')],
-  java:       [() => import('prismjs/components/prism-java')],
-};
-
-const grammarsLoaded = new Set<string>();
-
-async function loadGrammar(langKey: string): Promise<void> {
-  if (grammarsLoaded.has(langKey) || !GRAMMAR_LOADERS[langKey]) return;
-  for (const load of GRAMMAR_LOADERS[langKey]) await load();
-  grammarsLoaded.add(langKey);
-}
-
-/** Common shorthand aliases → Prism grammar keys */
-const LANG_ALIASES: Record<string, string> = {
-  js: 'javascript',
-  ts: 'typescript',
-  py: 'python',
-  sh: 'bash',
-  shell: 'bash',
-  zsh: 'bash',
-  html: 'markup',
-  xml: 'markup',
-  svg: 'markup',
-  yml: 'yaml',
-};
+import { SUPPORTED_LANGUAGES, highlightCode } from '../prism-languages';
 
 export class CodeBlock extends PilaBlock {
   private codeEl!: HTMLElement;
@@ -61,15 +21,9 @@ export class CodeBlock extends PilaBlock {
     const header = document.createElement('div');
     header.className = 'flex items-center justify-between px-3 py-[6px] border-b border-[var(--pila-code-border,var(--pila-border))] bg-[var(--pila-code-header-bg,rgba(0,0,0,.03))]';
 
-    const LANGUAGES = [
-      'plaintext', 'bash', 'css', 'csharp', 'html', 'java', 'javascript',
-      'json', 'jsx', 'markdown', 'markup', 'python', 'sql',
-      'tsx', 'typescript', 'xml', 'yaml',
-    ];
-
     this.langEl = document.createElement('select');
     this.langEl.className = 'font-mono text-[0.72rem] uppercase tracking-wide text-[color:var(--pila-code-text)] opacity-50 bg-transparent border-none outline-none p-0 cursor-pointer';
-    LANGUAGES.forEach((lang) => {
+    SUPPORTED_LANGUAGES.forEach((lang) => {
       const opt = document.createElement('option');
       opt.value = lang;
       opt.textContent = lang;
@@ -80,7 +34,7 @@ export class CodeBlock extends PilaBlock {
       this.ctx.manager.update(this.block.id!, {
         attrs: { ...this.block.attrs, language: this.langEl.value },
       });
-      void this.syncHighlight();
+      this.syncHighlight();
     });
 
     const copyBtn = document.createElement('button');
@@ -160,13 +114,13 @@ export class CodeBlock extends PilaBlock {
       }
     });
 
-    this.codeEl.addEventListener('input', () => void this.syncAll());
+    this.codeEl.addEventListener('input', () => this.syncAll());
 
     pre.append(this.highlightEl, this.codeEl);
     body.append(this.lineNumbersEl, pre);
     this.appendChild(body);
 
-    void this.syncAll();
+    this.syncAll();
   }
 
   private insertAtCaret(text: string): void {
@@ -180,22 +134,13 @@ export class CodeBlock extends PilaBlock {
     range.collapse(true);
     sel.removeAllRanges();
     sel.addRange(range);
-    void this.syncAll();
+    this.syncAll();
   }
 
-  private async syncHighlight(): Promise<void> {
+  private syncHighlight(): void {
     const text = this.codeEl.textContent ?? '';
     const lang = this.langEl.value.toLowerCase();
-    const resolvedKey = LANG_ALIASES[lang] ?? lang;
-
-    await loadGrammar(resolvedKey);
-    const grammar = Prism.languages[resolvedKey];
-    if (grammar) {
-      this.highlightEl.innerHTML = Prism.highlight(text, grammar, resolvedKey);
-    } else {
-      // Unknown language: display as plain text (textContent escapes HTML safely)
-      this.highlightEl.textContent = text;
-    }
+    this.highlightEl.innerHTML = highlightCode(text, lang);
   }
 
   private syncLineNumbers(): void {
@@ -207,9 +152,9 @@ export class CodeBlock extends PilaBlock {
     ).join('');
   }
 
-  private async syncAll(): Promise<void> {
+  private syncAll(): void {
     this.syncLineNumbers();
-    await this.syncHighlight();
+    this.syncHighlight();
   }
 
   private copyCode(): void {
@@ -228,7 +173,7 @@ export class CodeBlock extends PilaBlock {
     if (this.codeEl) {
       this.codeEl.textContent = (block.content ?? []).map((n) => n.text).join('');
       this.langEl.value = block.attrs?.language ?? 'plaintext';
-      void this.syncAll();
+      this.syncAll();
     }
   }
 

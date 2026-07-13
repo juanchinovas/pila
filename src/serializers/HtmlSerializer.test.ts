@@ -44,7 +44,7 @@ describe('HtmlSerializer', () => {
       [{ id: '1', type: 'bulletList', content: [{ text: 'item' }] }],
       { fullDocument: false },
     );
-    expect(html).toBe('<ul style="list-style-type:disc;list-style-position:outside"><li style="display:list-item">item</li></ul>');
+    expect(html).toBe('<ul style="list-style-type:disc;list-style-position:outside;padding-left:1.5em"><li style="display:list-item">item</li></ul>');
   });
 
   it('serializes numbered list', () => {
@@ -52,7 +52,7 @@ describe('HtmlSerializer', () => {
       [{ id: '1', type: 'numberedList', content: [{ text: 'one' }] }],
       { fullDocument: false },
     );
-    expect(html).toBe('<ol style="list-style-type:decimal;list-style-position:outside"><li style="display:list-item">one</li></ol>');
+    expect(html).toBe('<ol style="list-style-type:decimal;list-style-position:outside;padding-left:1.5em"><li style="display:list-item">one</li></ol>');
   });
 
   it('groups consecutive numbered list blocks into one ordered list', () => {
@@ -64,7 +64,7 @@ describe('HtmlSerializer', () => {
       ],
       { fullDocument: false },
     );
-    expect(html).toBe('<ol style="list-style-type:decimal;list-style-position:outside"><li style="display:list-item">one</li><li style="display:list-item">two</li><li style="display:list-item">three</li></ol>');
+    expect(html).toBe('<ol style="list-style-type:decimal;list-style-position:outside;padding-left:1.5em"><li style="display:list-item">one</li><li style="display:list-item">two</li><li style="display:list-item">three</li></ol>');
   });
 
   it('serializes unchecked todo', () => {
@@ -101,7 +101,8 @@ describe('HtmlSerializer', () => {
       { id: '1', type: 'code', content: [{ text: 'const x = 1' }], attrs: { language: 'typescript' } },
     ]);
     expect(html).toContain('class="language-typescript"');
-    expect(html).toContain('const x = 1');
+    expect(html).toContain('class="token keyword"');
+    expect(html).toContain('class="token number"');
   });
 
   it('escapes HTML entities in code block', () => {

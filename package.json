@@ -50,6 +50,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:cross": "playwright test --config=playwright.cross.config.ts",
+    "build:demo": "npm run build && npm run build:vue",
+    "build:vue": "cd demo-vue && npm ci && npm run build",
     "verify": "npm run lint && npm run test && npm run test:e2e"
   },
   "devDependencies": {

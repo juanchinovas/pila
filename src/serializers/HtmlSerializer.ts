@@ -1,6 +1,8 @@
 import { Block, BlockAttrs, InlineNode, TableRow } from '../types';
 import variablesCss from '../styles/variables.css?raw';
 import blockCss from '../styles/serializer.css?raw';
+import prismCss from 'prismjs/themes/prism.css?raw';
+import { highlightCode } from '../prism-languages';
 
 function inlineToHtml(nodes: InlineNode[]): string {
   return nodes
@@ -70,6 +72,7 @@ function listStyleAttr(attrs: BlockAttrs | undefined, kind: 'bulletList' | 'numb
   styles.push(
     kind === 'bulletList' ? 'list-style-type:disc' : 'list-style-type:decimal',
     'list-style-position:outside',
+    'padding-left:1.5em',
   );
   return styleAttrFromList(styles);
 }
@@ -171,7 +174,7 @@ export class HtmlSerializer {
         '  <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
         '  <title></title>',
         '  <style>',
-        variablesCss + '\n' + blockCss,
+        prismCss + '\n' + variablesCss + '\n' + blockCss,
         '  </style>',
         '</head>',
         '<body>',
@@ -250,10 +253,12 @@ export class HtmlSerializer {
         return `<div${classAttr('todo', block.attrs?.tailwindClasses)}${styleAttr}><input type="checkbox"${checked} disabled /><span${todoStyleAttr}>${inlineToHtml(content)}</span></div>`;
       }
       case 'code': {
-        const lang = escapeAttr(block.attrs?.language ?? 'plaintext');
-        const code = escapeHtml(content.map((n) => n.text).join(''));
+        const rawLang = block.attrs?.language ?? 'plaintext';
+        const lang = escapeAttr(rawLang);
+        const code = content.map((n) => n.text).join('');
+        const highlighted = highlightCode(code, rawLang);
         const wrapperStyleAttr = blockStyleAttr(block.attrs);
-        return `<div${classAttr('pila-code-block', block.attrs?.tailwindClasses)}${wrapperStyleAttr}><div class="pila-code-lang">${lang}</div><pre><code class="language-${lang}">${code}</code></pre></div>`;
+        return `<div${classAttr('pila-code-block', block.attrs?.tailwindClasses)}${wrapperStyleAttr}><div class="pila-code-lang">${lang}</div><pre><code class="language-${lang}">${highlighted}</code></pre></div>`;
       }
       case 'quote':
         return `<blockquote${classAttr(block.attrs?.tailwindClasses)}${styleAttr}>${inlineToHtml(content)}</blockquote>`;
