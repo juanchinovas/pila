@@ -12,10 +12,12 @@
       background: var(--pila-bg);
       min-height: 100vh;
       display: grid;
-      grid-template-columns: 25rem 1fr 25rem;
-      justify-items: center;
-      > * { 
-        grid-column: 2/2;
+      grid-template-columns: 1fr minmax(auto, 720px) 1fr;
+      > * { grid-column: 2/2; }
+    }
+    @media (width < 640px) {
+      body {
+        grid-template-columns: 16px 1fr 16px;
       }
     }
     h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; color: #111; }

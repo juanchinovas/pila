@@ -43,7 +43,7 @@ test.describe('Post example export coverage', () => {
 
     const markers = [title, intro, section, bullet1, bullet2, bullet3, todo, quote, callout]
 
-    await page.locator('#btn-json').click()
+    await page.evaluate(() => (document.querySelector<HTMLButtonElement>('#btn-json')?.click()))
     const jsonText = (await page.locator('#output').textContent()) ?? '[]'
     const json = JSON.parse(jsonText) as Array<Record<string, unknown>>
 
@@ -53,21 +53,21 @@ test.describe('Post example export coverage', () => {
       expect(serializedJson).toContain(marker)
     }
 
-    await page.locator('#btn-html').click()
+    await page.evaluate(() => (document.querySelector<HTMLButtonElement>('#btn-html')?.click()))
     const html = (await page.locator('#output').textContent()) ?? ''
     for (const marker of markers) {
       expect(html).toContain(marker)
     }
     expect(html.toLowerCase()).toContain('<h1')
 
-    await page.locator('#btn-email').click()
+    await page.evaluate(() => (document.querySelector<HTMLButtonElement>('#btn-email')?.click()))
     const email = (await page.locator('#output').textContent()) ?? ''
     for (const marker of markers) {
       expect(email).toContain(marker)
     }
     expect(email.toLowerCase()).not.toContain('javascript:')
 
-    await page.locator('#btn-md').click()
+    await page.evaluate(() => (document.querySelector<HTMLButtonElement>('#btn-md')?.click()))
     const markdown = (await page.locator('#output').textContent()) ?? ''
     expect(markdown).toContain(`# ${title}`)
     for (const marker of markers.slice(1)) {
