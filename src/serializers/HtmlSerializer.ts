@@ -1,41 +1,7 @@
 import { Block, BlockAttrs, InlineNode, TableRow } from '../types';
+import variablesCss from '../styles/variables.css?raw';
 
-const EMBEDDED_CSS = `/* ─── CSS Variables ───────────────────────────────────────────────── */
-:root {
-  --pila-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  --pila-mono: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
-  --pila-bg: #ffffff;
-  --pila-text: #1a1a1a;
-  --pila-muted: #9b9b9b;
-  --pila-placeholder: #c4c4c4;
-  --pila-accent: #2563eb;
-  --pila-accent-hover: #1d4ed8;
-  --pila-border: #e2e8f0;
-  --pila-radius: 6px;
-  --pila-code-bg: #f1f5f9;
-  --pila-code-text: #0f172a;
-  --pila-inline-code-bg: #f1f5f9;
-  --pila-inline-code-text: #0f172a;
-  --pila-quote-border: #94a3b8;
-  --pila-quote-text: #4b5563;
-  --pila-callout-info-bg: #eff6ff;
-  --pila-callout-info-border: #2563eb;
-  --pila-callout-info-text: #1e3a8a;
-  --pila-callout-warning-bg: #fffbeb;
-  --pila-callout-warning-border: #d97706;
-  --pila-callout-warning-text: #78350f;
-  --pila-callout-error-bg: #fef2f2;
-  --pila-callout-error-border: #dc2626;
-  --pila-callout-error-text: #7f1d1d;
-  --pila-callout-success-bg: #f0fdf4;
-  --pila-callout-success-border: #16a34a;
-  --pila-callout-success-text: #14532d;
-  --pila-callout-tip-bg: #faf5ff;
-  --pila-callout-tip-border: #9333ea;
-  --pila-callout-tip-text: #3b0764;
-}
-
-/* ─── Block Styles ────────────────────────────────────────────── */
+const BLOCK_CSS = `/* ─── Block Styles ────────────────────────────────────────────── */
 body {
   margin: 0;
   padding: 0;
@@ -405,7 +371,7 @@ export class HtmlSerializer {
         '  <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
         '  <title></title>',
         '  <style>',
-        EMBEDDED_CSS,
+        variablesCss + '\n' + BLOCK_CSS,
         '  </style>',
         '</head>',
         '<body>',
