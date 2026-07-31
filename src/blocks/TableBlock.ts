@@ -2,7 +2,7 @@ import { InlineParser } from '../inline/InlineParser';
 import { InlineRenderer } from '../inline/InlineRenderer';
 import { Block, BlockAttrs, TableCell, TableRow } from '../types';
 import { PilaBlock } from './PilaBlock';
-import { BlockPopover } from '../ui/BlockPopover';
+import { BlockAction, BlockPopover } from '../ui/BlockPopover';
 import { icon, Icons } from '../ui/icons';
 import { setPortalPosition } from '../ui/overlayPosition';
 
@@ -10,6 +10,10 @@ export class TableBlock extends PilaBlock {
   private tableEl!: HTMLTableElement;
   private focusedRow = 0;
   private focusedCol = 0;
+
+  get colorOptions(): boolean {
+    return false;
+  }
 
   // Hover Handles
   private rowHandle: HTMLDivElement | null = null;
@@ -33,7 +37,7 @@ export class TableBlock extends PilaBlock {
     this.tableEl = this.buildTable(this.block.attrs?.rows ?? []);
     this.appendChild(this.tableEl);
 
-    this.addEventListener('mouseleave', () => {
+    this.eventGroup.on(this, 'mouseleave', () => {
       this.scheduleHide();
     });
   }
@@ -62,15 +66,15 @@ export class TableBlock extends PilaBlock {
       this.colHandle.className = 'pila-table-handle hover:bg-gray-500/100 h-2';
       this.colHandle.appendChild(icon(Icons.MoreHorizontal, 14));
       this.colHandle.draggable = true;
-      this.colHandle.addEventListener('dragstart', (e) => this.onColDragStart(e, this.focusedCol));
-      this.colHandle.addEventListener('dragend', () => this.onDragEnd());
+      this.eventGroup.on(this.colHandle, 'dragstart', (e) => this.onColDragStart(e, this.focusedCol));
+      this.eventGroup.on(this.colHandle, 'dragend', () => this.onDragEnd());
       // Use click instead of mousedown to allow drag-start on mousedown
-      this.colHandle.addEventListener('click', (e) => {
+      this.eventGroup.on(this.colHandle, 'click', (e) => {
         e.stopPropagation();
         this.openColMenu(e.clientX, e.clientY);
       });
-      this.colHandle.addEventListener('mouseenter', () => this.clearHideTimeout());
-      this.colHandle.addEventListener('mouseleave', () => this.scheduleHide());
+      this.eventGroup.on(this.colHandle, 'mouseenter', () => this.clearHideTimeout());
+      this.eventGroup.on(this.colHandle, 'mouseleave', () => this.scheduleHide());
       
       this.ctx.portalTo?.appendChild(this.colHandle);
     }
@@ -94,14 +98,14 @@ export class TableBlock extends PilaBlock {
       this.rowHandle.className = 'pila-table-handle hover:bg-gray-500/100 w-2';
       this.rowHandle.appendChild(icon(Icons.MoreVertical, 14));
       this.rowHandle.draggable = true;
-      this.rowHandle.addEventListener('dragstart', (e) => this.onRowDragStart(e, this.focusedRow));
-      this.rowHandle.addEventListener('dragend', () => this.onDragEnd());
-      this.rowHandle.addEventListener('click', (e) => {
+      this.eventGroup.on(this.rowHandle, 'dragstart', (e) => this.onRowDragStart(e, this.focusedRow));
+      this.eventGroup.on(this.rowHandle, 'dragend', () => this.onDragEnd());
+      this.eventGroup.on(this.rowHandle, 'click', (e) => {
         e.stopPropagation();
         this.openRowMenu(e.clientX, e.clientY);
       });
-      this.rowHandle.addEventListener('mouseenter', () => this.clearHideTimeout());
-      this.rowHandle.addEventListener('mouseleave', () => this.scheduleHide());
+      this.eventGroup.on(this.rowHandle, 'mouseenter', () => this.clearHideTimeout());
+      this.eventGroup.on(this.rowHandle, 'mouseleave', () => this.scheduleHide());
       this.ctx.portalTo?.appendChild(this.rowHandle);
     }
 
@@ -121,12 +125,12 @@ export class TableBlock extends PilaBlock {
       this.cellSettingsBtn.style.position = 'absolute';
       this.cellSettingsBtn.style.zIndex = '9001';
       this.cellSettingsBtn.appendChild(icon(Icons.Settings2, 12));
-      this.cellSettingsBtn.addEventListener('click', (e) => {
+      this.eventGroup.on(this.cellSettingsBtn, 'click', (e) => {
         e.stopPropagation();
         this.openCellPopover(e.clientX, e.clientY);
       });
-      this.cellSettingsBtn.addEventListener('mouseenter', () => this.clearHideTimeout());
-      this.cellSettingsBtn.addEventListener('mouseleave', () => this.scheduleHide());
+      this.eventGroup.on(this.cellSettingsBtn, 'mouseenter', () => this.clearHideTimeout());
+      this.eventGroup.on(this.cellSettingsBtn, 'mouseleave', () => this.scheduleHide());
       this.ctx.portalTo?.appendChild(this.cellSettingsBtn);
     }
 
@@ -143,12 +147,12 @@ export class TableBlock extends PilaBlock {
   private openCellPopover(x: number, y: number): void {
     const popover = new BlockPopover(this.ctx.portalTo);
     popover.open(x, y, [
-      { label: 'Align left', icon: 'AlignLeft', handler: () => this.setCellStyle({ align: 'left' }) },
-      { label: 'Align center', icon: 'AlignCenter', handler: () => this.setCellStyle({ align: 'center' }) },
-      { label: 'Align right', icon: 'AlignRight', handler: () => this.setCellStyle({ align: 'right' }) },
-      { label: 'Background', icon: 'Paintbucket', handler: (e) => this.showColorPicker(e, 'cell', 'background') },
-      { label: 'Text color', icon: 'Palette', handler: (e) => this.showColorPicker(e, 'cell', 'color') },
-      { label: 'Clear styling', icon: 'Eraser', handler: () => this.setCellStyle({ background: '', color: '', align: undefined }) },
+      { label: 'Align left', type: 'action', value: 'left', icon: 'AlignLeft', handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ align: ev.detail.value as 'left' }) },
+      { label: 'Align center', type: 'action', value: 'center', icon: 'AlignCenter', handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ align: ev.detail.value as 'center' }) },
+      { label: 'Align right', type: 'action', value: 'right', icon: 'AlignRight', handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ align: ev.detail.value as 'right' }) },
+      { label: 'Background', type: 'color', icon: 'Paintbucket', handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ background: String(ev.detail.value) }) },
+      { label: 'Text color', type: 'color', icon: 'Palette', handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ color: String(ev.detail.value) }) },
+      { label: 'Clear styling', type: 'action', icon: 'Eraser', handler: () => this.setCellStyle({ background: '', color: '', align: undefined }) },
     ]);
   }
 
@@ -184,23 +188,23 @@ export class TableBlock extends PilaBlock {
 
   private openRowMenu(x: number, y: number): void {
     const popover = new BlockPopover(this.ctx.portalTo);
-    const actions: { label: string; icon: string; handler: (e: MouseEvent) => void; danger?: boolean }[] = [
-      { label: 'Toggle row as header', icon: 'Rows2', handler: () => this.toggleHeaderRow() },
-      { label: 'Add row above', icon: 'ArrowUpToLine', handler: () => this.addRow('above') },
-      { label: 'Add row below', icon: 'ArrowDownToLine', handler: () => this.addRow('below') },
-      { label: 'Align left', icon: 'AlignLeft', handler: () => this.setRowStyle({ align: 'left' }) },
-      { label: 'Align center', icon: 'AlignCenter', handler: () => this.setRowStyle({ align: 'center' }) },
-      { label: 'Align right', icon: 'AlignRight', handler: () => this.setRowStyle({ align: 'right' }) },
-      { label: 'Background', icon: 'Paintbucket', handler: (e: MouseEvent) => this.showColorPicker(e, 'row', 'background') },
-      { label: 'Text color', icon: 'Palette', handler: (e: MouseEvent) => this.showColorPicker(e, 'row', 'color') },
-      { label: 'Clear styling', icon: 'Eraser', handler: () => this.setRowStyle({ background: '', color: '', align: undefined }) },
-      { label: 'Delete row', icon: 'Trash2', danger: true, handler: () => this.removeRow() },
+    const actions: BlockAction[] = [
+      { label: 'Toggle row as header', type: 'action' , icon: 'Rows2', handler: () => this.toggleHeaderRow() },
+      { label: 'Add row above', type: 'action', value: 'above', icon: 'ArrowUpToLine', handler: (ev: CustomEvent<BlockAction>) => this.addRow(ev.detail.value as 'above') },
+      { label: 'Add row below', type: 'action', value: 'below', icon: 'ArrowDownToLine', handler: (ev: CustomEvent<BlockAction>) => this.addRow(ev.detail.value as 'below') },
+      { label: 'Align left', type: 'action', value: 'left', icon: 'AlignLeft', handler: (ev: CustomEvent<BlockAction>) => this.setRowStyle({ align: ev.detail.value as 'left' }) },
+      { label: 'Align center', type: 'action', value: 'center', icon: 'AlignCenter', handler: (ev: CustomEvent<BlockAction>) => this.setRowStyle({ align: ev.detail.value as 'center' }) },
+      { label: 'Align right', type: 'action', value: 'right', icon: 'AlignRight', handler: (ev: CustomEvent<BlockAction>) => this.setRowStyle({ align: ev.detail.value as 'right' }) },
+      { label: 'Background', type: 'color', value: '', icon: 'Paintbucket', handler: (e: CustomEvent<BlockAction>) => this.setRowStyle({ background: String(e.detail.value) }) },
+      { label: 'Text color', type: 'color', value: '', icon: 'Palette', handler: (e: CustomEvent<BlockAction>) => this.setRowStyle({ color: String(e.detail.value) }) },
+      { label: 'Clear styling', type: 'action', icon: 'Eraser', handler: () => this.setRowStyle({ background: '', color: '', align: undefined }) },
+      { label: 'Delete row', type: 'action', icon: 'Trash2', danger: true, handler: () => this.removeRow() },
     ];
 
     if (this.hasSelection()) {
-      actions.splice(actions.length - 1, 0, { label: 'Merge cells', icon: 'Table2', handler: () => this.mergeSelected() });
-    } else {
-      actions.splice(actions.length - 1, 0, { label: 'Unmerge cells', icon: 'Grid', handler: () => this.unmergeFocused() });
+      actions.splice(actions.length - 1, 0, { label: 'Merge cells', type: 'action', icon: 'Table2', handler: () => this.mergeSelected() });
+    } else if (this.isFocusedCellMerged()) {
+      actions.splice(actions.length - 1, 0, { label: 'Unmerge cells', type: 'action', icon: 'Grid', handler: () => this.unmergeFocused() });
     }
 
     popover.open(x, y, actions);
@@ -208,23 +212,23 @@ export class TableBlock extends PilaBlock {
 
   private openColMenu(x: number, y: number): void {
     const popover = new BlockPopover(this.ctx.portalTo);
-    const actions: { label: string; icon: string; handler: (e: MouseEvent) => void; danger?: boolean }[] = [
-      { label: 'Toggle column as header', icon: 'Columns2', handler: () => this.toggleHeaderCol() },
-      { label: 'Add column left', icon: 'ArrowLeftToLine', handler: () => this.addCol('left') },
-      { label: 'Add column right', icon: 'ArrowRightToLine', handler: () => this.addCol('right') },
-      { label: 'Align left', icon: 'AlignLeft', handler: () => this.setColStyle({ align: 'left' }) },
-      { label: 'Align center', icon: 'AlignCenter', handler: () => this.setColStyle({ align: 'center' }) },
-      { label: 'Align right', icon: 'AlignRight', handler: () => this.setColStyle({ align: 'right' }) },
-      { label: 'Background', icon: 'Paintbucket', handler: (e: MouseEvent) => this.showColorPicker(e, 'col', 'background') },
-      { label: 'Text color', icon: 'Palette', handler: (e: MouseEvent) => this.showColorPicker(e, 'col', 'color') },
-      { label: 'Clear styling', icon: 'Eraser', handler: () => this.setColStyle({ background: '', color: '', align: undefined }) },
-      { label: 'Delete column', icon: 'Trash2', danger: true, handler: () => this.removeCol() },
+    const actions: BlockAction[] = [
+      { label: 'Toggle column as header', type: 'action', icon: 'Columns2', handler: () => this.toggleHeaderCol() },
+      { label: 'Add column left', type: 'action', value: 'left', icon: 'ArrowLeftToLine', handler: (ev: CustomEvent<BlockAction>) => this.addCol(ev.detail.value as 'left') },
+      { label: 'Add column right', type: 'action', value: 'right', icon: 'ArrowRightToLine', handler: (ev: CustomEvent<BlockAction>) => this.addCol(ev.detail.value as 'right') },
+      { label: 'Align left', type: 'action', value: 'left', icon: 'AlignLeft', handler: (ev: CustomEvent<BlockAction>) => this.setColStyle({ align: ev.detail.value as 'left' }) },
+      { label: 'Align center', type: 'action', value: 'center', icon: 'AlignCenter', handler: (ev: CustomEvent<BlockAction>) => this.setColStyle({ align: ev.detail.value as 'center' }) },
+      { label: 'Align right', type: 'action', value: 'right', icon: 'AlignRight', handler: (ev: CustomEvent<BlockAction>) => this.setColStyle({ align: ev.detail.value as 'right' }) },
+      { label: 'Background', type: 'color', value: '', icon: 'Paintbucket', handler: (e: CustomEvent<BlockAction>) => this.setColStyle({ background: String(e.detail.value) }) },
+      { label: 'Text color', type: 'color', value: '', icon: 'Palette', handler: (e: CustomEvent<BlockAction>) => this.setColStyle({ color: String(e.detail.value) }) },
+      { label: 'Clear styling', type: 'action', icon: 'Eraser', handler: () => this.setColStyle({ background: '', color: '', align: undefined }) },
+      { label: 'Delete column', type: 'action', icon: 'Trash2', danger: true, handler: () => this.removeCol() },
     ];
 
     if (this.hasSelection()) {
-      actions.splice(actions.length - 1, 0, { label: 'Merge cells', icon: 'Table2', handler: () => this.mergeSelected() });
-    } else {
-      actions.splice(actions.length - 1, 0, { label: 'Unmerge cells', icon: 'Grid', handler: () => this.unmergeFocused() });
+      actions.splice(actions.length - 1, 0, { label: 'Merge cells', type: 'action', icon: 'Table2', handler: () => this.mergeSelected() });
+    } else if (this.isFocusedCellMerged()) {
+      actions.splice(actions.length - 1, 0, { label: 'Unmerge cells', type: 'action', icon: 'Grid', handler: () => this.unmergeFocused() });
     }
 
     popover.open(x, y, actions);
@@ -233,6 +237,12 @@ export class TableBlock extends PilaBlock {
   private hasSelection(): boolean {
     if (!this.selectionStart || !this.selectionEnd) return false;
     return this.selectionStart.r !== this.selectionEnd.r || this.selectionStart.c !== this.selectionEnd.c;
+  }
+
+  private isFocusedCellMerged(): boolean {
+    const rows = this.currentRows();
+    const cell = rows[this.focusedRow]?.cells[this.focusedCol];
+    return !!(cell?.colspan || cell?.rowspan);
   }
 
   private onTableMouseDown(e: MouseEvent): void {
@@ -287,6 +297,8 @@ export class TableBlock extends PilaBlock {
     const c1 = Math.min(this.selectionStart.c, this.selectionEnd.c);
     const c2 = Math.max(this.selectionStart.c, this.selectionEnd.c);
 
+    if (r1 === r2 && c1 === c2) return;
+
     const rows = this.currentRows();
     const targetCell = rows[r1].cells[c1];
     
@@ -303,21 +315,16 @@ export class TableBlock extends PilaBlock {
     }
 
     targetCell.content = combinedContent;
-    const colspan = (c2 - c1) + 1;
-    const rowspan = (r2 - r1) + 1;
+    targetCell.colspan = (c2 - c1) + 1;
+    targetCell.rowspan = (r2 - r1) + 1;
 
-    // Rebuild the data structure: 
-    // We need to keep the grid consistent. Merged cells are removed from the array 
-    // but the target cell gets colspan/rowspan.
-    for (let r = r2; r >= r1; r--) {
-      for (let c = c2; c >= c1; c--) {
+    // Mark all other cells in range as hidden slaves of the target
+    for (let r = r1; r <= r2; r++) {
+      for (let c = c1; c <= c2; c++) {
         if (r === r1 && c === c1) continue;
-        rows[r].cells.splice(c, 1);
+        rows[r].cells[c] = { content: [], mergedTo: { row: r1, col: c1 } };
       }
     }
-
-    targetCell.colspan = colspan;
-    targetCell.rowspan = rowspan;
 
     this.persistStructuralRows(rows);
     this.selectionStart = null;
@@ -333,21 +340,22 @@ export class TableBlock extends PilaBlock {
     const rs = targetCell.rowspan || 1;
     const cs = targetCell.colspan || 1;
 
-    targetCell.colspan = undefined;
-    targetCell.rowspan = undefined;
-
-    // Inject empty cells back into the grid
-    for (let r = 0; r < rs; r++) {
-      for (let c = 0; c < cs; c++) {
-        if (r === 0 && c === 0) continue;
-        rows[this.focusedRow + r].cells.splice(this.focusedCol + c, 0, { content: [] });
+    // Clear mergedTo on all slave cells
+    for (let dr = 0; dr < rs; dr++) {
+      for (let dc = 0; dc < cs; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const slave = rows[this.focusedRow + dr]?.cells[this.focusedCol + dc];
+        if (slave) slave.mergedTo = undefined;
       }
     }
+
+    delete targetCell.colspan;
+    delete targetCell.rowspan;
 
     this.persistStructuralRows(rows);
   }
 
-  private showColorPicker(e: MouseEvent, target: 'row' | 'col' | 'cell', type: 'background' | 'color'): void {
+  /*private showColorPicker(e: MouseEvent, target: 'row' | 'col' | 'cell', type: 'background' | 'color'): void {
     if (e) e.stopPropagation();
     
     const targetEl = e.target as HTMLElement;
@@ -357,27 +365,28 @@ export class TableBlock extends PilaBlock {
     const input = document.createElement('input');
     input.id = 'color_picker_input_table';
     input.type = 'color';
+    input.setAttribute('form', '');
     input.value = currentColor; // Default to current color
     input.style.position = 'absolute';
     input.style.opacity = '0';
     setPortalPosition(input, this.ctx.portalTo ?? document.body, e.clientX, e.clientY);
     this.ctx.portalTo?.appendChild(input);
     
-    input.addEventListener('input', () => {
+    input.addEventListener('input', debounce(() => {
       const val = input.value;
       if (target === 'row') this.setRowStyle({ [type]: val });
       else if (target === 'col') this.setColStyle({ [type]: val });
       else this.setCellStyle({ [type]: val });
-    });
+    }, 100));
 
     input.addEventListener('change', () => {
       input.remove();
     });
 
     input.click();
-  }
+  }*/
 
-  private setCellStyle(style: { background?: string, color?: string, align?: 'left' | 'center' | 'right' }): void {
+  private  setCellStyle(style: { background?: string, color?: string, align?: 'left' | 'center' | 'right' }): void {
     const rows = this.currentRows();
     const cell = rows[this.focusedRow]?.cells[this.focusedCol];
     if (!cell) return;
@@ -435,12 +444,13 @@ export class TableBlock extends PilaBlock {
     table.className = 'border-collapse w-full text-[0.9rem] mt-5';
 
     // Single delegated listeners for drag
-    table.addEventListener('dragover', (e) => this.onTableDragOver(e));
-    table.addEventListener('drop',     (e) => e.preventDefault());
+    this.eventGroup.on(table, 'dragover', (e) => this.onTableDragOver(e));
+    this.eventGroup.on(table, 'drop', (e) => e.preventDefault());
 
     // Cell selection listeners
-    table.addEventListener('mousedown', (e) => this.onTableMouseDown(e));
-    window.addEventListener('mouseup', () => this.onTableMouseUp());
+    this.eventGroup.on(table, 'mousedown', (e) => this.onTableMouseDown(e));
+    this.eventGroup.on(window, 'mouseup', () => this.onTableMouseUp());
+
 
     const headerRowSet = this.headerRowSet();
     const headerColSet = this.headerColSet();
@@ -478,6 +488,7 @@ export class TableBlock extends PilaBlock {
 
     // Data cells
     row.cells.forEach((cell, colIdx) => {
+      if (cell.mergedTo) return; // hidden by a merged cell
       const isHeaderCell = isHeaderRow || headerColSet.includes(colIdx);
       const tag  = isHeaderCell ? 'th' : 'td';
       const td   = document.createElement(tag);
@@ -735,10 +746,13 @@ export class TableBlock extends PilaBlock {
   // ── Data helpers ──────────────────────────────────────────────────────────
 
   private currentRows(): TableRow[] {
-    const rows: TableRow[] = [];
+    const domRows: TableRow[] = [];
     this.tableEl.querySelectorAll('tr').forEach((tr) => {
       const cells = Array.from(tr.querySelectorAll<HTMLElement>('th, td'));
-      if (cells.length === 0) return;
+      if (cells.length === 0) {
+        domRows.push({ cells: [] });
+        return;
+      }
       const rowCells: TableCell[] = cells.map((td) => {
         const cellEl  = td.querySelector('[contenteditable]') as HTMLElement;
         const alignVal = td.dataset.align;
@@ -752,12 +766,52 @@ export class TableBlock extends PilaBlock {
           color: td.style.color || undefined,
           width: td.style.width || undefined,
           colspan: td.getAttribute('colspan') ? parseInt(td.getAttribute('colspan')!, 10) : undefined,
-          rowspan: td.getAttribute('rowspan') ? parseInt(td.getAttribute('rowspan')!, 10) : undefined
+          rowspan: td.getAttribute('rowspan') ? parseInt(td.getAttribute('rowspan')!, 10) : undefined,
         };
       });
-      rows.push({ cells: rowCells });
+      domRows.push({ cells: rowCells });
     });
-    return rows;
+
+    // Expand sparse DOM representation into a full rectangular grid,
+    // injecting hidden mergedTo cells for positions covered by colspan/rowspan
+    const grid: TableCell[][] = [];
+
+    for (let r = 0; r < domRows.length; r++) {
+      if (!grid[r]) grid[r] = [];
+      let virCol = 0;
+
+      for (let dc = 0; dc < domRows[r].cells.length; dc++) {
+        while (grid[r][virCol]) virCol++;
+
+        const cell = { ...domRows[r].cells[dc] };
+        const cs = cell.colspan || 1;
+        const rs = cell.rowspan || 1;
+
+        grid[r][virCol] = cell;
+
+        for (let dr = 0; dr < rs; dr++) {
+          for (let dc2 = 0; dc2 < cs; dc2++) {
+            if (dr === 0 && dc2 === 0) continue;
+            const tr = r + dr;
+            const tc = virCol + dc2;
+            if (!grid[tr]) grid[tr] = [];
+            grid[tr][tc] = { content: [], mergedTo: { row: r, col: virCol } };
+          }
+        }
+
+        virCol += cs;
+      }
+    }
+
+    const result: TableRow[] = [];
+    for (let r = 0; r < grid.length; r++) {
+      const cells: TableCell[] = [];
+      for (let c = 0; c < grid[r].length; c++) {
+        cells.push(grid[r][c] || { content: [] });
+      }
+      result.push({ cells });
+    }
+    return result;
   }
 
   private saveRows(rows: TableRow[]): void {
@@ -810,7 +864,7 @@ export class TableBlock extends PilaBlock {
   getContent(): Block {
     return {
       ...this.block,
-      attrs: { ...this.block.attrs, rows: this.currentRows() },
+      attrs: { ...this.block.attrs, rows: this.tableEl ? this.currentRows() : this.block.attrs?.rows ?? [] },
     };
   }
 
