@@ -13,6 +13,7 @@ import '../blocks/DividerBlock';
 import '../blocks/ImageBlock';
 import '../blocks/TableBlock';
 import '../blocks/ColumnsBlock';
+import '../blocks/RowBlock';
 import '../blocks/ButtonBlock';
 import { SlashMenu } from '../ui/SlashMenu';
 import { FloatingToolbar } from '../ui/FloatingToolbar';
@@ -28,7 +29,11 @@ class CustomBlock extends PilaBlock {
   }
 
   getContent(): Block { return { ...this.block }; }
-  focusBlock(): void { (this.innerEl as HTMLElement)?.focus?.(); }
+  focusBlock(): void { 
+    requestAnimationFrame(() => {
+      (this.innerEl as HTMLElement)?.focus?.();
+    });
+  }
 }
 if (!customElements.get('pila-custom-block')) {
   customElements.define('pila-custom-block', CustomBlock);
@@ -139,7 +144,7 @@ export class PilaEditor {
     this.manager.removeAllListeners();
   }
 
-  getContent(format: 'json' | 'html' | 'markdown' | 'email'): string {
+  getContent(format: 'json' | 'html' | 'markdown' | 'email', options?: { fullDocument?: boolean }): string {
     const blocks = this.manager.getAll().map((block) => {
       const instance = this.blockInstances.get(block.id!);
       const current = instance ? instance.getContent() : block;
@@ -151,11 +156,13 @@ export class PilaEditor {
 
     switch (format) {
       case 'json':     return JsonSerializer.serialize(blocks);
-      case 'html':     return HtmlSerializer.serialize(blocks);
+      case 'html':     return HtmlSerializer.serialize(blocks, options);
       case 'markdown': return MarkdownSerializer.serialize(blocks);
-      case 'email':    return EmailSerializer.serialize(blocks);
+      case 'email':    return EmailSerializer.serialize(blocks, options);
     }
   }
+
+  // ─── Private ────────────────────────────────────────────────────────────────
 
   private withObservedHtmlPresentationAttrs(block: Block, instance?: PilaBlock): Block {
     if (!instance) return block;
@@ -205,14 +212,14 @@ export class PilaEditor {
         return instance.querySelector('table') ?? instance;
       case 'columns':
         return instance.querySelector('.pila-columns') ?? instance;
+      case 'row':
+        return instance.querySelector('.pila-row-block') ?? instance;
       case 'button':
         return instance.querySelector('a.pila-button') ?? instance;
       default:
         return instance;
     }
   }
-
-  // ─── Private ────────────────────────────────────────────────────────────────
 
   private renderAll(): void {
     const blocks = this.manager.getAll();
@@ -272,6 +279,7 @@ export class PilaEditor {
       editorEl: this.editorEl,
       placeholder: this.options.placeholder,
       portalTo: this.portalTo,
+      pluginRegistry: this.plugins,
     };
 
     // Plugin-registered custom block types
@@ -324,6 +332,9 @@ export class PilaEditor {
       case 'columns':
         el = document.createElement('pila-columns') as PilaBlock;
         break;
+      case 'row':
+        el = document.createElement('pila-row') as PilaBlock;
+        break;
       case 'button':
         el = document.createElement('pila-button') as PilaBlock;
         break;
@@ -336,8 +347,6 @@ export class PilaEditor {
     el.ctx = ctx;
     return el;
   }
-
-
 
   private setFocus(block: Block): void;
   private setFocus(id: string): void;

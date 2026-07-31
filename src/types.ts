@@ -19,6 +19,8 @@ export interface TableCell {
   background?: string
   color?: string
   width?: string
+  /** If set, this cell is hidden/covered by the master cell at (row, col) in a merge. */
+  mergedTo?: { row: number; col: number }
 }
 
 export interface TableRow {
@@ -31,6 +33,8 @@ export interface ColumnDef {
   /** flex-grow factor controlling column width relative to siblings. Default: 1 (equal). */
   width?: number
   blocks: Block[]
+  background?: string
+  color?: string
 }
 
 // ─── Emoji Plugin Surface ───────────────────────────────────────────────────
@@ -79,6 +83,14 @@ export interface BlockAttrs {
   headerRows?: number[]  // table — row indices rendered as header rows
   headerCols?: number[]  // table — col indices rendered as <th>
   columnDefs?: ColumnDef[] // columns block
+  rowBlocks?: Block[]      // row block children
+  borderStyle?: 'solid' | 'dashed' | 'dotted' | 'none' // row border style
+  borderWidth?: string     // row border width (e.g. '1px')
+  borderColor?: string     // row border color (e.g. '#000')
+  borderTop?: boolean      // row border top
+  borderBottom?: boolean   // row border bottom
+  borderLeft?: boolean     // row border left
+  borderRight?: boolean    // row border right
   level?: 1 | 2 | 3     // heading
   alignment?: 'left' | 'center' | 'right' | 'justify'  // text / image
   tailwindClasses?: string // optional exported class list for HTML serializer
@@ -98,6 +110,7 @@ export type BuiltinBlockType =
   | 'image'
   | 'table'
   | 'columns'
+  | 'row'
   | 'button';
 
 /** Plugin-registered custom types use plain strings. */
@@ -106,11 +119,11 @@ export type BlockType = BuiltinBlockType | string;
 // ─── Block ───────────────────────────────────────────────────────────────────
 
 export interface Block {
-  id?: string
-  type: BlockType
-  content?: InlineNode[]
-  attrs?: BlockAttrs
-  children?: Block[]
+  id?: string;
+  type: BlockType;
+  content?: InlineNode[];
+  attrs?: BlockAttrs;
+  children?: Block[];
 }
 
 // ─── Plugin API ───────────────────────────────────────────────────────────────

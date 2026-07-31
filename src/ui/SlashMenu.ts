@@ -23,7 +23,7 @@ const ITEMS: SlashItem[] = [
   { type: 'numberedList',  name: 'Numbered List',  description: 'Ordered list',             iconNode: Icons.ListOrdered   },
   { type: 'todo',          name: 'To-do',          description: 'Checkbox list item',       iconNode: Icons.ListTodo      },
   { type: 'code',          name: 'Code',           description: 'Code block with language', iconNode: Icons.Code          },
-  { type: 'quote',         name: 'Quote',              description: 'Blockquote',                  iconNode: Icons.Quote         },
+  { type: 'quote',         name: 'Quote',              description: 'Blockquote',                   iconNode: Icons.Quote         },
   { type: 'callout',       name: 'Callout · Info',     description: 'Info callout box',             iconNode: Icons.Info,          defaultAttrs: { icon: '💡', flavor: 'info'    } },
   { type: 'callout',       name: 'Callout · Warning',  description: 'Warning callout box',          iconNode: Icons.AlertTriangle, defaultAttrs: { icon: '⚠️',  flavor: 'warning' } },
   { type: 'callout',       name: 'Callout · Error',    description: 'Error or danger callout box',  iconNode: Icons.AlertCircle,   defaultAttrs: { icon: '🚨', flavor: 'error'   } },
@@ -33,6 +33,7 @@ const ITEMS: SlashItem[] = [
   { type: 'image',         name: 'Image',          description: 'Image by URL',             iconNode: Icons.Image         },
   { type: 'table',         name: 'Table',          description: '3×3 grid (editable)',      iconNode: Icons.Table         },
   { type: 'columns',       name: 'Columns',        description: 'Flexbox column layout',    iconNode: Icons.Columns,       defaultAttrs: { columnDefs: [{ blocks: [] }, { blocks: [] }] } },
+  { type: 'row',           name: 'Row',            description: 'Flexbox row layout',       iconNode: Icons.Rows,          },
   { type: 'button',        name: 'Button · Primary',  description: 'CTA button (filled)',     iconNode: Icons.MousePointerClick, defaultAttrs: { buttonStyle: 'primary',   alignment: 'left' } },
   { type: 'button',        name: 'Button · Outline',  description: 'CTA button (outlined)',   iconNode: Icons.MousePointerClick, defaultAttrs: { buttonStyle: 'outline',   alignment: 'left' } },
   { type: 'button',        name: 'Button · Secondary', description: 'CTA button (muted)',     iconNode: Icons.MousePointerClick, defaultAttrs: { buttonStyle: 'secondary', alignment: 'left' } },
@@ -58,7 +59,7 @@ export class SlashMenu {
   constructor(
     editorEl: HTMLElement,
     manager: BlockManager,
-    plugins = new PluginRegistry(),
+    plugins: PluginRegistry,
     portalTo: HTMLElement = document.body
   ) {
     this.editorEl = editorEl;
@@ -122,6 +123,7 @@ export class SlashMenu {
     if (e.key === '/') {
       const target = e.target as HTMLElement;
       const blockId = target.dataset.blockId;
+
       if (blockId && this.isAtStartOrEmpty(target)) {
         // Let the keystroke insert '/' first, then open on input
         // For tables, the ID might be "blockId_cell_0_0", so we normalize to base ID
@@ -272,7 +274,7 @@ export class SlashMenu {
 
       if (chosen === 'divider') {
         // Turn current block into divider
-        this.manager.update(this.activeBlockId, { type: 'divider', content: undefined });
+        this.manager.update(this.activeBlockId, { type: 'divider', content: [] });
       } else if (chosen === 'image') {
         const blockId = this.activeBlockId;
         this.close();
@@ -280,7 +282,7 @@ export class SlashMenu {
         if (!result || !result.src) return;
         this.manager.update(blockId, {
           type: 'image',
-          content: undefined,
+          content: [],
           attrs: {
             src: result.src,
             alt: result.alt,
@@ -293,7 +295,7 @@ export class SlashMenu {
         const rows = this.makeDefaultTableRows();
         this.manager.update(this.activeBlockId, {
           type: 'table',
-          content: undefined,
+          content: [],
           attrs: { rows },
         });
       } else if (chosen === 'code') {
@@ -315,7 +317,7 @@ export class SlashMenu {
         const defaultAttrs = item?.defaultAttrs ?? { buttonStyle: 'primary' as const, alignment: 'left' as const };
         this.manager.update(this.activeBlockId, {
           type: 'button',
-          content: undefined,
+          content: [],
           attrs: defaultAttrs,
         });
       } else if (chosen === 'columns') {
@@ -323,8 +325,16 @@ export class SlashMenu {
         const columnDefs = item?.defaultAttrs?.columnDefs ?? [{ blocks: [] }, { blocks: [] }];
         this.manager.update(this.activeBlockId, {
           type: 'columns',
-          content: undefined,
+          content: [],
           attrs: { columnDefs },
+        });
+      } else if (chosen === 'row') {
+        this.manager.update(this.activeBlockId, {
+          type: 'row',
+          content: [],
+          attrs: { 
+              rowBlocks: [],
+           },
         });
       } else {
         this.manager.update(this.activeBlockId, {

@@ -35,6 +35,7 @@
     "./src/blocks/ImageBlock.ts",
     "./src/blocks/TableBlock.ts",
     "./src/blocks/ColumnsBlock.ts",
+    "./src/blocks/RowBlock.ts",
     "./src/blocks/ButtonBlock.ts"
   ],
   "scripts": {

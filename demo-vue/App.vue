@@ -212,7 +212,60 @@ const initialContent: Block[] = [
 
   { type: 'divider' },
 
-  { type: 'heading2', content: [{ text: '10. Button Block' }] },
+  { type: 'heading2', content: [{ text: '10. Row Block' }] },
+  { type: 'paragraph', content: [{ text: 'Row blocks are bordered containers that hold child blocks in a vertical stack. Configure borders via the toolbar (style, width, color, radius, per-side).' }] },
+
+  { type: 'row', attrs: {
+    borderStyle: 'solid',
+    borderWidth: '5px',
+    borderColor: 'rgb(255, 102, 84)',
+    borderRadius: '0px',
+    borderTop: false,
+    borderBottom: true,
+    borderLeft: false,
+    borderRight: false,
+    background: '#001b4f',
+    textColor: '#ffffff',
+    rowBlocks: [
+      { type: 'heading3', content: [{ text: 'Bordered Row' }] },
+      { type: 'paragraph', content: [{ text: 'This row has a solid blue border with rounded corners. Add any block type inside.' }] },
+      { type: 'bulletList', content: [{ text: 'Child blocks stack vertically' }] },
+      { type: 'bulletList', content: [{ text: 'Drag to reorder children' }] },
+    ],
+  } },
+
+  { type: 'row', attrs: {
+    borderStyle: 'dashed',
+    borderWidth: '2px',
+    borderColor: '#f59e0b',
+    borderRadius: '12px',
+    borderTop: true,
+    borderBottom: true,
+    borderLeft: false,
+    borderRight: false,
+    rowBlocks: [
+      { type: 'heading3', content: [{ text: 'Dashed Top/Bottom Only' }] },
+      { type: 'callout', content: [{ text: 'This row only has top and bottom borders — left and right are disabled.' }], attrs: { icon: '💡', flavor: 'tip' } },
+    ],
+  } },
+
+  { type: 'row', attrs: {
+    borderStyle: 'dotted',
+    borderWidth: '1px',
+    borderColor: '#10b981',
+    borderRadius: '4px',
+    borderTop: true,
+    borderBottom: true,
+    borderLeft: true,
+    borderRight: true,
+    rowBlocks: [
+      { type: 'paragraph', content: [{ text: 'A minimal dotted border row with green styling.' }] },
+    ],
+  } },
+
+  { type: 'divider' },
+
+  { type: 'heading2', content: [{ text: '11. Button Block' }] },
   { type: 'paragraph', content: [{ text: 'Buttons are fully customizable links styled as buttons:' }] },
   { type: 'button', content: [{ text: 'Primary Button' }], attrs: { buttonStyle: 'primary', href: 'https://github.com/sunacchi/pila', alignment: 'left' } },
   { type: 'button', content: [{ text: 'Secondary Button' }], attrs: { buttonStyle: 'secondary', href: '#', alignment: 'center' } },
@@ -221,7 +274,7 @@ const initialContent: Block[] = [
 
   { type: 'divider' },
 
-  { type: 'heading2', content: [{ text: '11. Plugin Block — Badge (Custom)' }] },
+  { type: 'heading2', content: [{ text: '12. Plugin Block — Badge (Custom)' }] },
   { type: 'paragraph', content: [{ text: 'This badge block is provided by the demo plugin. It demonstrates how plugins can register custom block types, toolbar buttons, and emoji providers.' }] },
   // Plugin block type "badge" - will be registered by demoPlugin
   { type: 'badge', content: [{ text: 'Plugin Badge Example' }] },
@@ -229,14 +282,14 @@ const initialContent: Block[] = [
 
   { type: 'divider' },
 
-  { type: 'heading2', content: [{ text: '12. Serializers — Export Formats' }] },
+  { type: 'heading2', content: [{ text: '13. Serializers — Export Formats' }] },
   { type: 'paragraph', content: [{ text: 'Pila includes four built-in serializers. Use the toolbar buttons above to export:' }] },
   { type: 'bulletList', content: [{ text: 'JSON — Full block data for storage/round-tripping' }] },
   { type: 'bulletList', content: [{ text: 'HTML — Semantic HTML with Tailwind classes' }] },
   { type: 'bulletList', content: [{ text: 'Markdown — GitHub-flavored markdown' }] },
   { type: 'bulletList', content: [{ text: 'Email HTML — Inline styles, tables → divs for email compatibility' }] },
 
-  { type: 'heading2', content: [{ text: '13. Inline Formatting Reference' }] },
+  { type: 'heading2', content: [{ text: '14. Inline Formatting Reference' }] },
   { type: 'paragraph', content: [{ text: 'Select any text to see the floating toolbar with:' }] },
   { type: 'bulletList', content: [{ text: 'Bold (', code: true }, { text: 'Ctrl+B', code: true }, { text: ')' }] },
   { type: 'bulletList', content: [{ text: 'Italic (', code: true }, { text: 'Ctrl+I', code: true }, { text: ')' }] },
@@ -254,7 +307,7 @@ const initialContent: Block[] = [
 
   { type: 'divider' },
 
-  { type: 'heading2', content: [{ text: '14. Keyboard Shortcuts' }] },
+  { type: 'heading2', content: [{ text: '15. Keyboard Shortcuts' }] },
   { type: 'table', attrs: { rows: [
     { cells: [
       { content: [{ text: 'Shortcut', bold: true }], background: '#f0f4f8' },
@@ -304,7 +357,7 @@ const initialContent: Block[] = [
 
   { type: 'divider' },
 
-  { type: 'heading2', content: [{ text: '15. Events & Plugin API' }] },
+  { type: 'heading2', content: [{ text: '16. Events & Plugin API' }] },
   { type: 'paragraph', content: [{ text: 'The editor emits events for integration:' }] },
   { type: 'code', content: [{ text: 'editor.on("block:add", ({ block, index }) => {})\neditor.on("block:update", ({ id, block }) => {})\neditor.on("block:delete", ({ id }) => {})\neditor.on("block:move", ({ id, toIndex }) => {})\neditor.on("blocks:change", ({ blocks }) => {})' }], attrs: { language: 'typescript' } },
   { type: 'paragraph', content: [{ text: 'Plugins can register custom blocks, slash menu items, toolbar buttons, and emoji providers via the install(api) function.' }] },
@@ -312,7 +365,7 @@ const initialContent: Block[] = [
   { type: 'divider' },
 
   { type: 'heading2', content: [{ text: '🎉 That\'s Everything!' }] },
-  { type: 'paragraph', content: [{ text: 'This demo post showcases all ' }, { text: '12 built-in block types', bold: true }, { text: ', ' }, { text: '5 callout flavors', bold: true }, { text: ', ' }, { text: '3 button styles', bold: true }, { text: ', ' }, { text: 'column layouts', bold: true }, { text: ', advanced tables, images, code highlighting, and the plugin system.' }] },
+  { type: 'paragraph', content: [{ text: 'This demo post showcases all ' }, { text: '13 built-in block types', bold: true }, { text: ', ' }, { text: '5 callout flavors', bold: true }, { text: ', ' }, { text: '3 button styles', bold: true }, { text: ', ' }, { text: 'column & row layouts', bold: true }, { text: ', advanced tables, images, code highlighting, and the plugin system.' }] },
   { type: 'callout', content: [{ text: 'Try exporting this content as JSON, HTML, Markdown, or Email HTML using the toolbar buttons above!' }], attrs: { icon: '🚀', flavor: 'success' } },
 ];
 
@@ -322,6 +375,15 @@ onMounted(() => {
       placeholder: 'Type / to add a block…',
       initialContent,
       plugins: [demoPlugin],
+      /*onChange: (blocks: Block[]) => {
+          console.log(blocks);
+        
+        const rawValue = editor!.getContent("json");
+        const emailValue = editor!.getContent("email", { fullDocument: false });
+        
+        console.log(rawValue);
+        console.log("Email Value:", emailValue);
+      }*/
     })
     editor.mount()
     ;(window as typeof window & { __pilaEditor?: PilaEditor }).__pilaEditor = editor
@@ -340,7 +402,7 @@ const updateOutput = (format: 'json' | 'html' | 'markdown' | 'email' | 'clear') 
     output.value = ''
     return
   }
-  output.value = editor.getContent(format)
+  output.value = editor.getContent(format, { fullDocument: false })
 }
 
 // Wrapper to use library icons in Vue

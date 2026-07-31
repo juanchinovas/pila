@@ -201,6 +201,20 @@ pila-code {
   @apply flex items-stretch w-full;
 }
 
+/* ─── Row block ─────────────────────────────────────────────────────────── */
+
+.pila-row-block {
+  @apply block;
+}
+
+.pila-row {
+  @apply block w-full;
+}
+
+.pila-row-container {
+  @apply block w-full;
+}
+
 .pila-column {
   @apply flex-1 min-w-0 relative;
 }
@@ -416,7 +430,7 @@ code[class*="language-"] {
 }
 
 .pila-popover-item {
-  @apply flex items-center gap-2.5 py-1.5 px-2 rounded cursor-pointer transition-colors;
+  @apply flex items-center gap-2.5 py-1.5 px-2 rounded cursor-pointer transition-colors relative;
 }
 
 .pila-popover-item:hover {
