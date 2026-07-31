@@ -3,6 +3,7 @@ import { InlineParser } from '../inline/InlineParser';
 import { icon, Icons } from './icons';
 import { BlockAction, BlockPopover } from './BlockPopover';
 import { setPortalPosition } from './overlayPosition';
+import type { PilaBlock } from '../blocks/PilaBlock';
 
 export class DragHandle {
   private editorEl: HTMLElement;
@@ -51,6 +52,7 @@ export class DragHandle {
     this.handleEl.appendChild(this.addingBelowBtn);
 
     this.draggingBtn = document.createElement('button');
+    this.draggingBtn.type = 'button';
     this.draggingBtn.appendChild(icon(Icons.GripVertical, 18));
     this.draggingBtn.classList.add('p-0.5');
     this.draggingBtn.title = 'Drag to reorder\nclick for more actions';
@@ -133,125 +135,20 @@ export class DragHandle {
 
   private openPopover(_: MouseEvent, blockId: string): void {
     const rect = this.draggingBtn.getBoundingClientRect();
-    const block = this.manager.getById(blockId);
-    const blockOptions: BlockAction[] = [
-      { 
-        label: 'Duplicate', 
-        icon: 'Copy', 
-        shortcut: '⌘D', 
-        handler: () => {
-          this.manager.duplicate(blockId);
-        } 
-      },
-      { 
-        label: 'Delete', 
-        icon: 'Trash2', 
-        shortcut: 'Del', 
-        danger: true, 
-        handler: () => {
-          this.manager.remove(blockId);
-        } 
-      }
-    ];
+    const wrapper = this.editorEl.querySelector(
+      `[data-block-id="${blockId}"]`
+    ) as PilaBlock | null;
 
-    if (!['code', 'table', 'image', 'callout', 'button'].includes(block?.type ?? '')) {
-      const bgColors = [
-        { name: 'Default', swatch: 'transparent', value: undefined },
-        { name: 'Gray',    swatch: 'var(--pila-code-bg)', value: 'var(--pila-code-bg)' },
-        { name: 'Blue',    swatch: 'rgba(59, 130, 246, 0.1)', value: 'rgba(59, 130, 246, 0.1)' },
-        { name: 'Green',   swatch: 'rgba(34, 197, 94, 0.1)', value: 'rgba(34, 197, 94, 0.1)' },
-        { name: 'Yellow',  swatch: 'rgba(234, 179, 8, 0.1)', value: 'rgba(234, 179, 8, 0.1)' },
-        { name: 'Red',     swatch: 'rgba(239, 68, 68, 0.1)', value: 'rgba(239, 68, 68, 0.1)' },
-      ];
+    if (!wrapper) return;
 
-      const textColors = [
-        { name: 'Default', swatch: 'transparent', value: undefined },
-        { name: 'Gray',    swatch: 'var(--pila-muted)', value: 'var(--pila-muted)' },
-        { name: 'Blue',    swatch: 'rgb(37, 99, 235)', value: 'rgb(37, 99, 235)' },
-        { name: 'Green',   swatch: 'rgb(21, 128, 61)', value: 'rgb(21, 128, 61)' },
-        { name: 'Yellow',  swatch: 'rgb(161, 98, 7)', value: 'rgb(161, 98, 7)' },
-        { name: 'Red',     swatch: 'rgb(185, 28, 28)', value: 'rgb(185, 28, 28)' },
-      ];
+    const blockOptions: BlockAction[] = [];
 
-      const bgActions = bgColors.map(c => ({
-        label: c.name,
-        icon: 'Square',
-        color: c.swatch,
-        handler: (_: MouseEvent) => {
-          this.updateBlockAttrsWithLiveContent(blockId, { background: c.value });
-          this.changeBlockBackground(blockId, c.value ?? '');
-        }
-      }));
-
-      // Add custom bg color input
-      bgActions.push({
-        label: 'Custom...',
-        icon: 'Plus',
-        color: '', // Ensure color is at least an empty string if checked
-        handler: (_: MouseEvent) => {
-          const input = document.createElement('input');
-          input.type = 'color';
-          input.className = 'pila-custom-color-input';
-          input.style.position = 'absolute';
-          input.style.opacity = '0';
-          input.addEventListener('input', (ev: Event) => {
-            const target = ev.target as HTMLInputElement;
-            this.updateBlockAttrsWithLiveContent(blockId, { background: target.value });
-            this.changeBlockBackground(blockId, target.value);
-
-            this.popover.close();
-          });
-          this.portalTo.appendChild(input);
-          input.click();
-          setTimeout(() => input.remove(), 1000);
-        }
-      });
-
-      const textActions = textColors.map(c => ({
-        label: c.name,
-        icon: 'Type',
-        color: c.swatch,
-        handler: (_: MouseEvent) => {
-          this.updateBlockAttrsWithLiveContent(blockId, { textColor: c.value });
-          this.changeBlockTextColor(blockId, c.value ?? '');
-        }
-      }));
-
-      // Add custom text color input
-      textActions.push({
-        label: 'Custom...',
-        icon: 'Plus',
-        color: '', // Ensure color is at least an empty string
-        handler: (_: MouseEvent) => {
-          const input = document.createElement('input');
-          input.type = 'color';
-          input.className = 'pila-custom-color-input';
-          input.style.position = 'absolute';
-          input.style.opacity = '0';
-          input.addEventListener('input', (ev: Event) => {
-            const target = ev.target as HTMLInputElement;
-            this.updateBlockAttrsWithLiveContent(blockId, { textColor: target.value });
-            this.changeBlockTextColor(blockId, target.value);
-
-            this.popover.close();
-          });
-          this.portalTo?.appendChild(input);
-          input.click();
-          setTimeout(() => input.remove(), 1000);
-        }
-      });
-
-      blockOptions.unshift({
-        label: 'Text Color',
-        icon: 'Type',
-        children: textActions
-      });
-      blockOptions.unshift({
-        label: 'Background',
-        icon: 'Paintbucket',
-        children: bgActions
-      });
+    if (wrapper.colorOptions) {
+      blockOptions.push(...this.getColorAndBackgroundColorActions(blockId, wrapper));
     }
+
+    blockOptions.push(...wrapper.getPopoverActions());
+
     this.popover.open(rect.right + 5, rect.top, blockOptions);
   }
 
@@ -262,7 +159,6 @@ export class DragHandle {
     const contentEl = this.editorEl.querySelector(
       `[data-block-id="${blockId}"] [contenteditable]`
     ) as HTMLElement | null;
-
     this.manager.update(blockId, {
       ...(contentEl ? { content: InlineParser.parse(contentEl) } : {}),
       attrs: { ...(block.attrs ?? {}), ...attrsPatch },
@@ -275,10 +171,14 @@ export class DragHandle {
 
   private scheduleHide(): void {
     this.cancelHide();
-    this.hideTimeout = setTimeout(() => { this.handleEl.style.display = 'none'; }, 200);
+    this.hideTimeout = setTimeout(() => { this.handleEl.style.display = 'none'; }, 350);
   }
 
   private getBlockWrapper(target: Element): HTMLElement | null {
+    if (target.closest('.pila-column-editor')) {
+      return target.closest('.pila-column-editor')?.closest('.pila-block') as HTMLElement | null ?? null;
+    }
+
     return target.closest('.pila-block') as HTMLElement | null;
   }
 
@@ -292,7 +192,9 @@ export class DragHandle {
     const wrapper = this.getBlockWrapper(e.target as Element);
     if (!wrapper) return;
     // Blocks inside a column editor are handled by that column's own DragHandle
-    if (wrapper.closest('.pila-column-editor')) return;
+    if (wrapper.closest('.pila-column-editor')) {
+      return;
+    }
 
     this.handleEl.dataset.blockId = wrapper.dataset.blockId ?? '';
     this.handleEl.style.display = 'flex';
@@ -420,12 +322,12 @@ export class DragHandle {
       return;
     }
 
-    wrapper.style.setProperty('background-color', color);
-
     if (!wrapper.hasAttribute('contenteditable')) {
       wrapper.querySelectorAll<HTMLElement>('[contenteditable]').forEach(el => {  
         el.style.setProperty('background-color', color);
       });
+    } else {
+      wrapper.style.setProperty('background-color', color);
     }
   }
 
@@ -450,5 +352,79 @@ export class DragHandle {
         el.style.setProperty('color', color);
       });
     }
+  }
+
+  private getColorAndBackgroundColorActions(blockId: string, wrapper: HTMLElement): BlockAction[] {
+    const bgColors = [
+      { name: 'Default', swatch: 'transparent',             value: undefined, isStatic: true },
+      { name: 'Gray',    swatch: 'var(--pila-code-bg)',     value: 'var(--pila-code-bg)', isStatic: true },
+      { name: 'Blue',    swatch: 'rgba(59, 130, 246, 0.1)', value: 'rgba(59, 130, 246, 0.1)', isStatic: true },
+      { name: 'Green',   swatch: 'rgba(34, 197, 94, 0.1)',  value: 'rgba(34, 197, 94, 0.1)', isStatic: true },
+      { name: 'Yellow',  swatch: 'rgba(234, 179, 8, 0.1)',  value: 'rgba(234, 179, 8, 0.1)', isStatic: true },
+      { name: 'Red',     swatch: 'rgba(239, 68, 68, 0.1)',  value: 'rgba(239, 68, 68, 0.1)', isStatic: true },
+      { name: 'Purple',  swatch: 'rgba(139, 92, 246, 0.1)', value: 'rgba(139, 92, 246, 0.1)', isStatic: true },
+      {
+        name: 'Custom...',
+        icon: 'Plus',
+        color: wrapper.style.getPropertyValue('background-color') ?? '',
+      }
+    ];
+
+    const textColors = [
+      { name: 'Default', swatch: 'transparent',       value: undefined, isStatic: true },
+      { name: 'Gray',    swatch: 'var(--pila-muted)', value: 'var(--pila-muted)', isStatic: true },
+      { name: 'Blue',    swatch: 'rgb(37, 99, 235)',  value: 'rgb(37, 99, 235)', isStatic: true },
+      { name: 'Green',   swatch: 'rgb(21, 128, 61)',  value: 'rgb(21, 128, 61)', isStatic: true },
+      { name: 'Yellow',  swatch: 'rgb(161, 98, 7)',   value: 'rgb(161, 98, 7)', isStatic: true },
+      { name: 'Red',     swatch: 'rgb(185, 28, 28)',  value: 'rgb(185, 28, 28)', isStatic: true },
+      { name: 'Purple',  swatch: 'rgb(139, 92, 246)', value: 'rgb(139, 92, 246)', isStatic: true },
+      {
+        name: 'Custom...',
+        icon: 'Plus',
+        type: 'color',
+        color: wrapper.style.getPropertyValue('color') ?? ''
+      }
+    ];
+
+    const bgActions: BlockAction[] = bgColors.map(c => ({
+      label: c.name,
+      icon:  c.icon ?? 'Square',
+      color: c.swatch ?? c.color,
+      value: c.value,
+      isStatic: c.isStatic,
+      type: 'color',
+      handler: (ev: CustomEvent<BlockAction>) => {
+        this.updateBlockAttrsWithLiveContent(blockId, { background: String(ev.detail.value) });
+        this.changeBlockBackground(blockId, String(ev.detail.value));
+      }
+    }));
+
+    const textActions: BlockAction[] = textColors.map(c => ({
+      label: c.name,
+      icon: c.icon ?? 'Type',
+      type: 'color',
+      color: c.swatch,
+      value: c.value,
+      isStatic: c.isStatic,
+      handler: (ev: CustomEvent<BlockAction>) => {
+        this.updateBlockAttrsWithLiveContent(blockId, { textColor: String(ev.detail.value) });
+        this.changeBlockTextColor(blockId, String(ev.detail.value));
+      }
+    }));
+
+    return [
+      {
+        label: 'Background',
+        icon: 'Paintbucket',
+        type: 'action',
+        children: bgActions,
+      },
+      {
+        label: 'Text Color',
+        icon: 'Type',
+        type: 'action',
+        children: textActions,
+      }
+    ];
   }
 }

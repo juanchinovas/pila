@@ -2,6 +2,7 @@ import { InlineParser } from '../inline/InlineParser';
 import { InlineRenderer } from '../inline/InlineRenderer';
 import { Block } from '../types';
 import { PilaBlock } from './PilaBlock';
+import type { BlockAction } from '../ui/BlockPopover';
 
 export class CalloutBlock extends PilaBlock {
   private iconEl!: HTMLElement;
@@ -20,7 +21,7 @@ export class CalloutBlock extends PilaBlock {
     this.iconEl.textContent = this.block.attrs?.icon ?? '💡';
     this.iconEl.setAttribute('contenteditable', 'true');
     this.iconEl.setAttribute('spellcheck', 'false');
-    this.iconEl.addEventListener('keydown', (e) => {
+    this.eventGroup.on(this.iconEl, 'keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         this.contentEl.focus();
@@ -34,7 +35,7 @@ export class CalloutBlock extends PilaBlock {
     );
 
     // Shift+Enter exits
-    this.contentEl.addEventListener('keydown', (e: KeyboardEvent) => {
+    this.eventGroup.on(this.contentEl, 'keydown', (e: KeyboardEvent) => {
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         const newBlock = this.ctx.manager.add('paragraph', { content: [], afterId: this.block.id! });
@@ -51,6 +52,42 @@ export class CalloutBlock extends PilaBlock {
     this.appendChild(this.contentEl);
   }
 
+  get colorOptions(): boolean {
+    return false;
+  }
+
+  override getPopoverActions(): BlockAction[] {
+    const flavors = ['info', 'warning', 'error', 'success', 'tip'] as const;
+    const flavorIcons: Record<string, string> = {
+      info: '💡', warning: '⚠️', error: '❌', success: '✅', tip: '💡',
+    };
+
+    return [
+      {
+        label: 'Flavor',
+        icon: 'Palette',
+        type: 'action',
+        children: flavors.map(f => ({
+          label: f.charAt(0).toUpperCase() + f.slice(1),
+          icon: 'Circle',
+          type: 'action',
+          value: { flavor: f, icon: flavorIcons[f] },
+          handler: (ev: CustomEvent<BlockAction>) => {
+            const { flavor, icon } = ev.detail.value as { flavor: typeof flavors[number]; icon: string };
+            this.ctx.manager.update(this.block.id!, {
+              attrs: {
+                ...this.block.attrs,
+                flavor,
+                icon,
+              },
+            });
+          },
+        })),
+      },
+      ...super.getPopoverActions(),
+    ];
+  }
+
   override updateData(block: Block): void {
     super.updateData(block);
     if (this.contentEl) {
@@ -59,17 +96,19 @@ export class CalloutBlock extends PilaBlock {
       const flavor = block.attrs?.flavor ?? 'info';
       this.classList.forEach(cls => { if (cls.startsWith('pila-callout--')) this.classList.remove(cls); });
       this.classList.add(`pila-callout--${flavor}`);
-      InlineRenderer.render(this.contentEl, block.content ?? []);
+      if (this.contentNeedsRerender) {
+        InlineRenderer.render(this.contentEl, this.block.content ?? []);
+      }
     }
   }
 
   getContent(): Block {
     return {
       ...this.block,
-      content: InlineParser.parse(this.contentEl),
+      content: this.contentEl ? InlineParser.parse(this.contentEl) : this.block.content,
       attrs: {
         ...this.block.attrs,
-        icon: this.iconEl.textContent ?? '💡',
+        icon: this.iconEl ? this.iconEl.textContent! : this.block.attrs?.icon ?? '💡',
       },
     };
   }

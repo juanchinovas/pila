@@ -1,14 +1,19 @@
+import { debounce, generateId, toCustomEvent } from '@/core/utils';
 import { icon, Icons } from './icons';
 import { portalViewportBounds, setPortalPosition, viewportPointToPortal } from './overlayPosition';
+import { EventRegistry } from '@/core/EventRegistry';
 
 export interface BlockAction {
-  label: string
-  icon: keyof typeof Icons
-  shortcut?: string
-  danger?: boolean
-  color?: string
-  handler?: (e: MouseEvent) => void
-  children?: BlockAction[]
+  label: string;
+  type: 'color' | 'action';
+  value?: unknown;
+  icon?: keyof typeof Icons;
+  shortcut?: string;
+  danger?: boolean;
+  color?: string;
+  isStatic?: boolean;
+  handler?: (e: CustomEvent<BlockAction>) => void;
+  children?: BlockAction[];
 }
 
 export class BlockPopover {
@@ -18,6 +23,7 @@ export class BlockPopover {
   private onKeyDownBound = this.handleKeyDown.bind(this);
   private onClickOutsideBound = this.handleClickOutside.bind(this);
   private selectedIndex = -1;
+  private eventRegistry = new EventRegistry();
 
   constructor(portalTo: HTMLElement = document.body) {
     this.portalTo = portalTo;
@@ -25,8 +31,7 @@ export class BlockPopover {
 
   open(x: number, y: number, actions: BlockAction[]): void {
     this.close();
-
-    this.popoverEl = this.renderActions(actions, false);
+    this.popoverEl = this.renderActions(actions);
     this.portalTo.appendChild(this.popoverEl);
     
     // Position
@@ -35,20 +40,14 @@ export class BlockPopover {
     this.popoverEl.style.zIndex = '10000';
 
     // Events
-    document.addEventListener('keydown', this.onKeyDownBound, true);
-    document.addEventListener('mousedown', this.onClickOutsideBound, true);
+    this.eventRegistry.on(document, 'keydown', this.onKeyDownBound, true);
+    this.eventRegistry.on(document, 'mousedown', this.onClickOutsideBound, true);
   }
 
-  private renderActions(actions: BlockAction[], isSubmenu: boolean): HTMLElement {
+  private renderActions(actions: BlockAction[], isSubmenuChild: boolean = false): HTMLElement {
     const el = document.createElement('div');
+    el.id = generateId();
     el.className = 'pila-block-popover';
-    // Stop all mouse events from propagating to siblings/parents (like DragHandle)
-    el.addEventListener('mousedown', (e) => e.stopPropagation());
-    el.addEventListener('mouseup',   (e) => e.stopPropagation());
-    el.addEventListener('click',     (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-    });
     
     // Set a smaller width for submenus if they contain colors
     if (actions.some(a => a.color)) {
@@ -57,11 +56,14 @@ export class BlockPopover {
       el.style.width = '240px';
     }
 
-    actions.forEach((action, idx) => {
+    actions.forEach((action, aId) => {
       const item = document.createElement('div');
       item.setAttribute('role', 'button');
       item.setAttribute('tabindex', '0');
-      item.dataset.index = idx.toString();
+      item.dataset.index = aId.toString();
+      item.dataset.hasChildren = action.children ? 'true' : 'false';
+      item.dataset.isSubmenuChild = isSubmenuChild ? 'true' : 'false';
+      item.id = `pila-popover-item-${el.id}-${aId.toString()}`;
       item.className = `pila-popover-item ${action.danger ? 'pila-popover-item--danger' : ''}`;
       
       const iconWrap = document.createElement('span');
@@ -81,13 +83,34 @@ export class BlockPopover {
           circle.style.backgroundPosition = '0 0, 2px 2px';
         }
         iconWrap.appendChild(circle);
-      } else {
+      } else if (action.icon) {
         iconWrap.appendChild(icon(Icons[action.icon], 16));
       }
       
       const label = document.createElement('span');
       label.className = 'pila-popover-label';
       label.textContent = action.label;
+
+      if (action.type === 'color' && !action.isStatic) {
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.setAttribute('form', '');
+        input.className = 'pila-custom-color-input w-full';
+        input.style.position = 'absolute';
+        input.style.opacity = '0';
+        input.value = (action.color ?? action.value ?? '#000000') as string;
+        input.id = `pila-popover-item-color-${el.id}-${aId}`;
+        label.setAttribute('for', input.id);
+        this.eventRegistry.on(input, 'input', debounce((ev: Event) => {
+          if (action.handler) {
+            const inputEl = ev.target as HTMLInputElement;
+            action.value = inputEl.value;
+            action.handler(toCustomEvent(ev, action));
+          }
+        }));
+
+        item.appendChild(input);
+      }
       
       item.appendChild(iconWrap);
       item.appendChild(label);
@@ -105,34 +128,35 @@ export class BlockPopover {
         arrow.style.opacity = '0.5';
         arrow.innerHTML = '&#9656;'; // Small right arrow
         item.appendChild(arrow);
-
-        item.addEventListener('mouseenter', () => {
-          this.closeSubmenu();
-          // Use a small delay for submenu opening to improve UX
-          requestAnimationFrame(() => {
-            const rect = item.getBoundingClientRect();
-            this.openSubmenu(rect.right + 2, rect.top - 4, action.children!);
-          });
-        });
-      } else {
-        item.addEventListener('mouseenter', () => {
-          if (!isSubmenu) {
-            this.closeSubmenu();
-          }
-        });
       }
       
-      item.addEventListener('mousedown', (e) => {
+      this.eventRegistry.on(item, 'mousedown', (e) => {
         if (action.handler) {
           e.preventDefault();
           e.stopPropagation();
-          action.handler(e);
+          action.handler(toCustomEvent(e, action));
           // Don't close if it's a special input or we want it to stay open
           // But usually we close. For custom color inputs, we'll need to handle it.
           if (!(e.target as HTMLElement).closest('.pila-custom-color-input')) {
             this.close();
           }
         }
+      });
+
+      this.eventRegistry.on(item, 'mouseenter', () => {
+        if (item.dataset.hasChildren !== 'true' && item.dataset.isSubmenuChild !== 'true') {
+          this.closeSubmenu();
+        }
+
+        if (item.dataset.hasChildren === 'true' && item.dataset.isSubmenuChild !== 'true') {
+          // Use a small delay for submenu opening to improve UX
+          return void requestAnimationFrame(() => {
+            this.closeSubmenu();
+            const rect = item.getBoundingClientRect();
+            this.openSubmenu(rect.right + 2, rect.top - 4, action.children!);
+          });
+        }
+
       });
       
       el.appendChild(item);
@@ -171,13 +195,12 @@ export class BlockPopover {
   }
 
   close(): void {
-    this.closeSubmenu();
+    this.eventRegistry.unsubscribeAll();
     if (this.popoverEl) {
+      this.closeSubmenu();
       this.popoverEl.remove();
       this.popoverEl = null;
       this.selectedIndex = -1;
-      document.removeEventListener('keydown', this.onKeyDownBound, true);
-      document.removeEventListener('mousedown', this.onClickOutsideBound, true);
     }
   }
 
