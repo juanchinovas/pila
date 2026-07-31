@@ -20,7 +20,7 @@ export class QuoteBlock extends PilaBlock {
     );
 
     // Shift+Enter exits the block
-    this.contentEl.addEventListener('keydown', (e: KeyboardEvent) => {
+    this.eventGroup.on(this.contentEl, 'keydown', (e: KeyboardEvent) => {
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         this.exitAndAddParagraph();
@@ -32,8 +32,8 @@ export class QuoteBlock extends PilaBlock {
 
   override updateData(block: Block): void {
     super.updateData(block);
-    if (this.contentEl) {
-      InlineRenderer.render(this.contentEl, block.content ?? []);
+    if (this.contentEl && this.contentNeedsRerender) {
+      InlineRenderer.render(this.contentEl, this.block.content ?? []);
     }
   }
 

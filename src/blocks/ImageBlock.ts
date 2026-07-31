@@ -9,6 +9,10 @@ export class ImageBlock extends PilaBlock {
   private overlay!: HTMLDivElement;
   private propsPopover: ImagePropsPopover | null = null;
 
+  get colorOptions(): boolean {
+    return false;
+  }
+
   protected buildDOM(): void {
     // ── Figure wrapper ────────────────────────────────────────────────────
     // position:relative on the wrapper lets the overlay be positioned inside
@@ -26,16 +30,16 @@ export class ImageBlock extends PilaBlock {
     this.img.setAttribute('tabindex', '0');
     this.applyImageStyles();
 
-    this.img.addEventListener('focus', () => {
+    this.eventGroup.on(this.img, 'focus', () => {
       this.img.style.outline = '2px solid var(--pila-accent)';
       this.img.style.outlineOffset = '2px';
     });
-    this.img.addEventListener('blur', () => {
+    this.eventGroup.on(this.img, 'blur', () => {
       this.img.style.outline = '';
       this.img.style.outlineOffset = '';
     });
 
-    this.img.addEventListener('keydown', (e: KeyboardEvent) => {
+    this.eventGroup.on(this.img, 'keydown', (e: KeyboardEvent) => {
       this.handleArrow(e);
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -62,7 +66,7 @@ export class ImageBlock extends PilaBlock {
       'pila-image-caption mt-[6px] text-[0.85rem] text-[color:var(--pila-muted)] ' +
       'text-center outline-none whitespace-pre-wrap';
     this.caption.textContent = this.block.attrs?.alt ?? '';
-    this.caption.addEventListener('input', () => {
+    this.eventGroup.on(this.caption, 'input', () => {
       this.img.alt = this.caption.textContent ?? '';
     });
 
@@ -81,7 +85,7 @@ export class ImageBlock extends PilaBlock {
       'text-[var(--pila-text)] cursor-pointer transition-colors ' +
       'hover:bg-[var(--pila-accent)] hover:text-white hover:border-[var(--pila-accent)]';
     editBtn.innerHTML = '&#9881; Edit';
-    editBtn.addEventListener('mousedown', (e: MouseEvent) => {
+    this.eventGroup.on(editBtn, 'mousedown', (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
       this.openPropsPopover(e.clientX, e.clientY);
@@ -97,8 +101,8 @@ export class ImageBlock extends PilaBlock {
       this.overlay.classList.add('opacity-0', 'pointer-events-none');
       this.overlay.classList.remove('opacity-100', 'pointer-events-auto');
     };
-    this.figure.addEventListener('mouseenter', showOverlay);
-    this.figure.addEventListener('mouseleave', hideOverlay);
+    this.eventGroup.on(this.figure, 'mouseenter', showOverlay);
+    this.eventGroup.on(this.figure, 'mouseleave', hideOverlay);
 
     // ── Resizer ───────────────────────────────────────────────────────────
     const resizer = document.createElement('div');
@@ -111,7 +115,7 @@ export class ImageBlock extends PilaBlock {
     let isResizing = false;
     let startX: number, startWidth: number;
 
-    resizer.addEventListener('mousedown', (e: MouseEvent) => {
+    this.eventGroup.on(resizer, 'mousedown', (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
       isResizing = true;

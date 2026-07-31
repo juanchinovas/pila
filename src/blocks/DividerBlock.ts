@@ -17,14 +17,14 @@ export class DividerBlock extends PilaBlock {
 
     this.wrapper.append(line);
 
-    this.wrapper.addEventListener('focus', () => {
+    this.eventGroup.on(this.wrapper, 'focus', () => {
       this.wrapper.classList.add('pila-divider-wrapper--focused');
     });
-    this.wrapper.addEventListener('blur', () => {
+    this.eventGroup.on(this.wrapper, 'blur', () => {
       this.wrapper.classList.remove('pila-divider-wrapper--focused');
     });
 
-    this.wrapper.addEventListener('keydown', (e: KeyboardEvent) => {
+    this.eventGroup.on(this.wrapper, 'keydown', (e: KeyboardEvent) => {
       this.handleArrow(e);
       if (e.key === 'Enter') {
         e.preventDefault();

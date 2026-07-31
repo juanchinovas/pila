@@ -13,6 +13,14 @@ export class ButtonBlock extends PilaBlock {
   private hrefInput!: HTMLInputElement;
   private wrapperEl!: HTMLDivElement;
 
+  get colorOptions(): boolean {
+    return false;
+  }
+
+  protected get contentEditableEl(): HTMLElement | null {
+    return this.labelEl ?? null;
+  }
+
   protected buildDOM(): void {
     this.classList.add('pila-button-block');
     // Needed so the absolutely-positioned edit bar is contained within this element
@@ -29,7 +37,7 @@ export class ButtonBlock extends PilaBlock {
     this.btnEl.className = `pila-button pila-button--${this.block.attrs?.buttonStyle ?? 'primary'}`;
     this.btnEl.setAttribute('role', 'button');
     // Prevent navigation and forward focus to the editable label
-    this.btnEl.addEventListener('click', (e) => {
+    this.eventGroup.on(this.btnEl, 'click', (e) => {
       e.preventDefault();
       this.labelEl.focus();
     });
@@ -49,16 +57,16 @@ export class ButtonBlock extends PilaBlock {
     this.editBar = this.buildEditBar();
 
     // Focus / blur
-    this.labelEl.addEventListener('focus', () => this.showEditBar());
-    this.labelEl.addEventListener('blur', (e) => {
+    this.eventGroup.on(this.labelEl, 'focus', () => this.showEditBar());
+    this.eventGroup.on(this.labelEl, 'blur', (e) => {
       // Keep bar open if focus moves into the edit bar (e.g. clicking the URL input)
       if (!this.editBar.contains(e.relatedTarget as Node)) {
         this.hideEditBar();
       }
     });
     // Show bar when input is focused directly (e.g. tab from label)
-    this.hrefInput.addEventListener('focus', () => this.showEditBar());
-    this.hrefInput.addEventListener('blur', (e) => {
+    this.eventGroup.on(this.hrefInput, 'focus', () => this.showEditBar());
+    this.eventGroup.on(this.hrefInput, 'blur', (e) => {
       if (
         !this.labelEl.contains(e.relatedTarget as Node) &&
         !this.editBar.contains(e.relatedTarget as Node)
@@ -68,7 +76,7 @@ export class ButtonBlock extends PilaBlock {
     });
 
     // Keyboard handling
-    this.labelEl.addEventListener('keydown', (e: KeyboardEvent) => {
+    this.eventGroup.on(this.labelEl, 'keydown', (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         this.commitLabel();
@@ -102,7 +110,7 @@ export class ButtonBlock extends PilaBlock {
     s.display = 'inline-flex';
     s.alignItems = 'center';
     s.justifyContent = 'center';
-    s.padding = '8px 20px';
+    s.padding = '5px 20px';
     s.borderRadius = 'var(--pila-radius, 6px)';
     s.fontSize = '0.95rem';
     s.fontWeight = '500';
@@ -160,7 +168,7 @@ export class ButtonBlock extends PilaBlock {
 
     // Prevent blur on the label when clicking buttons in the bar,
     // but NOT on the input (preventDefault on input stops it from focusing)
-    bar.addEventListener('mousedown', (e) => {
+    this.eventGroup.on(bar, 'mousedown', (e) => {
       if ((e.target as HTMLElement).tagName !== 'INPUT') e.preventDefault();
     });
 
@@ -168,12 +176,13 @@ export class ButtonBlock extends PilaBlock {
     this.hrefInput = document.createElement('input');
     this.hrefInput.type = 'url';
     this.hrefInput.placeholder = 'https://...';
+    this.hrefInput.setAttribute('form', '');
     this.hrefInput.style.cssText =
       'flex:1;min-width:140px;padding:3px 8px;font-size:0.8rem;' +
       'border:1px solid var(--pila-border,#e2e8f0);border-radius:4px;outline:none;' +
       'background:var(--pila-bg,#fff);color:var(--pila-text,#1a1a1a);font-family:inherit;';
     this.hrefInput.value = this.block.attrs?.href ?? '';
-    this.hrefInput.addEventListener('input', () => {
+    this.eventGroup.on(this.hrefInput, 'input', () => {
       const href = this.hrefInput.value;
       this.btnEl.href = href || '#';
       this.ctx.manager.update(this.block.id!, { attrs: { href: href || undefined } });
@@ -188,7 +197,7 @@ export class ButtonBlock extends PilaBlock {
       btn.type = 'button';
       btn.textContent = s.charAt(0).toUpperCase() + s.slice(1);
       this.applyStyleBtnInline(btn, (this.block.attrs?.buttonStyle ?? 'primary') === s);
-      btn.addEventListener('mousedown', (e) => {
+      this.eventGroup.on(btn, 'mousedown', (e) => {
         e.preventDefault();
         this.btnEl.className = `pila-button pila-button--${s}`;
         this.applyButtonInlineStyles(s);
@@ -217,7 +226,7 @@ export class ButtonBlock extends PilaBlock {
       btn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;';
       btn.appendChild(makeIcon(alignIcons[a], 14));
       this.applyStyleBtnInline(btn, (this.block.attrs?.alignment ?? 'left') === a);
-      btn.addEventListener('mousedown', (e) => {
+      this.eventGroup.on(btn, 'mousedown', (e) => {
         e.preventDefault();
         this.applyWrapperAlignment(a);
         alignGroup.querySelectorAll('button').forEach((b) =>
@@ -254,7 +263,9 @@ export class ButtonBlock extends PilaBlock {
   override updateData(block: Block): void {
     super.updateData(block);
     if (this.labelEl) {
-      InlineRenderer.render(this.labelEl, block.content?.length ? block.content : [{ text: 'Button' }]);
+      if (this.contentNeedsRerender) {
+        InlineRenderer.render(this.labelEl, this.block.content?.length ? this.block.content : [{ text: 'Button' }]);
+      }
       const style = block.attrs?.buttonStyle ?? 'primary';
       this.btnEl.className = `pila-button pila-button--${style}`;
       this.applyButtonInlineStyles(style);

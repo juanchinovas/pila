@@ -25,15 +25,15 @@ export class ParagraphBlock extends PilaBlock {
 
   override updateData(block: Block): void {
     super.updateData(block);
-    if (this.contentEl) {
-      InlineRenderer.render(this.contentEl, block.content ?? []);
+    if (this.contentEl && this.contentNeedsRerender) {
+      InlineRenderer.render(this.contentEl, this.block.content ?? []);
     }
   }
 
   getContent(): Block {
     return {
       ...this.block,
-      content: InlineParser.parse(this.contentEl),
+      content: this.contentEl ? InlineParser.parse(this.contentEl) : this.block.content,
     };
   }
 

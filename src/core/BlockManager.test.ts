@@ -108,6 +108,24 @@ describe('BlockManager', () => {
       manager.update(b.id!, { content: [] });
       expect(events).toHaveLength(1);
     });
+
+    it('preserves content when the update omits content (attrs-only)', () => {
+      const b = manager.add('paragraph', { content: [{ text: 'hello' }] });
+      manager.update(b.id!, { attrs: { background: '#fff' } });
+      expect(manager.getById(b.id!)?.content).toEqual([{ text: 'hello' }]);
+    });
+
+    it('preserves existing content when changes.content is undefined', () => {
+      const b = manager.add('paragraph', { content: [{ text: 'hello' }] });
+      manager.update(b.id!, { content: undefined });
+      expect(manager.getById(b.id!)?.content).toEqual([{ text: 'hello' }]);
+    });
+
+    it('overwrites content when changes.content is explicitly provided', () => {
+      const b = manager.add('paragraph', { content: [{ text: 'old' }] });
+      manager.update(b.id!, { content: [] });
+      expect(manager.getById(b.id!)?.content).toEqual([]);
+    });
   });
 
   // ─── delete ───────────────────────────────────────────────────────────────

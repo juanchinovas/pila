@@ -5,6 +5,7 @@ import { InlineNode } from '../types';
  */
 export class InlineParser {
   static parse(el: HTMLElement): InlineNode[] {
+    if (!el) return [];
     const nodes: InlineNode[] = [];
     InlineParser.walkNode(el, {}, nodes);
     return nodes;

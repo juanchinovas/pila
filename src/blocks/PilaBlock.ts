@@ -5,9 +5,14 @@ import { BlockManager } from '../core/BlockManager';
 import { InlineParser } from '../inline/InlineParser';
 import { InlineRenderer } from '../inline/InlineRenderer';
 import { MarkdownShortcuts } from '../inline/MarkdownShortcuts';
+import type { BlockAction } from '../ui/BlockPopover';
+import { PluginRegistry } from '@/core/PluginRegistry';
+import { EventRegistry } from '@/core/EventRegistry';
+import { debounce } from '@/core/utils';
 
 export interface BlockContext {
   manager: BlockManager;
+  pluginRegistry: PluginRegistry;
   editorEl: HTMLElement;
   placeholder?: string;
   portalTo?: HTMLElement;
@@ -57,6 +62,36 @@ export abstract class PilaBlock extends LitElement {
 
   block!: Block;
   ctx!: BlockContext;
+  protected eventGroup = new EventRegistry();
+
+  /**
+   * Serialized content the BlockManager last reported for this block.
+   * Used by `updateData` to detect whether an update explicitly changed content
+   * (Enter split, Backspace merge, programmatic `manager.update`, …) versus an
+   * attrs-only refresh where the manager still holds stale content and the live
+   * DOM (what the user typed) is authoritative.
+   */
+  private syncedContentKey: string | null = null;
+
+  /**
+   * Whether the most recent `updateData` actually changed this block's content
+   * relative to the live DOM. Subclasses re-render their contenteditable only
+   * when this is true — rebuilding an identical DOM destroys the caret, which
+   * makes subsequent typed characters appear at the front ("reversed word").
+   */
+  protected contentNeedsRerender = false;
+
+  /**
+   * Debounced flush of live typed content to the BlockManager.
+   * Fires after the user pauses typing, keeping the manager copy in sync
+   * without triggering `blocks:change` → `renderAll()` on every keystroke.
+   */
+  private readonly flushContent = debounce(() => {
+    if (!this.isConnected) return;
+    const el = this.contentEditableEl;
+    if (!el || this.block?.content === undefined) return;
+    this.ctx.manager.update(this.block.id!, { content: InlineParser.parse(el) });
+  }, 350);
 
   // ─── Lit lifecycle ────────────────────────────────────────────────────────
 
@@ -78,6 +113,7 @@ export abstract class PilaBlock extends LitElement {
   override firstUpdated(): void {
     this._syncHostAttrs();
     if (this.block) {
+      this.syncedContentKey = JSON.stringify(this.block.content ?? null);
       this.buildDOM();
     }
   }
@@ -95,15 +131,75 @@ export abstract class PilaBlock extends LitElement {
   }
 
   /**
+   * Whether this block supports the generic background / text-color submenu
+   * in the drag-handle popover. Override to `return false` in blocks that
+   * manage their own styling (code, table, image, button, columns, row).
+   */
+  get colorOptions(): boolean {
+    return false;
+  }
+
+  /**
+   * Popover actions shown when the user clicks the drag-handle grip.
+   * The base class provides **Duplicate** and **Delete** — the two common
+   * actions that every block should have.
+   *
+   * Override in subclasses to prepend / append block-specific actions.
+   * Always call `super.getPopoverActions()` to include the defaults.
+   */
+  getPopoverActions(): BlockAction[] {
+    return [
+      {
+        label: 'Duplicate',
+        icon: 'Copy',
+        type: 'action',
+        shortcut: '⌘D',
+        handler: () => this.ctx.manager.duplicate(this.block.id!),
+      },
+      {
+        label: 'Delete',
+        icon: 'Trash2',
+        type: 'action',
+        shortcut: 'Del',
+        danger: true,
+        handler: () => this.ctx.manager.remove(this.block.id!),
+      },
+    ];
+  }
+
+  /**
    * Sync new block data without triggering a full Lit re-render.
    * Called by Editor.ts on every `blocks:change` event.
    * Override in individual blocks to additionally update live DOM state
    * (e.g. alignment).
    */
   updateData(newBlock: Block): void {
-    // Preserve live content from DOM if available (manager may have stale data)
+    // Fallback in case updateData runs before firstUpdated() (block set by the
+    // editor before the element is connected, so its content is still pristine).
+    if (this.syncedContentKey === null) {
+      this.syncedContentKey = JSON.stringify(this.block?.content ?? null);
+    }
+
     const liveContent = this.contentEditableEl ? InlineParser.parse(this.contentEditableEl) : null;
-    this.block = { ...newBlock, content: liveContent ?? newBlock.content };
+    const contentChanged = JSON.stringify(newBlock.content ?? null) !== this.syncedContentKey;
+
+    if (contentChanged) {
+      // The manager explicitly changed this block's content — it is authoritative.
+      this.block = newBlock;
+      this.syncedContentKey = JSON.stringify(newBlock.content ?? null);
+    } else {
+      // The manager didn't touch content this round, so its copy may be stale.
+      // Preserve live content from the DOM if available.
+      this.block = { ...newBlock, content: liveContent ?? newBlock.content };
+    }
+
+    // Only re-render the contenteditable when the incoming content differs from
+    // what's already live in the DOM. If they're identical (attrs-only refresh,
+    // debounced typing flush, Enter-split/Backspace-merge pre-renders) the DOM is
+    // already correct — rebuilding it would reset the caret mid-edit.
+    this.contentNeedsRerender =
+      JSON.stringify(this.block.content ?? null) !== JSON.stringify(liveContent ?? null);
+
     this._syncHostAttrs();
     this.applyGlobalStyles();
   }
@@ -140,6 +236,7 @@ export abstract class PilaBlock extends LitElement {
 
   /** Remove this element from the DOM and clean up. */
   destroy(): void {
+    this.eventGroup.unsubscribeAll();
     this.remove();
   }
 
@@ -166,11 +263,15 @@ export abstract class PilaBlock extends LitElement {
     const el = document.createElement(tag);
     el.setAttribute('contenteditable', 'true');
     el.setAttribute('spellcheck', 'true');
+
     if (extraClass) el.className = extraClass;
+
     el.setAttribute('data-block-id', this.block.id!);
     InlineRenderer.render(el, inlineNodes);
-    el.addEventListener('keydown', (e) => this.handleKeyDown(e));
-    el.addEventListener('input', () => this.onInput(el));
+
+    this.eventGroup.on(el, 'keydown', (e) => this.handleKeyDown(e));
+    this.eventGroup.on(el, 'input', () => this.onInput(el));
+
     return el;
   }
 
@@ -203,6 +304,9 @@ export abstract class PilaBlock extends LitElement {
   protected handleEnter(el: HTMLElement): void {
     const { before, after } = this.splitAtCaret(el);
 
+    // Reflect the pre-caret content in the DOM before the model update so the
+    // re-render resolves to exactly `before` (live content is authoritative).
+    InlineRenderer.render(el, before);
     this.ctx.manager.update(this.block.id!, { content: before });
 
     const newBlock = this.ctx.manager.add('paragraph', {
@@ -258,13 +362,19 @@ export abstract class PilaBlock extends LitElement {
     const mergedContent = [...(prevBlock.content ?? []), ...currentNodes];
     const mergeOffset = (prevBlock.content ?? []).reduce((s, n) => s + n.text.length, 0);
 
+    // Reflect the merged content in the previous block's DOM before the model
+    // update so the re-render (live content is authoritative) keeps it.
+    const prevEl = this.ctx.editorEl.querySelector(
+      `[data-block-id="${prevBlock.id!}"] [contenteditable]`,
+    ) as HTMLElement | null;
+    if (prevEl) {
+      InlineRenderer.render(prevEl, mergedContent);
+    }
+
     this.ctx.manager.update(prevBlock.id!, { content: mergedContent });
     this.ctx.manager.delete(this.block.id!);
 
     requestAnimationFrame(() => {
-      const prevEl = this.ctx.editorEl.querySelector(
-        `[data-block-id="${prevBlock.id!}"] [contenteditable]`,
-      ) as HTMLElement | null;
       if (prevEl) {
         prevEl.focus();
         this.setCaret(prevEl, mergeOffset);
@@ -501,6 +611,9 @@ export abstract class PilaBlock extends LitElement {
     if (this.block.content !== undefined) {
       this.block = { ...this.block, content: InlineParser.parse(el) };
     }
+    // Debounced manager flush — keeps the model in sync once typing pauses,
+    // instead of pushing every keystroke through `blocks:change` → `renderAll()`.
+    this.flushContent();
   }
 
   /** Split inline content at the current caret position. */

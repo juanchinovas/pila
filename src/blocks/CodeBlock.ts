@@ -11,6 +11,14 @@ export class CodeBlock extends PilaBlock {
   private copyIconEl!: SVGElement;
   private checkIconEl!: SVGElement;
 
+  get colorOptions(): boolean {
+    return false;
+  }
+
+  protected get contentEditableEl(): HTMLElement | null {
+    return this.codeEl ?? null;
+  }
+
   protected buildDOM(): void {
     this.classList.add(
       'bg-[var(--pila-code-bg)]', 'border', 'border-[var(--pila-code-border,var(--pila-border))]',
@@ -30,7 +38,7 @@ export class CodeBlock extends PilaBlock {
       this.langEl.appendChild(opt);
     });
     this.langEl.value = this.block.attrs?.language ?? 'plaintext';
-    this.langEl.addEventListener('change', () => {
+    this.eventGroup.on(this.langEl, 'change', () => {
       this.ctx.manager.update(this.block.id!, {
         attrs: { ...this.block.attrs, language: this.langEl.value },
       });
@@ -45,7 +53,7 @@ export class CodeBlock extends PilaBlock {
     this.checkIconEl = icon(Icons.Check, 13);
     this.checkIconEl.style.display = 'none';
     copyBtn.append(this.copyIconEl, this.checkIconEl);
-    copyBtn.addEventListener('click', () => this.copyCode());
+    this.eventGroup.on(copyBtn, 'click', () => this.copyCode());
 
     header.append(this.langEl, copyBtn);
     this.appendChild(header);
@@ -93,7 +101,7 @@ export class CodeBlock extends PilaBlock {
     this.codeEl.setAttribute('data-block-id', this.block.id!);
     this.codeEl.textContent = (this.block.content ?? []).map((n) => n.text).join('');
 
-    this.codeEl.addEventListener('keydown', (e) => {
+    this.eventGroup.on(this.codeEl, 'keydown', (e) => {
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
         this.exitBlock();
@@ -114,7 +122,7 @@ export class CodeBlock extends PilaBlock {
       }
     });
 
-    this.codeEl.addEventListener('input', () => this.syncAll());
+    this.eventGroup.on(this.codeEl, 'input', () => this.syncAll());
 
     pre.append(this.highlightEl, this.codeEl);
     body.append(this.lineNumbersEl, pre);
@@ -171,7 +179,9 @@ export class CodeBlock extends PilaBlock {
   override updateData(block: Block): void {
     super.updateData(block);
     if (this.codeEl) {
-      this.codeEl.textContent = (block.content ?? []).map((n) => n.text).join('');
+      if (this.contentNeedsRerender) {
+        this.codeEl.textContent = (this.block.content ?? []).map((n) => n.text).join('');
+      }
       this.langEl.value = block.attrs?.language ?? 'plaintext';
       this.syncAll();
     }

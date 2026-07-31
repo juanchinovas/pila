@@ -24,7 +24,7 @@ export class ListBlock extends PilaBlock {
     );
 
     // Tab / Shift+Tab indentation
-    li.addEventListener('keydown', (e: KeyboardEvent) => {
+    this.eventGroup.on(li, 'keydown', (e: KeyboardEvent) => {
       if (e.key === 'Tab') {
         e.preventDefault();
         if (e.shiftKey) {
@@ -57,6 +57,7 @@ export class ListBlock extends PilaBlock {
     }
 
     const { before, after } = this.splitAtCaret(el);
+    InlineRenderer.render(el, before);
     this.ctx.manager.update(this.block.id!, { content: before });
 
     const newBlock = this.ctx.manager.add(this.block.type, {
@@ -75,10 +76,12 @@ export class ListBlock extends PilaBlock {
   override updateData(block: Block): void {
     super.updateData(block);
     if (this.contentEl) {
-      if (block.type === 'numberedList' && this.markerEl) {
+      if (this.block.type === 'numberedList' && this.markerEl) {
         this.markerEl.textContent = `${this.orderedIndex()}.`;
       }
-      InlineRenderer.render(this.contentEl, block.content ?? []);
+      if (this.contentNeedsRerender) {
+        InlineRenderer.render(this.contentEl, this.block.content ?? []);
+      }
     }
   }
 
@@ -98,7 +101,7 @@ export class ListBlock extends PilaBlock {
   getContent(): Block {
     return {
       ...this.block,
-      content: InlineParser.parse(this.contentEl),
+      content: this.contentEl ? InlineParser.parse(this.contentEl) : this.block.content,
     };
   }
 
