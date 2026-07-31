@@ -132,6 +132,7 @@ export class ImagePropsModal {
 
     const input = document.createElement('input');
     input.type = 'text';
+    input.setAttribute('form', '');
     input.id = `pila-img-${name}`;
     input.name = name;
     input.className = this.FIELD_CLASS;
@@ -162,6 +163,7 @@ export class ImagePropsModal {
 
       const fileInput = document.createElement('input');
       fileInput.type = 'file';
+      fileInput.setAttribute('form', '');
       fileInput.accept = 'image/*';
       fileInput.style.display = 'none';
       

@@ -15,7 +15,7 @@ interface ToolbarButton {
 export class FloatingToolbar {
   private editorEl: HTMLElement;
   private manager: BlockManager;
-  private plugins: PluginRegistry;
+  private plugins?: PluginRegistry;
   private portalTo: HTMLElement;
   private toolbarEl!: HTMLElement;
   private onSelectionChange!: () => void;
@@ -27,7 +27,7 @@ export class FloatingToolbar {
   constructor(
     editorEl: HTMLElement,
     manager: BlockManager,
-    plugins = new PluginRegistry(),
+    plugins?: PluginRegistry,
     portalTo: HTMLElement = document.body
   ) {
     this.editorEl = editorEl;
@@ -74,12 +74,13 @@ export class FloatingToolbar {
 
     buttons.forEach(({ iconNode, title, mark, command }) => {
       const btn = document.createElement('button');
+      btn.type = 'button';
       btn.className = 'pila-toolbar-btn';
       btn.title = title;
       btn.setAttribute('aria-label', title);
       btn.appendChild(icon(iconNode));
       btn.dataset.mark = mark;
-      btn.addEventListener('mousedown', (e) => {
+      btn.addEventListener('click', (e) => {
         e.preventDefault(); // Keep selection
         command();
       });
@@ -93,11 +94,12 @@ export class FloatingToolbar {
 
     // Link button
     const linkBtn = document.createElement('button');
+    linkBtn.type = 'button';
     linkBtn.className = 'pila-toolbar-btn';
     linkBtn.title = 'Link';
     linkBtn.setAttribute('aria-label', 'Link');
     linkBtn.appendChild(icon(Icons.Link));
-    linkBtn.addEventListener('mousedown', (e) => {
+    linkBtn.addEventListener('click', (e) => {
       e.preventDefault();
       this.toggleLinkInput(toolbar);
     });
@@ -119,10 +121,11 @@ export class FloatingToolbar {
       const btn = document.createElement('button');
       btn.className = 'pila-toolbar-btn';
       btn.title = title;
+      btn.type = 'button';
       btn.setAttribute('aria-label', title);
       btn.dataset.align = value;
       btn.appendChild(icon(iconNode));
-      btn.addEventListener('mousedown', (e) => {
+      btn.addEventListener('click', (e) => {
         e.preventDefault();
         this.applyAlignment(value);
       });
@@ -130,7 +133,7 @@ export class FloatingToolbar {
     });
 
     // Plugin-registered extra toolbar buttons
-    const extraButtons = this.plugins.getToolbarButtons();
+    const extraButtons = this.plugins?.getToolbarButtons?.() ?? [];
     if (extraButtons.length > 0) {
       const sep2 = document.createElement('span');
       sep2.className = 'pila-toolbar-sep';
@@ -138,12 +141,13 @@ export class FloatingToolbar {
 
       extraButtons.forEach((desc) => {
         const btn = document.createElement('button');
+        btn.type = 'button';
         btn.className = 'pila-toolbar-btn';
         btn.title = desc.title;
         btn.setAttribute('aria-label', desc.title);
         btn.innerHTML = desc.label;
         if (desc.markName) btn.dataset.mark = desc.markName;
-        btn.addEventListener('mousedown', (e) => {
+        btn.addEventListener('click', (e) => {
           e.preventDefault();
           desc.command();
           this.refreshActiveState();
@@ -157,7 +161,8 @@ export class FloatingToolbar {
 
   private applyAlignment(alignment: string): void {
     if (!this.focusedBlockId) return;
-    const block = this.manager.getAll().find((b) => b.id === this.focusedBlockId);
+
+    const block = this.manager.getById(this.focusedBlockId);
     if (!block) return;
 
     if (block.type === 'table') {
@@ -219,7 +224,7 @@ export class FloatingToolbar {
 
     // Hide all current toolbar children
     Array.from(toolbar.children).forEach((el) => {
-      ;(el as HTMLElement).style.display = 'none';
+      (el as HTMLElement).style.display = 'none';
     });
 
     const linkArea = document.createElement('div');
@@ -227,16 +232,19 @@ export class FloatingToolbar {
 
     const input = document.createElement('input');
     input.type = 'url';
+    input.setAttribute('form', '');
     input.placeholder = 'https://…';
     input.className = 'pila-toolbar-link-input';
     input.value = existingHref;
 
     const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
     confirmBtn.className = 'pila-toolbar-btn pila-toolbar-btn--confirm';
     confirmBtn.title = 'Apply link';
     confirmBtn.appendChild(icon(Icons.Check));
 
     const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
     cancelBtn.className = 'pila-toolbar-btn';
     cancelBtn.title = 'Cancel';
     cancelBtn.appendChild(icon(Icons.X));
@@ -348,7 +356,7 @@ export class FloatingToolbar {
 
     // Alignment active state
     const block = this.focusedBlockId
-      ? this.manager.getAll().find((b) => b.id === this.focusedBlockId)
+      ? this.manager.getById(this.focusedBlockId)
       : null;
     const currentAlign = block?.attrs?.alignment ?? 'left';
     this.toolbarEl.querySelectorAll<HTMLButtonElement>('.pila-toolbar-btn[data-align]').forEach((btn) => {

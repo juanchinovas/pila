@@ -42,6 +42,7 @@ export class EmojiPopover {
     
     this.inputEl = document.createElement('input');
     this.inputEl.type = 'text';
+    this.inputEl.setAttribute('form', '');
     this.inputEl.placeholder = 'Filter emojis...';
     this.inputEl.className = 'pila-emoji-filter-input w-full border border-gray-200 rounded px-2 py-1 outline-none text-sm';
     

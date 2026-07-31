@@ -115,11 +115,13 @@ export class ImagePropsPopover {
       actions.style.marginTop = '4px';
 
       const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
       cancelBtn.textContent = 'Cancel';
       cancelBtn.className = 'px-3 py-1 text-xs rounded border border-[var(--pila-border)] text-[var(--pila-muted)] hover:bg-[var(--pila-border)]';
       cancelBtn.onclick = () => this.cancel();
 
       const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
       saveBtn.textContent = 'Save';
       saveBtn.className = 'px-3 py-1 text-xs rounded bg-[var(--pila-accent)] text-white hover:opacity-90';
       saveBtn.onclick = () => this.confirm();
@@ -150,6 +152,7 @@ export class ImagePropsPopover {
     const input = document.createElement('input');
     input.type = type;
     input.value = value;
+    input.setAttribute('form', '');
     input.className = this.FIELD_CLASS;
     ref(input);
     wrapper.appendChild(lbl);
@@ -172,6 +175,7 @@ export class ImagePropsPopover {
 
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
+    fileInput.setAttribute('form', '');
     fileInput.accept = 'image/*';
     fileInput.style.display = 'none';
     
