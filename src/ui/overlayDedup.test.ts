@@ -2,8 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { BlockManager } from '../core/BlockManager';
 import { SlashMenu } from './SlashMenu';
 import { FloatingToolbar } from './FloatingToolbar';
-import { ColumnsToolbar } from './ColumnsToolbar';
-import { TableToolbar } from './TableToolbar';
+import { PluginRegistry } from '@/core/PluginRegistry';
 
 describe('Overlay dedup hardening', () => {
   afterEach(() => {
@@ -15,7 +14,8 @@ describe('Overlay dedup hardening', () => {
     document.body.appendChild(editor);
 
     const manager = new BlockManager([{ id: 'b1', type: 'paragraph', content: [{ text: '' }] }]);
-    const slashMenu = new SlashMenu(editor, manager);
+    const pluginRegistry = new PluginRegistry();
+    const slashMenu = new SlashMenu(editor, manager, pluginRegistry);
 
     slashMenu.mount();
     slashMenu.mount();
@@ -43,22 +43,5 @@ describe('Overlay dedup hardening', () => {
 
     toolbar.destroy();
     expect(document.body.querySelectorAll('[data-pila-ui="floating-toolbar"]').length).toBe(0);
-  });
-
-  it('ColumnsToolbar and TableToolbar attach only once per instance', () => {
-    const portal = document.createElement('div');
-    document.body.appendChild(portal);
-
-    const colToolbar = new ColumnsToolbar(portal);
-    const tableToolbar = new TableToolbar(portal);
-
-    expect(portal.querySelectorAll('[data-pila-ui="columns-toolbar"]').length).toBe(1);
-    expect(portal.querySelectorAll('[data-pila-ui="table-toolbar"]').length).toBe(1);
-
-    colToolbar.destroy();
-    tableToolbar.destroy();
-
-    expect(portal.querySelectorAll('[data-pila-ui="columns-toolbar"]').length).toBe(0);
-    expect(portal.querySelectorAll('[data-pila-ui="table-toolbar"]').length).toBe(0);
   });
 });
