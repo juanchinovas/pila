@@ -17,6 +17,18 @@ describe('HtmlSerializer', () => {
     expect(html).toContain('</style>');
   });
 
+  it('includes embedded CSS when fullDocument is false but includeCSS is true', () => {
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'paragraph', content: [{ text: 'hello' }] }],
+      { fullDocument: false, includeCSS: true },
+    );
+    expect(html).toContain('<style>');
+    expect(html).toContain('--pila-font');
+    expect(html).toContain('--pila-accent');
+    expect(html).toContain('</style>');
+    expect(html).toContain('<p>hello</p>');
+  });
+
   it('does not include embedded CSS when fullDocument is false', () => {
     const html = HtmlSerializer.serialize(
       [{ id: '1', type: 'paragraph', content: [{ text: 'hello' }] }],

@@ -1,3 +1,4 @@
+import { sanitizeHref } from '@/serializers/utils';
 import { BlockManager } from '../core/BlockManager';
 import { InlineParser } from './InlineParser';
 
@@ -65,9 +66,7 @@ export class InlineFormatter {
 
     if (url) {
       const a = document.createElement('a');
-      // Validate: only http/https/mailto links
-      if (!/^(https?:\/\/|mailto:)/i.test(url)) return;
-      a.href = url;
+      a.href = sanitizeHref(url);
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
       try {

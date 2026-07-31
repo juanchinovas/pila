@@ -3,6 +3,7 @@ import variablesCss from '../styles/variables.css?raw';
 import blockCss from '../styles/serializer.css?raw';
 import prismCss from 'prismjs/themes/prism.css?raw';
 import { highlightCode } from '../prism-languages';
+import { escapeHtml, escapeAttr, sanitizeHref, collectAdjacentLists } from './utils';
 
 function inlineToHtml(nodes: InlineNode[]): string {
   return nodes
@@ -19,23 +20,6 @@ function inlineToHtml(nodes: InlineNode[]): string {
       return html;
     })
     .join('');
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function escapeAttr(str: string): string {
-  return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-function sanitizeHref(href: string): string {
-  if (/^(https?:\/\/|mailto:)/i.test(href)) return href;
-  return '#';
 }
 
 function splitStyleDeclarations(style?: string): string[] {
@@ -161,9 +145,11 @@ function tableToHtml(rows: TableRow[], attrs: BlockAttrs): string {
 }
 
 export class HtmlSerializer {
-  static serialize(blocks: Block[], options?: { fullDocument?: boolean }): string {
-    const { fullDocument = true } = options ?? {};
+  static serialize(blocks: Block[], options?: { fullDocument?: boolean; includeCSS?: boolean }): string {
+    const { fullDocument = true, includeCSS = fullDocument } = options ?? {};
     const body = HtmlSerializer.serializeBody(blocks);
+
+    const css = prismCss + '\n' + variablesCss + '\n' + blockCss;
 
     if (fullDocument) {
       return [
@@ -174,7 +160,7 @@ export class HtmlSerializer {
         '  <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
         '  <title></title>',
         '  <style>',
-        prismCss + '\n' + variablesCss + '\n' + blockCss,
+        css,
         '  </style>',
         '</head>',
         '<body>',
@@ -182,6 +168,10 @@ export class HtmlSerializer {
         '</body>',
         '</html>',
       ].join('\n');
+    }
+
+    if (includeCSS) {
+      return `<style>${css}</style>\n${body}`;
     }
 
     return body;
@@ -193,16 +183,10 @@ export class HtmlSerializer {
     for (let index = 0; index < blocks.length; index += 1) {
       const block = blocks[index];
 
-      if (block.type === 'bulletList' || block.type === 'numberedList') {
-        const listType = block.type;
-        const listBlocks = [block];
-
-        while (index + 1 < blocks.length && blocks[index + 1].type === listType) {
-          listBlocks.push(blocks[index + 1]);
-          index += 1;
-        }
-
-        html.push(HtmlSerializer.listToHtml(listBlocks, listType));
+      const collected = collectAdjacentLists(blocks, index);
+      if (collected) {
+        html.push(HtmlSerializer.listToHtml(collected.listBlocks, collected.listType));
+        index = collected.nextIndex;
         continue;
       }
 
@@ -294,6 +278,20 @@ export class HtmlSerializer {
           })
           .join('\n');
         return `<div${classAttr('pila-columns', block.attrs?.tailwindClasses)}${styleAttr}>${cols}</div>`;
+      }
+      case 'row': {
+        const rowBlocks = block.attrs?.rowBlocks ?? [];
+        const inner = rowBlocks.map((b) => HtmlSerializer.blockToHtml(b)).join('\n');
+        const borderStyle = block.attrs?.borderStyle ?? 'none';
+        const borderWidth = block.attrs?.borderWidth ?? '1px';
+        const borderColor = block.attrs?.borderColor ?? 'var(--pila-border)';
+        const borderRadius = block.attrs?.borderRadius ?? '0px';
+        const borderTop = block.attrs?.borderTop !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+        const borderBottom = block.attrs?.borderBottom !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+        const borderLeft = block.attrs?.borderLeft !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+        const borderRight = block.attrs?.borderRight !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+        const rowStyle = `border-top:${borderTop};border-bottom:${borderBottom};border-left:${borderLeft};border-right:${borderRight};border-radius:${borderRadius};padding:${borderStyle !== 'none' ? '8px' : '0'};`;
+        return `<div${classAttr('pila-row', block.attrs?.tailwindClasses)} style="${escapeAttr(rowStyle)}">${inner}</div>`;
       }
       case 'button': {
         const label = inlineToHtml(content);

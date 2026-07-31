@@ -79,6 +79,19 @@
       max-height: 300px;
       overflow-y: auto;
     }
+    #preview {
+      width: 100%;
+      min-height: 300px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-top: 16px;
+      background: white;
+    }
+    .preview-label {
+      font-size: 0.75rem;
+      color: #666;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -87,13 +100,15 @@
   <div id="editor"></div>
   <div class="toolbar">
     <button id="btn-json">Get JSON</button>
-    <button id="btn-html">Get HTML</button>
+    <button id="btn-html">Get HTML (full doc)</button>
+    <button id="btn-html-body">Get HTML (body only)</button>
     <button id="btn-md">Get Markdown</button>
     <button id="btn-email">Get Email HTML</button>
     <button id="btn-clear">Clear</button>
   </div>
   <pre id="output"></pre>
-  <section id="preview"></section>
+  <p class="preview-label">Preview:</p>
+  <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
 
   <script type="module">
     import '../src/styles/pila.css'
@@ -106,6 +121,7 @@
     }
     addIcon('btn-json',  Icons.FileJson)
     addIcon('btn-html',  Icons.FileCode)
+    addIcon('btn-html-body',  Icons.FileCode)
     addIcon('btn-md',    Icons.FileText)
     addIcon('btn-email', Icons.Mail)
     addIcon('btn-clear', Icons.Eraser)
@@ -233,20 +249,27 @@
     editor.mount()
 
     const output = document.getElementById('output')
+    const preview = document.getElementById('preview')
     document.getElementById('btn-json').addEventListener('click', () => {
       output.textContent = editor.getContent('json')
     })
     document.getElementById('btn-html').addEventListener('click', () => {
-      output.textContent = editor.getContent('html')
-      showPreview(output.textContent)
+      const html = editor.getContent('html', { fullDocument: true })
+      output.textContent = html
+      showPreview(html, true)
+    })
+    document.getElementById('btn-html-body').addEventListener('click', () => {
+      const html = editor.getContent('html', { fullDocument: false, includeCSS: true })
+      output.textContent = html
+      showPreview(html, false)
     })
     document.getElementById('btn-md').addEventListener('click', () => {
       output.textContent = editor.getContent('markdown')
-      showPreview(output.textContent)
+      showPreview(output.textContent, false)
     })
     document.getElementById('btn-email').addEventListener('click', () => {
       output.textContent = editor.getContent('email')
-      showPreview(output.textContent)
+      showPreview(output.textContent, true)
     })
     document.getElementById('btn-clear').addEventListener('click', () => {
       output.textContent = '';
@@ -254,9 +277,92 @@
     })
     
 
-    function showPreview(content) {
-      const preview = document.getElementById('preview')
-      preview.innerHTML = content
+    function showPreview(content, isFullDocument) {
+      if (!content) {
+        preview.srcdoc = ''
+        return
+      }
+      if (isFullDocument) {
+        preview.srcdoc = content
+      } else {
+        // For body-only HTML, wrap in a minimal document
+        preview.srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>${getCSS()}</style></head><body>${content}</body></html>`
+      }
+    }
+
+    function getCSS() {
+      // Return the CSS variables + block styles for body-only preview
+      return `
+        :root {
+          --pila-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+          --pila-mono: 'Fira Code', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+          --pila-bg: #ffffff;
+          --pila-text: #1a1a1a;
+          --pila-muted: #9b9b9b;
+          --pila-placeholder: #c4c4c4;
+          --pila-accent: #2563eb;
+          --pila-accent-hover: #1d4ed8;
+          --pila-border: #e2e8f0;
+          --pila-radius: 6px;
+          --pila-code-bg: #f1f5f9;
+          --pila-code-text: #0f172a;
+          --pila-inline-code-bg: #f1f5f9;
+          --pila-inline-code-text: #0f172a;
+          --pila-callout-info-bg: #eff6ff;
+          --pila-callout-info-border: #2563eb;
+          --pila-callout-info-text: #1e3a8a;
+          --pila-callout-warning-bg: #fffbeb;
+          --pila-callout-warning-border: #d97706;
+          --pila-callout-warning-text: #78350f;
+          --pila-callout-error-bg: #fef2f2;
+          --pila-callout-error-border: #dc2626;
+          --pila-callout-error-text: #7f1d1d;
+          --pila-callout-success-bg: #f0fdf4;
+          --pila-callout-success-border: #16a34a;
+          --pila-callout-success-text: #14532d;
+          --pila-callout-tip-bg: #faf5ff;
+          --pila-callout-tip-border: #9333ea;
+          --pila-callout-tip-text: #3b0764;
+          --pila-quote-border: #94a3b8;
+          --pila-quote-text: #4b5563;
+        }
+        body { margin: 0; padding: 16px; font-family: var(--pila-font); color: var(--pila-text); background: var(--pila-bg); line-height: 1.6; }
+        p { margin: 0 0 12px; font-size: 15px; line-height: 1.6; }
+        h1, h2, h3 { font-weight: 700; line-height: 1.25; margin: 24px 0 8px; }
+        h1 { font-size: 28px; } h2 { font-size: 22px; } h3 { font-size: 18px; font-weight: 600; }
+        blockquote { margin: 12px 0; padding: 8px 16px; border-left: 4px solid var(--pila-quote-border); color: var(--pila-quote-text); font-style: italic; font-size: 15px; line-height: 1.6; }
+        .pila-code-block { margin: 12px 0; background: var(--pila-code-bg); border-radius: var(--pila-radius); overflow: hidden; }
+        .pila-code-lang { padding: 4px 12px; font-size: 11px; font-family: var(--pila-mono); color: var(--pila-muted); border-bottom: 1px solid var(--pila-border); text-transform: lowercase; }
+        .pila-code-block pre { margin: 0; padding: 12px; overflow-x: auto; background: none; }
+        .pila-code-block pre code { font-family: var(--pila-mono); font-size: 13px; color: var(--pila-code-text); white-space: pre; background: none; padding: 0; border-radius: 0; }
+        code { font-family: var(--pila-mono); font-size: 0.875em; background: var(--pila-inline-code-bg); color: var(--pila-inline-code-text); padding: 1px 4px; border-radius: 3px; }
+        a { color: var(--pila-accent); text-decoration: underline; }
+        a:hover { color: var(--pila-accent-hover); }
+        .callout { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; margin: 12px 0; border-radius: var(--pila-radius); border-left: 4px solid var(--pila-callout-info-border); background: var(--pila-callout-info-bg); color: var(--pila-callout-info-text); font-size: 15px; line-height: 1.6; }
+        .callout--warning { border-left-color: var(--pila-callout-warning-border); background: var(--pila-callout-warning-bg); color: var(--pila-callout-warning-text); }
+        .callout--error { border-left-color: var(--pila-callout-error-border); background: var(--pila-callout-error-bg); color: var(--pila-callout-error-text); }
+        .callout--success { border-left-color: var(--pila-callout-success-border); background: var(--pila-callout-success-bg); color: var(--pila-callout-success-text); }
+        .callout--tip { border-left-color: var(--pila-callout-tip-border); background: var(--pila-callout-tip-bg); color: var(--pila-callout-tip-text); }
+        .callout-icon { flex-shrink: 0; font-size: 1.1em; min-width: 1.3em; line-height: 1.6; }
+        .callout > p { margin: 0; flex: 1; }
+        .pila-button { display: inline-flex; align-items: center; justify-content: center; padding: 10px 24px; font-size: 0.95rem; font-weight: 600; text-decoration: none; border-radius: var(--pila-radius); transition: opacity 0.15s; cursor: pointer; }
+        .pila-button--primary { background: var(--pila-accent); color: #ffffff; border: 2px solid var(--pila-accent); }
+        .pila-button--secondary { background: var(--pila-border); color: var(--pila-text); border: 2px solid var(--pila-border); }
+        .pila-button--outline { background: transparent; color: var(--pila-accent); border: 2px solid var(--pila-accent); }
+        ul, ol { padding-left: 1.5em; margin: 12px 0; }
+        li { margin: 0 0 4px; font-size: 15px; line-height: 1.6; }
+        hr { border: none; border-top: 1px solid var(--pila-border); margin: 20px 0; }
+        table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 15px; }
+        th, td { padding: 8px 12px; border: 1px solid var(--pila-border); text-align: left; }
+        th { background: var(--pila-code-bg); font-weight: 600; }
+        .pila-columns { display: flex; align-items: stretch; width: 100%; gap: 12px; margin: 12px 0; }
+        .pila-column { flex: 1; min-width: 0; }
+        figure { margin: 12px 0; padding: 0; }
+        figure img { max-width: 100%; height: auto; }
+        .todo { margin: 0 0 8px; font-size: 15px; line-height: 1.6; }
+        .todo input[type="checkbox"] { margin-right: 6px; }
+        .pila-code-block pre code[class*="language-"] { text-shadow: none; box-shadow: none; background: none; }
+      `
     }
   </script>
 </body>

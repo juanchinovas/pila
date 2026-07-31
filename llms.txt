@@ -60,7 +60,7 @@ interface InlineNode {
   italic?: boolean
   underline?: boolean
   code?: boolean
-  link?: string          // http / https / mailto only
+  link?: string          // URL
 }
 ```
 

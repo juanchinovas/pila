@@ -25,7 +25,7 @@ interface InlineNode {
   italic?: boolean
   underline?: boolean
   code?: boolean
-  link?: string       // URL — only http/https/mailto are allowed
+  link?: string       // URL
 }
 ```
 

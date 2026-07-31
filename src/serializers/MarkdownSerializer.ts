@@ -1,4 +1,5 @@
 import { Block, InlineNode, TableRow } from '../types';
+import { collectAdjacentLists } from './utils';
 
 function inlineToMd(nodes: InlineNode[]): string {
   return nodes
@@ -37,16 +38,10 @@ export class MarkdownSerializer {
     for (let index = 0; index < blocks.length; index += 1) {
       const block = blocks[index];
 
-      if (block.type === 'bulletList' || block.type === 'numberedList') {
-        const listType = block.type;
-        const listBlocks = [block];
-
-        while (index + 1 < blocks.length && blocks[index + 1].type === listType) {
-          listBlocks.push(blocks[index + 1]);
-          index += 1;
-        }
-
-        lines.push(MarkdownSerializer.listToMd(listBlocks, listType));
+      const collected = collectAdjacentLists(blocks, index);
+      if (collected) {
+        lines.push(MarkdownSerializer.listToMd(collected.listBlocks, collected.listType));
+        index = collected.nextIndex;
         continue;
       }
 
@@ -113,6 +108,12 @@ export class MarkdownSerializer {
               .map((b) => MarkdownSerializer.blockToMd(b))
               .join('\n\n'),
           )
+          .join('\n\n');
+      }
+      case 'row': {
+        const rowBlocks = block.attrs?.rowBlocks ?? [];
+        return rowBlocks
+          .map((b) => MarkdownSerializer.blockToMd(b))
           .join('\n\n');
       }
       case 'button': {

@@ -13,6 +13,7 @@
  */
 
 import { Block, BlockAttrs, InlineNode, TableRow } from '../types';
+import { escapeHtml, escapeAttr, sanitizeHref, collectAdjacentLists } from './utils';
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
@@ -100,23 +101,6 @@ function buildTheme(): Theme {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function escapeAttr(str: string): string {
-  return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-function sanitizeHref(href: string): string {
-  if (/^(https?:\/\/|mailto:)/i.test(href)) return href;
-  return '#';
-}
-
 function inlineToHtml(nodes: InlineNode[], theme: Theme): string {
   return nodes
     .map((node) => {
@@ -139,8 +123,9 @@ function inlineToHtml(nodes: InlineNode[], theme: Theme): string {
 function blockColorStyle(attrs?: BlockAttrs): string {
   const chunks: string[] = [];
   if (attrs?.background) chunks.push(`background:${attrs.background};`);
-  if (attrs?.textColor) chunks.push(`color:${attrs.textColor};`);
+  if (attrs?.textColor) chunks.push(`color:${attrs.textColor}`);
   if (attrs?.alignment) chunks.push(`text-align:${attrs.alignment};`);
+  if (attrs?.objectFit) chunks.push(`object-fit:${attrs.objectFit};`);
   return chunks.join('');
 }
 
@@ -232,7 +217,7 @@ function columnsToHtml(defs: BlockAttrs['columnDefs'], theme: Theme, attrs?: Blo
 
 function listToHtml(blocks: Block[], type: 'bulletList' | 'numberedList', theme: Theme): string {
   const [firstBlock] = blocks;
-  const base = `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:${theme.text};`;
+  const base = `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;`;
   const listTag = type === 'bulletList' ? 'ul' : 'ol';
   const listStyleType = type === 'bulletList' ? 'disc' : 'decimal';
   const items = blocks
@@ -248,7 +233,7 @@ function listToHtml(blocks: Block[], type: 'bulletList' | 'numberedList', theme:
 // ─── Block serializer ─────────────────────────────────────────────────────────
 
 function blockToHtml(block: Block, theme: Theme): string {
-  const BASE = `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:${theme.text};`;
+  const BASE = `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;`;
   const BLOCK_COLORS = blockColorStyle(block.attrs);
   const content = block.content ?? [];
 
@@ -271,7 +256,7 @@ function blockToHtml(block: Block, theme: Theme): string {
     case 'todo': {
       const checked = block.attrs?.checked;
       const box = checked ? '&#x2611;' : '&#x2610;'; // ☑ / ☐
-      const strike = checked ? `text-decoration:line-through;color:${theme.muted};` : '';
+      const strike = checked ? `text-decoration:line-through;` : '';
       return `<p style="${BASE}${BLOCK_COLORS}margin:0 0 8px;font-size:15px;line-height:1.6;">${box}&nbsp;<span style="${strike}">${inlineToHtml(content, theme)}</span></p>`;
     }
 
@@ -334,6 +319,21 @@ function blockToHtml(block: Block, theme: Theme): string {
 
     case 'columns':
       return columnsToHtml(block.attrs?.columnDefs, theme, block.attrs);
+
+    case 'row': {
+      const rowBlocks = block.attrs?.rowBlocks ?? [];
+      const inner = rowBlocks.map((b) => blockToHtml(b, theme)).join('\n');
+      const borderStyle = block.attrs?.borderStyle ?? 'none';
+      const borderWidth = block.attrs?.borderWidth ?? '1px';
+      const borderColor = block.attrs?.borderColor ?? theme.border;
+      const borderRadius = block.attrs?.borderRadius ?? '0px';
+      const borderTop = block.attrs?.borderTop !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+      const borderBottom = block.attrs?.borderBottom !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+      const borderLeft = block.attrs?.borderLeft !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+      const borderRight = block.attrs?.borderRight !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+      const rowStyle = `border-top:${borderTop};border-bottom:${borderBottom};border-left:${borderLeft};border-right:${borderRight};border-radius:${borderRadius};padding:${borderStyle !== 'none' ? '8px' : '0'};margin:12px 0;${blockColorStyle(block.attrs)}`;
+      return `<div style="${escapeAttr(rowStyle)}">${inner}</div>`;
+    }
 
     case 'button': {
       const label = inlineToHtml(content, theme);
@@ -398,16 +398,10 @@ export class EmailSerializer {
     for (let index = 0; index < blocks.length; index += 1) {
       const block = blocks[index];
 
-      if (block.type === 'bulletList' || block.type === 'numberedList') {
-        const listType = block.type;
-        const listBlocks = [block];
-
-        while (index + 1 < blocks.length && blocks[index + 1].type === listType) {
-          listBlocks.push(blocks[index + 1]);
-          index += 1;
-        }
-
-        html.push(listToHtml(listBlocks, listType, theme));
+      const collected = collectAdjacentLists(blocks, index);
+      if (collected) {
+        html.push(listToHtml(collected.listBlocks, collected.listType, theme));
+        index = collected.nextIndex;
         continue;
       }
 
