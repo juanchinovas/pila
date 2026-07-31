@@ -2,12 +2,9 @@ import { Block, ColumnDef } from '../types';
 import { BlockManager } from './BlockManager';
 import { BlockContext, PilaBlock } from '../blocks/PilaBlock';
 import { SlashMenu } from '../ui/SlashMenu';
-import { DragHandle } from '../ui/DragHandle';
 import { createBlockEl } from './BlockFactory';
-
-function generateId(): string {
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-}
+import { generateId } from './utils';
+import { EventRegistry } from './EventRegistry';
 
 /**
  * Lightweight mini-editor for a single column inside a ColumnsBlock.
@@ -17,23 +14,21 @@ function generateId(): string {
 export class ColumnEditor {
   readonly el: HTMLDivElement;
   readonly manager: BlockManager;
+  private editorId: string;
+  private eventGroup = new EventRegistry();
 
   onEscapeUp:   (() => void) | null = null;
   onEscapeDown: (() => void) | null = null;
 
-  private placeholder: string;
   private blockInstances = new Map<string, PilaBlock>();
   private slashMenu!: SlashMenu;
-  private dragHandle!: DragHandle;
-  private portalTo: HTMLElement;
-  private unsub: (() => void) | null = null;
+  private _ctx!: BlockContext;
 
-  constructor(def: ColumnDef, placeholder = 'Type / to add a block…', portalTo: HTMLElement = document.body) {
-    this.placeholder = placeholder;
-    this.portalTo = portalTo;
-
+  constructor(def: ColumnDef, ctx: BlockContext) {
+    this._ctx = ctx;
     this.el = document.createElement('div');
     this.el.className = 'pila-column-editor';
+    this.editorId = generateId();
 
     const initial: Block[] =
       def.blocks && def.blocks.length > 0
@@ -41,22 +36,31 @@ export class ColumnEditor {
         : [{ id: generateId(), type: 'paragraph', content: [] }];
 
     this.manager = new BlockManager(initial);
-    this.unsub    = this.manager.on('blocks:change', () => this.renderAll());
-    this.renderAll();
 
-    this.slashMenu = new SlashMenu(this.el, this.manager, undefined, this.portalTo);
+    this.eventGroup.on(this.manager, 'blocks:change', () => {
+      this.renderAll();
+      console.log('ColumnEditor blocks changed:', this.manager.getAll()); // Debugging log
+      ctx.manager.emit('blocks:change', { blocks: ctx.manager.getAll() });
+    });
+
+    this.renderAll();
+    // |--Add this column's BlockManager as a child of the parent manager (for nested block lookup) ----|
+    ctx.manager.addChildManager(this.editorId, this.manager);
+
+    this.slashMenu = new SlashMenu(this.el, this.manager, ctx.pluginRegistry, ctx.portalTo);
     this.slashMenu.mount();
 
-    this.dragHandle = new DragHandle(this.el, this.manager, this.portalTo);
-    this.dragHandle.mount();
-
-    this.el.addEventListener('keydown', (e: KeyboardEvent) => this.handleEscape(e));
+    this.eventGroup.on(this.el, 'keydown', this.handleEscape.bind(this));
   }
 
   // ── Private ────────────────────────────────────────────────────────────────
 
   private get ctx(): BlockContext {
-    return { manager: this.manager, editorEl: this.el, placeholder: this.placeholder, portalTo: this.portalTo };
+    return {
+      ...this._ctx,
+      editorEl: this.el,
+      manager: this.manager
+    };
   }
 
   private renderAll(): void {
@@ -108,13 +112,12 @@ export class ColumnEditor {
     }
   }
 
-  // ── Private ─ escape detection ────────────────────────────────────────────
-
+  // |── Private ─ escape detection ────────────────────────────────────────────|
   private handleEscape(e: KeyboardEvent): void {
     // If the inner block already handled the navigation, skip.
     if (e.defaultPrevented) return;
     if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-
+    
     const blocks  = this.manager.getAll();
     const focused = (e.target as Element)?.closest<HTMLElement>('[data-block-id]');
     if (!focused) return;
@@ -152,10 +155,11 @@ export class ColumnEditor {
   }
 
   destroy(): void {
-    this.unsub?.();
+    this.eventGroup.unsubscribeAll();
     this.slashMenu?.destroy();
-    this.dragHandle?.destroy();
     this.blockInstances.forEach((inst) => inst.destroy());
     this.blockInstances.clear();
+
+    this.ctx.manager.removeChildManager(this.editorId);
   }
 }

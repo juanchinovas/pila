@@ -1,9 +1,6 @@
 import { Block, BlockType, BlockAttrs, InlineNode, EditorEvents } from '../types';
 import { EventEmitter } from './EventEmitter';
-
-function generateId(): string {
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-}
+import { generateId } from './utils';
 
 function compactAttrs(attrs: BlockAttrs | undefined): BlockAttrs | undefined {
   if (!attrs) return undefined;
@@ -16,6 +13,7 @@ function compactAttrs(attrs: BlockAttrs | undefined): BlockAttrs | undefined {
 
 export class BlockManager extends EventEmitter<EditorEvents> {
   private blocks: Block[] = [];
+  private childManagers: Map<string, BlockManager> = new Map();
 
   constructor(initial: Block[] = []) {
     super();
@@ -27,7 +25,15 @@ export class BlockManager extends EventEmitter<EditorEvents> {
   }
 
   getById(id: string): Block | undefined {
-    return this.blocks.find((b) => b.id! === id);
+    let block = this.blocks.find((b) => b.id === id);
+    if (!block && this.childManagers.size > 0) {
+      for (const childManager of this.childManagers.values()) {
+        block = childManager.getById(id);
+        if (block) break;
+      }
+    }
+
+    return block;
   }
 
   getIndex(id: string): number {
@@ -42,7 +48,7 @@ export class BlockManager extends EventEmitter<EditorEvents> {
       id: generateId(),
       type,
       ...(options.content !== undefined ? { content: options.content } : {}),
-      ...(options.attrs !== undefined ? { attrs: options.attrs } : {}),
+      ...(options.attrs !== undefined ? { attrs: options.attrs } : {})
     };
 
     let index: number;
@@ -61,10 +67,25 @@ export class BlockManager extends EventEmitter<EditorEvents> {
 
   update(id: string, changes: Partial<Omit<Block, 'id'>>): Block | undefined {
     const index = this.getIndex(id);
+    let isOnParent = index >= 0;
+    let _childManager: BlockManager | null = null;
+    let existingBlock = isOnParent ? this.blocks[index] : undefined;
 
-    if (index === -1) return undefined;
+    if (!isOnParent && this.childManagers.size == 0) {
+      return undefined;
+    }
 
-    const existing = this.blocks[index];
+    if (!isOnParent && this.childManagers.size > 0) {
+      for (const childManager of this.childManagers.values()) {
+        _childManager = childManager;
+        existingBlock = childManager.getById(id);
+        if (existingBlock) {
+          break;
+        }
+      }
+    }
+
+    const existing = existingBlock!;
     const nextAttrs =
       changes.attrs !== undefined
         ? compactAttrs({ ...existing.attrs, ...changes.attrs })
@@ -73,12 +94,21 @@ export class BlockManager extends EventEmitter<EditorEvents> {
       ...existing,
       ...changes,
       id,
+      // `content: undefined` means "don't touch content" (same convention as attrs),
+      // so an attrs-only update never wipes the block's existing content.
+      content: changes.content !== undefined ? changes.content : existing.content,
       attrs: nextAttrs,
     };
 
-    this.blocks[index] = updated;
+    if (isOnParent) {
+      this.blocks[index] = updated;
+    } else if (_childManager) {
+      _childManager.update(id, changes);
+    }
+
     this.emit('block:update', { id, block: updated });
     this.emit('blocks:change', { blocks: this.getAll() });
+
     return updated;
   }
 
@@ -138,5 +168,18 @@ export class BlockManager extends EventEmitter<EditorEvents> {
   reset(blocks: Block[]): void {
     this.blocks = blocks.map((b) => ({ ...b }));
     this.emit('blocks:change', { blocks: this.getAll() });
+  }
+
+  addChildManager(parentBlockId: string, childManager: BlockManager): void {
+    this.childManagers.set(parentBlockId, childManager);
+  }
+
+  removeChildManager(parentBlockId?: string): void {
+    if (parentBlockId) {
+      this.childManagers.delete(parentBlockId);
+      return;
+    }
+
+    this.childManagers.clear();
   }
 }
