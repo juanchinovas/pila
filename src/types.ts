@@ -207,3 +207,8 @@ export interface EditorEvents {
   'block:move': { id: string; toIndex: number }
   'blocks:change': { blocks: Block[] }
 }
+
+export interface SerializerOptions {
+  fullDocument?: boolean;
+  includeCSS?: boolean
+}

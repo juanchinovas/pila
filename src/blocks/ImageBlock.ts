@@ -166,6 +166,7 @@ export class ImageBlock extends PilaBlock {
     if (!this.propsPopover) {
       this.propsPopover = new ImagePropsPopover(this.ctx.portalTo);
     }
+    console.log('Opening ImagePropsPopover at:', x, y, 'with attrs:', this.block.attrs);
     const result = await this.propsPopover.open(x, y, this.block.attrs ?? {});
 
     if (result === null) return;
@@ -178,6 +179,7 @@ export class ImageBlock extends PilaBlock {
       alt:             result.alt,
       objectFit:       result.objectFit,
       borderRadius:    result.borderRadius,
+      alignment:       result.alignment || this.block.attrs?.alignment,
     };
 
     this.caption.textContent = result.alt;

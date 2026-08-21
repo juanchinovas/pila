@@ -145,6 +145,10 @@ export class DragHandle {
 
     if (wrapper.colorOptions) {
       blockOptions.push(...this.getColorAndBackgroundColorActions(blockId, wrapper));
+      blockOptions.push({
+        label: '',
+        type: 'divider',
+      });
     }
 
     blockOptions.push(...wrapper.getPopoverActions());
@@ -322,7 +326,7 @@ export class DragHandle {
       return;
     }
 
-    if (!wrapper.hasAttribute('contenteditable')) {
+    if (!wrapper.hasAttribute('contenteditable') && wrapper.dataset.isParentBlock !== 'true') {
       wrapper.querySelectorAll<HTMLElement>('[contenteditable]').forEach(el => {  
         el.style.setProperty('background-color', color);
       });
@@ -356,7 +360,7 @@ export class DragHandle {
 
   private getColorAndBackgroundColorActions(blockId: string, wrapper: HTMLElement): BlockAction[] {
     const bgColors = [
-      { name: 'Default', swatch: 'transparent',             value: undefined, isStatic: true },
+      { name: 'Default', swatch: 'transparent',             value: 'transparent', isStatic: true },
       { name: 'Gray',    swatch: 'var(--pila-code-bg)',     value: 'var(--pila-code-bg)', isStatic: true },
       { name: 'Blue',    swatch: 'rgba(59, 130, 246, 0.1)', value: 'rgba(59, 130, 246, 0.1)', isStatic: true },
       { name: 'Green',   swatch: 'rgba(34, 197, 94, 0.1)',  value: 'rgba(34, 197, 94, 0.1)', isStatic: true },
@@ -371,7 +375,7 @@ export class DragHandle {
     ];
 
     const textColors = [
-      { name: 'Default', swatch: 'transparent',       value: undefined, isStatic: true },
+      { name: 'Black', swatch: '#1a1a1a',       value: '#1a1a1a', isStatic: true },
       { name: 'Gray',    swatch: 'var(--pila-muted)', value: 'var(--pila-muted)', isStatic: true },
       { name: 'Blue',    swatch: 'rgb(37, 99, 235)',  value: 'rgb(37, 99, 235)', isStatic: true },
       { name: 'Green',   swatch: 'rgb(21, 128, 61)',  value: 'rgb(21, 128, 61)', isStatic: true },
@@ -388,7 +392,7 @@ export class DragHandle {
 
     const bgActions: BlockAction[] = bgColors.map(c => ({
       label: c.name,
-      icon:  c.icon ?? 'Square',
+      icon:  c.icon,
       color: c.swatch ?? c.color,
       value: c.value,
       isStatic: c.isStatic,
@@ -401,7 +405,7 @@ export class DragHandle {
 
     const textActions: BlockAction[] = textColors.map(c => ({
       label: c.name,
-      icon: c.icon ?? 'Type',
+      icon: c.icon,
       type: 'color',
       color: c.swatch,
       value: c.value,

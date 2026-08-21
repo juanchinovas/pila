@@ -67,7 +67,7 @@ export class BlockManager extends EventEmitter<EditorEvents> {
 
   update(id: string, changes: Partial<Omit<Block, 'id'>>): Block | undefined {
     const index = this.getIndex(id);
-    let isOnParent = index >= 0;
+    const isOnParent = index >= 0;
     let _childManager: BlockManager | null = null;
     let existingBlock = isOnParent ? this.blocks[index] : undefined;
 

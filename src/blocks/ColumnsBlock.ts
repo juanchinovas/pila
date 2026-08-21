@@ -28,38 +28,14 @@ export class ColumnsBlock extends PilaBlock {
   }
 
   getPopoverActions(): BlockAction[] {
-    const defs = this.readDefs();
-    const currentFlex = defs[this.focusedColIndex]?.width ?? 1;
-
     const actions: BlockAction[] = [
-      { label: 'Add column left', type: 'action', value: 'left', icon: 'ArrowLeftToLine', handler: () => this.addColumn('left') },
-      { label: 'Add column right', type: 'action', value: 'right', icon: 'ArrowRightToLine', handler: () => this.addColumn('right') },
-      {
-        label: `Width: ${currentFlex}x`,
-        icon: 'Columns2',
-        type: 'action',
-        children: WIDTH_PRESETS.map(({ label, flex }) => ({
-          label,
-          value: flex,
-          type: 'action',
-          icon: Math.abs(flex - currentFlex) < 0.01 ? 'Check' : 'Columns2',
-          handler: (ev: CustomEvent<BlockAction>) => this.setColumnWidth(ev.detail.value as number),
-        })),
-      },
-      {
-        label: 'Delete column',
-        icon: 'Trash2',
-        danger: true,
-        type: 'action',
-        handler: () => this.deleteColumn(),
-      },
       ...super.getPopoverActions(),
     ];
 
     return actions;
   }
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
+  // |── Lifecycle ─────────────────────────────────────────────────────────────|
 
   protected buildDOM(): void {
     this.classList.add('pila-columns-block', '!my-5');

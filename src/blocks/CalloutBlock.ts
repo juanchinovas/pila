@@ -69,7 +69,7 @@ export class CalloutBlock extends PilaBlock {
         type: 'action',
         children: flavors.map(f => ({
           label: f.charAt(0).toUpperCase() + f.slice(1),
-          icon: 'Circle',
+          icon: flavorIcons[f],
           type: 'action',
           value: { flavor: f, icon: flavorIcons[f] },
           handler: (ev: CustomEvent<BlockAction>) => {
@@ -84,6 +84,7 @@ export class CalloutBlock extends PilaBlock {
           },
         })),
       },
+      { label: '', type: 'divider' },
       ...super.getPopoverActions(),
     ];
   }

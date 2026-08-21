@@ -1,4 +1,4 @@
-import { Block, BlockAttrs, InlineNode, TableRow } from '../types';
+import { Block, BlockAttrs, InlineNode, SerializerOptions, TableRow } from '../types';
 import variablesCss from '../styles/variables.css?raw';
 import blockCss from '../styles/serializer.css?raw';
 import prismCss from 'prismjs/themes/prism.css?raw';
@@ -40,6 +40,7 @@ function blockStyleAttr(attrs?: BlockAttrs): string {
   if (attrs?.background) styles.push(`background-color:${attrs.background}`);
   if (attrs?.textColor) styles.push(`color:${attrs.textColor}`);
   if (attrs?.alignment) styles.push(`text-align:${attrs.alignment}`);
+  if (attrs?.objectFit) styles.push(`object-fit:${attrs.objectFit}`);
   return styleAttrFromList(styles);
 }
 
@@ -48,6 +49,7 @@ function blockStyleCss(attrs?: BlockAttrs): string {
   if (attrs?.background) styles.push(`background-color:${attrs.background}`);
   if (attrs?.textColor) styles.push(`color:${attrs.textColor}`);
   if (attrs?.alignment) styles.push(`text-align:${attrs.alignment}`);
+  if (attrs?.objectFit) styles.push(`object-fit:${attrs.objectFit}`);
   return styles.join(';');
 }
 
@@ -79,6 +81,7 @@ function imageFigureStyleAttr(attrs?: BlockAttrs): string {
   const chunks: string[] = splitStyleDeclarations(attrs?.style);
   if (attrs?.background) chunks.push(`background-color:${attrs.background}`);
   if (attrs?.textColor) chunks.push(`color:${attrs.textColor}`);
+  if (attrs?.objectFit) chunks.push(`object-fit:${attrs.objectFit}`);
   const alignment = attrs?.alignment;
   if (!alignment || alignment === 'left') {
     chunks.push('margin-right:auto');
@@ -94,6 +97,15 @@ function imageImgStyleAttr(attrs?: BlockAttrs): string {
   const chunks: string[] = [];
   if (attrs?.objectFit) chunks.push(`object-fit:${attrs.objectFit}`);
   if (attrs?.borderRadius) chunks.push(`border-radius:${attrs.borderRadius}`);
+  const alignment = attrs?.alignment;
+  if (!alignment || alignment === 'left') {
+    chunks.push('margin-right:auto');
+  } else if (alignment === 'center') {
+    chunks.push('margin-left:auto', 'margin-right:auto');
+  } else if (alignment === 'right') {
+    chunks.push('margin-left:auto');
+  }
+
   return styleAttrFromList(chunks);
 }
 
@@ -145,7 +157,7 @@ function tableToHtml(rows: TableRow[], attrs: BlockAttrs): string {
 }
 
 export class HtmlSerializer {
-  static serialize(blocks: Block[], options?: { fullDocument?: boolean; includeCSS?: boolean }): string {
+  static serialize(blocks: Block[], options?: SerializerOptions): string {
     const { fullDocument = true, includeCSS = fullDocument } = options ?? {};
     const body = HtmlSerializer.serializeBody(blocks);
 
@@ -286,11 +298,12 @@ export class HtmlSerializer {
         const borderWidth = block.attrs?.borderWidth ?? '1px';
         const borderColor = block.attrs?.borderColor ?? 'var(--pila-border)';
         const borderRadius = block.attrs?.borderRadius ?? '0px';
-        const borderTop = block.attrs?.borderTop !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
-        const borderBottom = block.attrs?.borderBottom !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
-        const borderLeft = block.attrs?.borderLeft !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
-        const borderRight = block.attrs?.borderRight !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
-        const rowStyle = `border-top:${borderTop};border-bottom:${borderBottom};border-left:${borderLeft};border-right:${borderRight};border-radius:${borderRadius};padding:${borderStyle !== 'none' ? '8px' : '0'};`;
+        const borderTop = block.attrs?.borderTop ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+        const borderBottom = block.attrs?.borderBottom ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+        const borderLeft = block.attrs?.borderLeft ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+        const borderRight = block.attrs?.borderRight ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+        const rowStyle = `border-top:${borderTop};border-bottom:${borderBottom};border-left:${borderLeft};border-right:${borderRight};border-radius:${borderRadius};padding:${borderStyle !== 'none' ? '8px' : '0'};margin:12px 0;${blockStyleCss(block.attrs)}`;
+
         return `<div${classAttr('pila-row', block.attrs?.tailwindClasses)} style="${escapeAttr(rowStyle)}">${inner}</div>`;
       }
       case 'button': {

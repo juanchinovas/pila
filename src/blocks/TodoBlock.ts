@@ -14,6 +14,7 @@ export class TodoBlock extends PilaBlock {
 
   protected buildDOM(): void {
     this.classList.add('flex', 'items-center', 'gap-x-2', 'px-0.5', 'py-[3px]');
+    this.dataset.isParentBlock = 'true';
 
     this.checkbox = document.createElement('input');
     this.checkbox.type = 'checkbox';

@@ -124,6 +124,7 @@ export class RowBlock extends PilaBlock {
           handler: (ev: CustomEvent<BlockAction>) => this.setBorderAttr('borderRadius', ev.detail.value),
         })),
       },
+      { label: '', type: 'divider', },
       ...super.getPopoverActions(),
     ];
 
@@ -134,6 +135,7 @@ export class RowBlock extends PilaBlock {
 
   protected buildDOM() {
     this.classList.add('pila-row-block', '!my-5');
+    this.dataset.isParentBlock = 'true';
 
     this.applyStyles();
 
@@ -142,12 +144,8 @@ export class RowBlock extends PilaBlock {
   }
 
   override updateData(block: Block): void {
-    const wasActive = this.contains(document.activeElement);
     super.updateData(block);
     this.applyStyles();
-    if (wasActive) {
-      this.editor?.focusFirst();
-    }
   }
 
   override destroy(): void {
@@ -166,7 +164,7 @@ export class RowBlock extends PilaBlock {
   }
 
   focusBlock(): void {
-    this.editor?.focusFirst();
+    // this.editor?.focusFirst();
   }
 
   private rowBlocks(): Block[] {
@@ -226,17 +224,17 @@ export class RowBlock extends PilaBlock {
     const color = attrs.borderColor ?? 'var(--pila-border)';
     const radius = attrs.borderRadius ?? '0px';
 
-    const top = attrs.borderTop !== false ? `${width} ${style} ${color}` : 'none';
-    const bottom = attrs.borderBottom !== false ? `${width} ${style} ${color}` : 'none';
-    const left = attrs.borderLeft !== false ? `${width} ${style} ${color}` : 'none';
-    const right = attrs.borderRight !== false ? `${width} ${style} ${color}` : 'none';
+    const top = attrs.borderTop ? `${width} ${style} ${color}` : 'none';
+    const bottom = attrs.borderBottom ? `${width} ${style} ${color}` : 'none';
+    const left = attrs.borderLeft ? `${width} ${style} ${color}` : 'none';
+    const right = attrs.borderRight ? `${width} ${style} ${color}` : 'none';
 
     this.style.borderTop = top;
     this.style.borderBottom = bottom;
     this.style.borderLeft = left;
     this.style.borderRight = right;
     this.style.borderRadius = radius;
-    this.style.padding = style !== 'none' ? '8px' : '0';
+    this.style.padding = '8px';
   }
 
   private destroyEditor(): void {

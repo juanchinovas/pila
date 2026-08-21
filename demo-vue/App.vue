@@ -367,6 +367,23 @@ const initialContent: Block[] = [
   { type: 'heading2', content: [{ text: '🎉 That\'s Everything!' }] },
   { type: 'paragraph', content: [{ text: 'This demo post showcases all ' }, { text: '13 built-in block types', bold: true }, { text: ', ' }, { text: '5 callout flavors', bold: true }, { text: ', ' }, { text: '3 button styles', bold: true }, { text: ', ' }, { text: 'column & row layouts', bold: true }, { text: ', advanced tables, images, code highlighting, and the plugin system.' }] },
   { type: 'callout', content: [{ text: 'Try exporting this content as JSON, HTML, Markdown, or Email HTML using the toolbar buttons above!' }], attrs: { icon: '🚀', flavor: 'success' } },
+  {
+    "id": "n6mu4f6hmrnya6jm",
+    "type": "row",
+    "content": [],
+    "attrs": {
+      "rowBlocks": [],
+      "borderTop": false,
+      "background": "#032e5b",
+      "borderStyle": "solid",
+      "borderLeft": false,
+      "borderRight": false,
+      "borderWidth": "4px",
+      "borderColor": "#ef5264",
+      "textColor": "#ffffff",
+      "borderBottom": true
+    }
+  },
 ];
 
 onMounted(() => {
@@ -402,7 +419,7 @@ const updateOutput = (format: 'json' | 'html' | 'markdown' | 'email' | 'clear') 
     output.value = ''
     return
   }
-  output.value = editor.getContent(format, { fullDocument: false })
+  output.value = editor.getContent(format, { fullDocument: true, includeCSS: format === 'email' })
 }
 
 // Wrapper to use library icons in Vue

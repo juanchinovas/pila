@@ -34,6 +34,8 @@ export class TableBlock extends PilaBlock {
 
   protected buildDOM(): void {
     this.classList.add('overflow-x-auto', '!my-5');
+    this.dataset.isParentBlock = 'true';
+    
     this.tableEl = this.buildTable(this.block.attrs?.rows ?? []);
     this.appendChild(this.tableEl);
 
@@ -102,7 +104,7 @@ export class TableBlock extends PilaBlock {
       this.eventGroup.on(this.rowHandle, 'dragend', () => this.onDragEnd());
       this.eventGroup.on(this.rowHandle, 'click', (e) => {
         e.stopPropagation();
-        this.openRowMenu(e.clientX, e.clientY);
+        this.openRowMenu(e.clientX, e.clientY); 
       });
       this.eventGroup.on(this.rowHandle, 'mouseenter', () => this.clearHideTimeout());
       this.eventGroup.on(this.rowHandle, 'mouseleave', () => this.scheduleHide());
@@ -146,12 +148,15 @@ export class TableBlock extends PilaBlock {
 
   private openCellPopover(x: number, y: number): void {
     const popover = new BlockPopover(this.ctx.portalTo);
+    const rows = this.currentRows();
+    const cell = rows[this.focusedRow]?.cells[this.focusedCol];
+
     popover.open(x, y, [
       { label: 'Align left', type: 'action', value: 'left', icon: 'AlignLeft', handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ align: ev.detail.value as 'left' }) },
       { label: 'Align center', type: 'action', value: 'center', icon: 'AlignCenter', handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ align: ev.detail.value as 'center' }) },
       { label: 'Align right', type: 'action', value: 'right', icon: 'AlignRight', handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ align: ev.detail.value as 'right' }) },
-      { label: 'Background', type: 'color', icon: 'Paintbucket', handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ background: String(ev.detail.value) }) },
-      { label: 'Text color', type: 'color', icon: 'Palette', handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ color: String(ev.detail.value) }) },
+      { label: 'Background', type: 'color', icon: 'Paintbucket', value: cell.background, handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ background: String(ev.detail.value) }) },
+      { label: 'Text color', type: 'color', icon: 'Palette', value: cell.color, handler: (ev: CustomEvent<BlockAction>) => this.setCellStyle({ color: String(ev.detail.value) }) },
       { label: 'Clear styling', type: 'action', icon: 'Eraser', handler: () => this.setCellStyle({ background: '', color: '', align: undefined }) },
     ]);
   }
@@ -355,38 +360,7 @@ export class TableBlock extends PilaBlock {
     this.persistStructuralRows(rows);
   }
 
-  /*private showColorPicker(e: MouseEvent, target: 'row' | 'col' | 'cell', type: 'background' | 'color'): void {
-    if (e) e.stopPropagation();
-    
-    const targetEl = e.target as HTMLElement;
-    const currentColor = targetEl.style[type] || '#ffffff';
-
-    // Use input type=color for a native picker
-    const input = document.createElement('input');
-    input.id = 'color_picker_input_table';
-    input.type = 'color';
-    input.setAttribute('form', '');
-    input.value = currentColor; // Default to current color
-    input.style.position = 'absolute';
-    input.style.opacity = '0';
-    setPortalPosition(input, this.ctx.portalTo ?? document.body, e.clientX, e.clientY);
-    this.ctx.portalTo?.appendChild(input);
-    
-    input.addEventListener('input', debounce(() => {
-      const val = input.value;
-      if (target === 'row') this.setRowStyle({ [type]: val });
-      else if (target === 'col') this.setColStyle({ [type]: val });
-      else this.setCellStyle({ [type]: val });
-    }, 100));
-
-    input.addEventListener('change', () => {
-      input.remove();
-    });
-
-    input.click();
-  }*/
-
-  private  setCellStyle(style: { background?: string, color?: string, align?: 'left' | 'center' | 'right' }): void {
+  private setCellStyle(style: { background?: string, color?: string, align?: 'left' | 'center' | 'right' }): void {
     const rows = this.currentRows();
     const cell = rows[this.focusedRow]?.cells[this.focusedCol];
     if (!cell) return;

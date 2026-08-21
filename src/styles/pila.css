@@ -429,8 +429,19 @@ code[class*="language-"] {
   box-shadow: var(--pila-shadow);
 }
 
-.pila-popover-item {
+.pila-popover-item:not(.pila-popover-item--divider) {
   @apply flex items-center gap-2.5 py-1.5 px-2 rounded cursor-pointer transition-colors relative;
+}
+
+.pila-popover-item--divider {
+  @apply cursor-default;
+  border-top: 1px solid var(--pila-slash-border);
+  margin: 0.5rem 0;
+
+  .pila-popover-icon,
+  .pila-popover-label {
+    @apply hidden;
+  }
 }
 
 .pila-popover-item:hover {

@@ -620,3 +620,71 @@ describe('HtmlSerializer', () => {
     expect(html).toContain('<!DOCTYPE html>');
   });
 });
+
+describe('HtmlSerializer regression — no editor DOM leakage', () => {
+  it('does not leak pila-* editor classes', () => {
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'paragraph', content: [{ text: 'hello' }] }],
+      { fullDocument: false },
+    );
+    expect(html).not.toContain('pila-paragraph');
+    expect(html).not.toContain('pila-block');
+    expect(html).not.toContain('pila-code-block');
+    expect(html).not.toContain('pila-callout');
+    expect(html).not.toContain('pila-divider-line');
+    expect(html).not.toContain('pila-todo-content');
+    expect(html).not.toContain('pila-quote-content');
+  });
+
+  it('does not leak Tailwind editing utility classes', () => {
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'paragraph', content: [{ text: 'hello' }] }],
+      { fullDocument: false },
+    );
+    expect(html).not.toContain('outline-none');
+    expect(html).not.toContain('m-0');
+    expect(html).not.toContain('px-0.5');
+    expect(html).not.toContain('py-[');
+    expect(html).not.toContain('min-h-[');
+    expect(html).not.toContain('whitespace-pre-wrap');
+    expect(html).not.toContain('break-words');
+    expect(html).not.toContain('flex-1');
+  });
+
+  it('does not leak editor UI inline styles', () => {
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'paragraph', content: [{ text: 'hello' }] }],
+      { fullDocument: false },
+    );
+    expect(html).not.toContain('cursor: text');
+    expect(html).not.toContain('user-select: text');
+    expect(html).not.toContain('display: table');
+    expect(html).not.toContain('margin-top: 4px');
+    expect(html).not.toContain('min-width: 80px');
+  });
+
+  it('does not duplicate built-in classes (e.g. pila-button)', () => {
+    const html = HtmlSerializer.serialize(
+      [{ id: '1', type: 'button', content: [{ text: 'Go' }], attrs: { href: 'https://example.com' } }],
+      { fullDocument: false },
+    );
+    const matches = html.match(/pila-button pila-button--primary pila-button pila-button--primary/);
+    expect(matches).toBeNull();
+  });
+
+  it('round-trips model tailwindClasses and style attrs', () => {
+    const html = HtmlSerializer.serialize(
+      [
+        {
+          id: '1',
+          type: 'paragraph',
+          content: [{ text: 'styled' }],
+          attrs: { tailwindClasses: 'my-custom-class', style: 'letter-spacing:0.1em;' },
+        },
+      ],
+      { fullDocument: false },
+    );
+    expect(html).toContain('my-custom-class');
+    expect(html).toContain('letter-spacing:0.1em');
+  });
+});

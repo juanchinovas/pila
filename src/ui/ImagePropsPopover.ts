@@ -8,6 +8,7 @@ export interface ImagePropsResult {
   alt: string
   objectFit?: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down'
   borderRadius?: string
+  alignment?: 'left' | 'center' | 'right'
 }
 
 export class ImagePropsPopover {
@@ -18,6 +19,7 @@ export class ImagePropsPopover {
   private heightField!: HTMLInputElement;
   private altField!: HTMLInputElement;
   private objectFitField!: HTMLSelectElement;
+  private alignmentField!: HTMLSelectElement;
   private borderRadiusField!: HTMLInputElement;
   
   private resolveFn: ((result: ImagePropsResult | null) => void) | null = null;
@@ -107,6 +109,24 @@ export class ImagePropsPopover {
       this.popoverEl.appendChild(fitWrapper);
 
       this.popoverEl.appendChild(this.makeField('Border Radius (px)', 'text', attrs.borderRadius ?? '', (el) => this.borderRadiusField = el as HTMLInputElement));
+
+      // alimentment
+      const alignmentWrapper = document.createElement('div');
+      const alignmentLabel = document.createElement('label');
+      alignmentLabel.className = this.LABEL_CLASS;
+      alignmentLabel.textContent = 'Alignment';
+      this.alignmentField = document.createElement('select');
+      this.alignmentField.className = this.FIELD_CLASS;
+      ['left', 'center', 'right'].forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+        if (attrs.alignment === opt) o.selected = true;
+        this.alignmentField.appendChild(o);
+      });
+      alignmentWrapper.appendChild(alignmentLabel);
+      alignmentWrapper.appendChild(this.alignmentField);
+      this.popoverEl.appendChild(alignmentWrapper);
 
       const actions = document.createElement('div');
       actions.style.display = 'flex';
@@ -207,7 +227,8 @@ export class ImagePropsPopover {
         height: this.heightField.value,
         alt: this.altField.value,
         objectFit: this.objectFitField.value as ImagePropsResult['objectFit'],
-        borderRadius: this.borderRadiusField.value
+        borderRadius: this.borderRadiusField.value,
+        alignment: this.alignmentField.value as 'left' | 'center' | 'right',
       });
     }
     this.close();

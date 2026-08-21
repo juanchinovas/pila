@@ -16,6 +16,7 @@ export class ListBlock extends PilaBlock {
     const isBullet = this.block.type === 'bulletList';
 
     this.classList.add('flex', 'items-center', 'gap-1', 'py-0.5', 'px-1', 'mt-5');
+    this.dataset.isParentBlock = 'true';
 
     const li = this.makeContentEditable(
       'li',

@@ -111,7 +111,7 @@ export class SlashMenu {
       if (e.key === 'ArrowUp')   { e.preventDefault(); e.stopPropagation(); this.moveSelection(-1); return; }
       if (e.key === 'Tab')       { 
         e.preventDefault(); 
-        e.stopPropagation(); 
+        e.stopPropagation();
         this.moveSelection(e.shiftKey ? -1 : 1); 
         return; 
       }

@@ -39,7 +39,6 @@ export class ColumnEditor {
 
     this.eventGroup.on(this.manager, 'blocks:change', () => {
       this.renderAll();
-      console.log('ColumnEditor blocks changed:', this.manager.getAll()); // Debugging log
       ctx.manager.emit('blocks:change', { blocks: ctx.manager.getAll() });
     });
 

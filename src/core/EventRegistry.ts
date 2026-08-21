@@ -1,4 +1,4 @@
-import { EditorEvents } from "..";
+import { EditorEvents } from '..';
 
 // 1. Zero-argument disposables
 export type Disposable =

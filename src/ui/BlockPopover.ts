@@ -5,7 +5,7 @@ import { EventRegistry } from '@/core/EventRegistry';
 
 export interface BlockAction {
   label: string;
-  type: 'color' | 'action';
+  type: 'color' | 'action' | 'divider';
   value?: unknown;
   icon?: keyof typeof Icons;
   shortcut?: string;
@@ -64,7 +64,7 @@ export class BlockPopover {
       item.dataset.hasChildren = action.children ? 'true' : 'false';
       item.dataset.isSubmenuChild = isSubmenuChild ? 'true' : 'false';
       item.id = `pila-popover-item-${el.id}-${aId.toString()}`;
-      item.className = `pila-popover-item ${action.danger ? 'pila-popover-item--danger' : ''}`;
+      item.className = `pila-popover-item ${action.danger ? 'pila-popover-item--danger' : ''} ${action.type === 'divider' ? 'pila-popover-item--divider' : ''}`;
       
       const iconWrap = document.createElement('span');
       iconWrap.className = 'pila-popover-icon';
@@ -83,8 +83,11 @@ export class BlockPopover {
           circle.style.backgroundPosition = '0 0, 2px 2px';
         }
         iconWrap.appendChild(circle);
-      } else if (action.icon) {
-        iconWrap.appendChild(icon(Icons[action.icon], 16));
+      }
+      
+      if (action.icon) {
+        const _icon = Icons[action.icon] ? icon(Icons[action.icon], 16) : document.createTextNode(action.icon);
+        iconWrap.appendChild(_icon);
       }
       
       const label = document.createElement('span');
@@ -130,35 +133,37 @@ export class BlockPopover {
         item.appendChild(arrow);
       }
       
-      this.eventRegistry.on(item, 'mousedown', (e) => {
-        if (action.handler) {
-          e.preventDefault();
-          e.stopPropagation();
-          action.handler(toCustomEvent(e, action));
-          // Don't close if it's a special input or we want it to stay open
-          // But usually we close. For custom color inputs, we'll need to handle it.
-          if (!(e.target as HTMLElement).closest('.pila-custom-color-input')) {
-            this.close();
+      if (action.type !== 'divider') {
+        this.eventRegistry.on(item, 'mousedown', (e) => {
+          if (action.handler) {
+            e.preventDefault();
+            e.stopPropagation();
+            action.handler(toCustomEvent(e, action));
+            // Don't close if it's a special input or we want it to stay open
+            // But usually we close. For custom color inputs, we'll need to handle it.
+            if (!(e.target as HTMLElement).closest('.pila-custom-color-input')) {
+              this.close();
+            }
           }
-        }
-      });
+        });
 
-      this.eventRegistry.on(item, 'mouseenter', () => {
-        if (item.dataset.hasChildren !== 'true' && item.dataset.isSubmenuChild !== 'true') {
-          this.closeSubmenu();
-        }
-
-        if (item.dataset.hasChildren === 'true' && item.dataset.isSubmenuChild !== 'true') {
-          // Use a small delay for submenu opening to improve UX
-          return void requestAnimationFrame(() => {
+        this.eventRegistry.on(item, 'mouseenter', () => {
+          if (item.dataset.hasChildren !== 'true' && item.dataset.isSubmenuChild !== 'true') {
             this.closeSubmenu();
-            const rect = item.getBoundingClientRect();
-            this.openSubmenu(rect.right + 2, rect.top - 4, action.children!);
-          });
-        }
+          }
 
-      });
-      
+          if (item.dataset.hasChildren === 'true' && item.dataset.isSubmenuChild !== 'true') {
+            // Use a small delay for submenu opening to improve UX
+            return void requestAnimationFrame(() => {
+              this.closeSubmenu();
+              const rect = item.getBoundingClientRect();
+              this.openSubmenu(rect.right + 2, rect.top - 4, action.children!);
+            });
+          }
+
+        });
+      }
+
       el.appendChild(item);
     });
 

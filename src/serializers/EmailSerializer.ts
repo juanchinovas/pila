@@ -12,7 +12,7 @@
  *    so user theme overrides are automatically reflected in exported emails.
  */
 
-import { Block, BlockAttrs, InlineNode, TableRow } from '../types';
+import { Block, BlockAttrs, InlineNode, SerializerOptions, TableRow } from '../types';
 import { escapeHtml, escapeAttr, sanitizeHref, collectAdjacentLists } from './utils';
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ function inlineToHtml(nodes: InlineNode[], theme: Theme): string {
 function blockColorStyle(attrs?: BlockAttrs): string {
   const chunks: string[] = [];
   if (attrs?.background) chunks.push(`background:${attrs.background};`);
-  if (attrs?.textColor) chunks.push(`color:${attrs.textColor}`);
+  if (attrs?.textColor) chunks.push(`color:${attrs.textColor};`);
   if (attrs?.alignment) chunks.push(`text-align:${attrs.alignment};`);
   if (attrs?.objectFit) chunks.push(`object-fit:${attrs.objectFit};`);
   return chunks.join('');
@@ -217,7 +217,7 @@ function columnsToHtml(defs: BlockAttrs['columnDefs'], theme: Theme, attrs?: Blo
 
 function listToHtml(blocks: Block[], type: 'bulletList' | 'numberedList', theme: Theme): string {
   const [firstBlock] = blocks;
-  const base = `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;`;
+  const base = 'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;';
   const listTag = type === 'bulletList' ? 'ul' : 'ol';
   const listStyleType = type === 'bulletList' ? 'disc' : 'decimal';
   const items = blocks
@@ -233,7 +233,7 @@ function listToHtml(blocks: Block[], type: 'bulletList' | 'numberedList', theme:
 // ─── Block serializer ─────────────────────────────────────────────────────────
 
 function blockToHtml(block: Block, theme: Theme): string {
-  const BASE = `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;`;
+  const BASE = 'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;';
   const BLOCK_COLORS = blockColorStyle(block.attrs);
   const content = block.content ?? [];
 
@@ -256,7 +256,7 @@ function blockToHtml(block: Block, theme: Theme): string {
     case 'todo': {
       const checked = block.attrs?.checked;
       const box = checked ? '&#x2611;' : '&#x2610;'; // ☑ / ☐
-      const strike = checked ? `text-decoration:line-through;` : '';
+      const strike = checked ? 'text-decoration:line-through;' : '';
       return `<p style="${BASE}${BLOCK_COLORS}margin:0 0 8px;font-size:15px;line-height:1.6;">${box}&nbsp;<span style="${strike}">${inlineToHtml(content, theme)}</span></p>`;
     }
 
@@ -305,11 +305,24 @@ function blockToHtml(block: Block, theme: Theme): string {
     case 'image': {
       const src = sanitizeHref(block.attrs?.src ?? '');
       const alt = escapeAttr(block.attrs?.alt ?? '');
+      let styles = '';
+      if (block.attrs?.objectFit) styles += `object-fit:${block.attrs.objectFit};`;
+      if (block.attrs?.borderRadius) styles += `border-radius:${block.attrs.borderRadius};`;
+      if (block.attrs?.alignment) {
+        const align = block.attrs.alignment;
+        if (align === 'center') {
+          styles += 'display:block;margin:12px auto;';
+        } else if (align === 'right') {
+          styles += 'display:block;margin:12px 0 12px auto;';
+        } else {
+          styles += 'display:block;margin:12px 0 12px 0;';
+        }
+      }
       const width = block.attrs?.width
         ? ` width="${escapeAttr(block.attrs.width)}"`
         : ' style="max-width:100%;height:auto;"';
       const height = block.attrs?.height ? ` height="${escapeAttr(block.attrs.height)}"` : '';
-      return `<figure style="margin:12px 0;padding:0;${BLOCK_COLORS}"><img src="${escapeAttr(src)}" alt="${alt}"${width}${height} /></figure>`;
+      return `<figure style="margin:12px 0;padding:0;${BLOCK_COLORS}${styles}"><img src="${escapeAttr(src)}" alt="${alt}"${width}${height} style="${styles}"/></figure>`;
     }
 
     case 'table': {
@@ -325,12 +338,12 @@ function blockToHtml(block: Block, theme: Theme): string {
       const inner = rowBlocks.map((b) => blockToHtml(b, theme)).join('\n');
       const borderStyle = block.attrs?.borderStyle ?? 'none';
       const borderWidth = block.attrs?.borderWidth ?? '1px';
-      const borderColor = block.attrs?.borderColor ?? theme.border;
+      const borderColor = block.attrs?.borderColor ?? 'none';
       const borderRadius = block.attrs?.borderRadius ?? '0px';
-      const borderTop = block.attrs?.borderTop !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
-      const borderBottom = block.attrs?.borderBottom !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
-      const borderLeft = block.attrs?.borderLeft !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
-      const borderRight = block.attrs?.borderRight !== false ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+      const borderTop = block.attrs?.borderTop ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+      const borderBottom = block.attrs?.borderBottom ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+      const borderLeft = block.attrs?.borderLeft ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
+      const borderRight = block.attrs?.borderRight ? `${borderWidth} ${borderStyle} ${borderColor}` : 'none';
       const rowStyle = `border-top:${borderTop};border-bottom:${borderBottom};border-left:${borderLeft};border-right:${borderRight};border-radius:${borderRadius};padding:${borderStyle !== 'none' ? '8px' : '0'};margin:12px 0;${blockColorStyle(block.attrs)}`;
       return `<div style="${escapeAttr(rowStyle)}">${inner}</div>`;
     }
@@ -380,7 +393,7 @@ export class EmailSerializer {
    *
    * Pass `{ fullDocument: false }` to get only the inner body content (no document wrapper).
    */
-  static serialize(blocks: Block[], options?: { fullDocument?: boolean }): string {
+  static serialize(blocks: Block[], options?: Pick<SerializerOptions, 'fullDocument'>): string {
     const { fullDocument = true } = options ?? {};
     const body = EmailSerializer.serializeBody(blocks);
 

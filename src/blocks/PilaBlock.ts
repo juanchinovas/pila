@@ -136,7 +136,7 @@ export abstract class PilaBlock extends LitElement {
    * manage their own styling (code, table, image, button, columns, row).
    */
   get colorOptions(): boolean {
-    return false;
+    return true;
   }
 
   /**
@@ -354,6 +354,7 @@ export abstract class PilaBlock extends LitElement {
 
     const prevBlock = allBlocks[idx - 1];
     if (!prevBlock.content) {
+      console.log('Previous block has no content, deleting current block', prevBlock, this.block);
       this.ctx.manager.delete(this.block.id!);
       return;
     }

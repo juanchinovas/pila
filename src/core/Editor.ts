@@ -1,4 +1,4 @@
-import { Block, EditorEvents, EditorOptions } from '../types';
+import { Block, EditorEvents, EditorOptions, SerializerOptions } from '../types';
 import { BlockManager } from './BlockManager';
 import { PluginRegistry } from './PluginRegistry';
 import { PilaBlock, BlockContext } from '../blocks/PilaBlock';
@@ -144,14 +144,10 @@ export class PilaEditor {
     this.manager.removeAllListeners();
   }
 
-  getContent(format: 'json' | 'html' | 'markdown' | 'email', options?: { fullDocument?: boolean }): string {
+  getContent(format: 'json' | 'html' | 'markdown' | 'email', options?: SerializerOptions): string {
     const blocks = this.manager.getAll().map((block) => {
       const instance = this.blockInstances.get(block.id!);
-      const current = instance ? instance.getContent() : block;
-      if (format === 'html') {
-        return this.withObservedHtmlPresentationAttrs(current, instance);
-      }
-      return current;
+      return instance ? instance.getContent() : block;
     });
 
     switch (format) {
@@ -159,65 +155,6 @@ export class PilaEditor {
       case 'html':     return HtmlSerializer.serialize(blocks, options);
       case 'markdown': return MarkdownSerializer.serialize(blocks);
       case 'email':    return EmailSerializer.serialize(blocks, options);
-    }
-  }
-
-  // ─── Private ────────────────────────────────────────────────────────────────
-
-  private withObservedHtmlPresentationAttrs(block: Block, instance?: PilaBlock): Block {
-    if (!instance) return block;
-
-    const source = this.getHtmlPresentationSource(block.type, instance);
-    if (!source) return block;
-
-    const observedClass = (source.getAttribute('class') ?? '').trim();
-    const observedStyle = (source.getAttribute('style') ?? '').trim();
-    if (!observedClass && !observedStyle) return block;
-
-    const attrs = { ...(block.attrs ?? {}) };
-    if (!attrs.tailwindClasses && observedClass) {
-      attrs.tailwindClasses = observedClass;
-    }
-    if (!attrs.style && observedStyle) {
-      attrs.style = observedStyle;
-    }
-
-    return { ...block, attrs };
-  }
-
-  private getHtmlPresentationSource(type: string, instance: PilaBlock): HTMLElement | null {
-    switch (type) {
-      case 'paragraph':
-        return instance.querySelector('p[contenteditable]');
-      case 'heading1':
-      case 'heading2':
-      case 'heading3':
-        return instance.querySelector('h1[contenteditable], h2[contenteditable], h3[contenteditable]');
-      case 'bulletList':
-      case 'numberedList':
-        return instance.querySelector('li[contenteditable]') ?? instance;
-      case 'todo':
-        return instance.querySelector('span[contenteditable]') ?? instance;
-      case 'code':
-        return instance;
-      case 'quote':
-        return instance.querySelector('blockquote[contenteditable]') ?? instance;
-      case 'callout':
-        return instance;
-      case 'divider':
-        return instance.querySelector('.pila-divider-line') ?? instance;
-      case 'image':
-        return instance.querySelector('figure') ?? instance;
-      case 'table':
-        return instance.querySelector('table') ?? instance;
-      case 'columns':
-        return instance.querySelector('.pila-columns') ?? instance;
-      case 'row':
-        return instance.querySelector('.pila-row-block') ?? instance;
-      case 'button':
-        return instance.querySelector('a.pila-button') ?? instance;
-      default:
-        return instance;
     }
   }
 
