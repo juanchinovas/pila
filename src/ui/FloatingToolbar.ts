@@ -287,7 +287,7 @@ export class FloatingToolbar {
 
   private handleSelectionChange(): void {
     if (this.isLinkMode) return;
-
+    
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || !sel.rangeCount) {
       this.hide();
@@ -311,7 +311,6 @@ export class FloatingToolbar {
     const node = range.commonAncestorContainer;
     const el = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     this.focusedBlockId = el?.closest('.pila-block')?.getAttribute('data-block-id') ?? null;
-
     this.show(rect);
     this.refreshActiveState();
   }

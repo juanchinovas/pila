@@ -20,21 +20,21 @@ export interface TableCell {
   color?: string
   width?: string
   /** If set, this cell is hidden/covered by the master cell at (row, col) in a merge. */
-  mergedTo?: { row: number; col: number }
+  mergedTo?: { row: number; col: number };
 }
 
 export interface TableRow {
-  cells: TableCell[]
+  cells: TableCell[];
 }
 
 // ─── Columns ─────────────────────────────────────────────────────────────────
 
 export interface ColumnDef {
   /** flex-grow factor controlling column width relative to siblings. Default: 1 (equal). */
-  width?: number
-  blocks: Block[]
-  background?: string
-  color?: string
+  width?: number;
+  blocks: Block[];
+  background?: string;
+  color?: string;
 }
 
 // ─── Emoji Plugin Surface ───────────────────────────────────────────────────

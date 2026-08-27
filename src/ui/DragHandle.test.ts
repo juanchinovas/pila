@@ -9,6 +9,10 @@ function createEditorAndBlock(blockId: string, text: string): { editorEl: HTMLEl
   const blockEl = document.createElement('div');
   blockEl.className = 'pila-block';
   blockEl.setAttribute('data-block-id', blockId);
+  // @ts-expect-error protected function needed to test
+  blockEl.getPopoverActions = () => [];
+    // @ts-expect-error protected function needed to test
+  blockEl.colorOptions = true;
 
   const editable = document.createElement('p');
   editable.setAttribute('contenteditable', 'true');
@@ -165,11 +169,11 @@ describe('DragHandle color update content flush', () => {
 
     const secondPopover = openActionsMenu(blockEl);
     const textColorMenu = await openSubmenu(secondPopover, 'Text Color');
-    chooseColor(textColorMenu, 'Default');
+    chooseColor(textColorMenu, 'Black');
 
     const updated = manager.getById(blockId);
     expect(updated?.content).toEqual([{ text: 'Defaults' }]);
-    expect(updated?.attrs).toBeUndefined();
+    expect(updated?.attrs).toEqual({ background: 'transparent', textColor: '#1a1a1a' });
 
     handle.destroy();
     editorEl.remove();

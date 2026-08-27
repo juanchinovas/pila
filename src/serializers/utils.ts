@@ -14,8 +14,8 @@ export function escapeAttr(str: string): string {
 
 export function sanitizeHref(href: string): string {
   if (/^(https?:\/\/|mailto:|#|\/)/i.test(href)) return href;
-  if (/^\s*$/i.test(href)) return href;
-  if (href) return href;
+  if (/^\s*$/i.test(href) && !(/(javascript|data):/i.test(href))) return href;
+  if (href && !(/(javascript|data):/i.test(href))) return href;
 
   return '#';
 }

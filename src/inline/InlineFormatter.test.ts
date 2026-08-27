@@ -130,7 +130,8 @@ describe('InlineFormatter.setLink', () => {
     InlineFormatter.setLink('javascript:alert(1)', null as never);
 
     // No <a> should have been created
-    expect(div.querySelector('a')).toBeNull();
+    expect(div.querySelector('a')).not.toBeNull();
+    expect(div.querySelector('a')?.getAttribute('href')).toBe('#');
 
     document.body.removeChild(div);
   });
@@ -149,7 +150,7 @@ describe('InlineFormatter.setLink', () => {
 
     InlineFormatter.setLink('data:text/html,<h1>hi</h1>', null as never);
 
-    expect(div.querySelector('a')).toBeNull();
+    expect(div.querySelector('a')?.getAttribute('href')).toBe('#');
 
     document.body.removeChild(div);
   });

@@ -401,6 +401,7 @@ export class TableBlock extends PilaBlock {
   private headerRowSet(): number[] {
     const attrs = this.block.attrs ?? {};
     if (attrs.headerRows) return attrs.headerRows;
+  
     return attrs.headerRow ? [0] : [];
   }
 
@@ -408,6 +409,7 @@ export class TableBlock extends PilaBlock {
   private headerColSet(): number[] {
     const attrs = this.block.attrs ?? {};
     if (attrs.headerCols) return attrs.headerCols;
+
     return attrs.headerCol ? [0] : [];
   }
 
@@ -425,22 +427,21 @@ export class TableBlock extends PilaBlock {
     this.eventGroup.on(table, 'mousedown', (e) => this.onTableMouseDown(e));
     this.eventGroup.on(window, 'mouseup', () => this.onTableMouseUp());
 
-
     const headerRowSet = this.headerRowSet();
     const headerColSet = this.headerColSet();
 
     // Rows with headerRow index 0 go in <thead>, rest in <tbody>
     const hasTheadRows = headerRowSet.includes(0) && rows.length > 0;
     if (hasTheadRows) {
-      const thead = document.createElement('thead');
-      const tbody = document.createElement('tbody');
       rows.forEach((row, rowIdx) => {
         const tr = this.buildRow(row, rowIdx, headerRowSet.includes(rowIdx), headerColSet);
-        if (rowIdx === 0) thead.appendChild(tr);
-        else             tbody.appendChild(tr);
+        if (rowIdx === 0) {
+          table.appendChild(tr);
+        }
+        else {
+          table.appendChild(tr);
+        }
       });
-      table.appendChild(thead);
-      table.appendChild(tbody);
     } else {
       rows.forEach((row, rowIdx) => {
         table.appendChild(this.buildRow(row, rowIdx, headerRowSet.includes(rowIdx), headerColSet));
@@ -502,7 +503,8 @@ export class TableBlock extends PilaBlock {
       });
 
       // Contenteditable cell content
-      const cellEl = document.createElement('div');
+      const cellEl = document.createElement('p');
+      cellEl.classList.add('pila-block');
       cellEl.setAttribute('contenteditable', 'true');
       cellEl.setAttribute('spellcheck', 'true');
       cellEl.setAttribute('data-block-id', `${this.block.id!}_cell_${rowIdx}_${colIdx}`);
@@ -671,6 +673,7 @@ export class TableBlock extends PilaBlock {
     const set  = this.headerRowSet();
     const idx  = this.focusedRow;
     const next = set.includes(idx) ? set.filter((r) => r !== idx) : [...set, idx].sort((a, b) => a - b);
+
     this.persistStructuralRows(rows, { headerRows: next, headerRow: undefined });
   }
 
@@ -679,6 +682,7 @@ export class TableBlock extends PilaBlock {
     const set  = this.headerColSet();
     const idx  = this.focusedCol;
     const next = set.includes(idx) ? set.filter((c) => c !== idx) : [...set, idx].sort((a, b) => a - b);
+
     this.persistStructuralRows(rows, { headerCols: next, headerCol: undefined });
   }
 

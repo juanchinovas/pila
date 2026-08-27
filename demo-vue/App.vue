@@ -145,11 +145,11 @@ const initialContent: Block[] = [
   { type: 'divider' },
 
   { type: 'heading2', content: [{ text: '8. Table Block' }] },
-  { type: 'table', attrs: { rows: [
+  { type: 'table', attrs: { headerRows: [0], rows: [
     { cells: [
-      { content: [{ text: 'Feature', bold: true }], background: '#f0f4f8' },
-      { content: [{ text: 'Status', bold: true }], background: '#f0f4f8' },
-      { content: [{ text: 'Notes', bold: true }], background: '#f0f4f8' },
+      { content: [{ text: 'Feature' }] },
+      { content: [{ text: 'Status' }] },
+      { content: [{ text: 'Notes' }] },
     ]},
     { cells: [
       { content: [{ text: 'Drag & Drop Reordering' }] },
@@ -308,10 +308,10 @@ const initialContent: Block[] = [
   { type: 'divider' },
 
   { type: 'heading2', content: [{ text: '15. Keyboard Shortcuts' }] },
-  { type: 'table', attrs: { rows: [
+  { type: 'table', attrs: { headerRows: [0], rows: [
     { cells: [
-      { content: [{ text: 'Shortcut', bold: true }], background: '#f0f4f8' },
-      { content: [{ text: 'Action', bold: true }], background: '#f0f4f8' },
+      { content: [{ text: 'Shortcut' }] },
+      { content: [{ text: 'Action' }] },
     ]},
     { cells: [
       { content: [{ text: '/' }] },
@@ -370,7 +370,7 @@ const initialContent: Block[] = [
   {
     "id": "n6mu4f6hmrnya6jm",
     "type": "row",
-    "content": [],
+    "content": [{ text: '16. Events & Plugin API' }],
     "attrs": {
       "rowBlocks": [],
       "borderTop": false,

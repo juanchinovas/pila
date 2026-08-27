@@ -8,9 +8,9 @@ export type Disposable =
 
 // 2. Target + Event + Listener tuple for manual registration
 export type EventListenerTuple = [
-  target: { off?(event: string, fn: Function): void; removeEventListener?(type: string, fn: Function): void },
+  target: { off?(event: string, fn: () => void): void; removeEventListener?(type: string, fn: () => void): void },
   event: keyof HTMLElementEventMap | keyof EditorEvents | string,
-  listener: Function
+  listener: () => void
 ];
 
 export type Unsubscribable = Disposable | EventListenerTuple;
@@ -57,15 +57,15 @@ export class EventRegistry {
   }
 
   // .on() delegates to .register() behind the scenes!
-  public on(target: any, type: string, listener: (...args: any[]) => void, options?: any): () => void {
+  public on(target: any, type: string, listener: (...args: any) => void, options?:  boolean | EventListenerOptions): () => void {
     if ('addEventListener' in target) {
       target.addEventListener(type, listener, options);
       return this.register(() => target.removeEventListener(type, listener, options));
     }
 
     if ('on' in target && 'off' in target) {
-      target.on(type, listener);
-      return this.register(() => target.off(type, listener));
+      (target as any).on(type, listener);
+      return this.register(() => (target as any).off(type, listener));
     }
 
     throw new TypeError('Unsupported target type passed to .on()');

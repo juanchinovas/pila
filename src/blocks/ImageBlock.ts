@@ -18,9 +18,9 @@ export class ImageBlock extends PilaBlock {
     // position:relative on the wrapper lets the overlay be positioned inside
     this.classList.add('!my-5');
     this.figure = document.createElement('figure');
-    this.figure.className = 'relative inline-block max-w-full mt-5';
+    this.figure.className = 'relative max-w-full';
     // display:table enables margin:auto centering
-    this.figure.style.cssText = 'display: table; margin: 4px 0; margin-right: auto;';
+    this.figure.style.cssText = 'margin: 4px 0; margin-right: auto;';
 
     // ── Image ─────────────────────────────────────────────────────────────
     this.img = document.createElement('img');
@@ -63,7 +63,7 @@ export class ImageBlock extends PilaBlock {
     this.caption.setAttribute('contenteditable', 'true');
     // keep pila-image-caption for :empty::before CSS
     this.caption.className =
-      'pila-image-caption mt-[6px] text-[0.85rem] text-[color:var(--pila-muted)] ' +
+      'pila-image-caption text-[0.85rem] text-[color:var(--pila-muted)] ' +
       'text-center outline-none whitespace-pre-wrap';
     this.caption.textContent = this.block.attrs?.alt ?? '';
     this.eventGroup.on(this.caption, 'input', () => {
@@ -166,7 +166,7 @@ export class ImageBlock extends PilaBlock {
     if (!this.propsPopover) {
       this.propsPopover = new ImagePropsPopover(this.ctx.portalTo);
     }
-    console.log('Opening ImagePropsPopover at:', x, y, 'with attrs:', this.block.attrs);
+  
     const result = await this.propsPopover.open(x, y, this.block.attrs ?? {});
 
     if (result === null) return;

@@ -59,7 +59,7 @@ const THEME_DEFAULTS: Theme = {
   calloutTipBorder: '#9333ea',
 };
 
-function readCssVar(name: string, fallback: string): string {
+function readCssVar(name: string, fallback: string = ''): string {
   if (typeof document !== 'undefined') {
     const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     if (val) return val;
@@ -291,7 +291,7 @@ function blockToHtml(block: Block, theme: Theme): string {
       const fgStyle = fg ? `color:${fg};` : '';
       return (
         '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" ' +
-        `style="margin:12px 0;background:${bg};border-left:4px solid ${colors.border};border-radius:0 6px 6px 0;">` +
+        `style="margin:12px 0;background:${bg};border-left:4px solid ${colors.border};border-radius:6px;border-collapse:separate;">` +
         '<tr>' +
         `<td style="padding:12px 16px;font-size:18px;vertical-align:top;width:28px;${fgStyle}">${icon}</td>` +
         `<td style="${BASE}padding:12px 16px 12px 0;font-size:15px;line-height:1.6;vertical-align:top;${fgStyle}">${inlineToHtml(content, theme)}</td>` +
@@ -300,7 +300,7 @@ function blockToHtml(block: Block, theme: Theme): string {
     }
 
     case 'divider':
-      return `<hr style="border:none;border-top:1px solid ${theme.border};margin:20px 0;" />`;
+      return `<hr style="height:1px;border:none;margin:20px 0;border-radius:6px;outline:2px solid transparent;outline-offset:2px;background:linear-gradient(to right,transparent 0%,${readCssVar('--pila-border')} 20%,${readCssVar('--pila-border')} 80%,transparent 100%);" />`;
 
     case 'image': {
       const src = sanitizeHref(block.attrs?.src ?? '');
@@ -311,18 +311,25 @@ function blockToHtml(block: Block, theme: Theme): string {
       if (block.attrs?.alignment) {
         const align = block.attrs.alignment;
         if (align === 'center') {
-          styles += 'display:block;margin:12px auto;';
+          styles += 'display:block;margin:0 auto;';
         } else if (align === 'right') {
-          styles += 'display:block;margin:12px 0 12px auto;';
+          styles += 'display:block;margin:12px 0 0 auto;';
         } else {
-          styles += 'display:block;margin:12px 0 12px 0;';
+          styles += 'display:block;margin:12px 0 0 0;';
         }
       }
       const width = block.attrs?.width
-        ? ` width="${escapeAttr(block.attrs.width)}"`
-        : ' style="max-width:100%;height:auto;"';
-      const height = block.attrs?.height ? ` height="${escapeAttr(block.attrs.height)}"` : '';
-      return `<figure style="margin:12px 0;padding:0;${BLOCK_COLORS}${styles}"><img src="${escapeAttr(src)}" alt="${alt}"${width}${height} style="${styles}"/></figure>`;
+        ? `width:${escapeAttr(block.attrs.width)};`
+        : 'max-width:100%;';
+      const height = block.attrs?.height
+        ? `height:${escapeAttr(block.attrs.height)};`
+        : 'height:auto;';
+      const caption = alt ? `<figcaption style="text-align:${block.attrs?.alignment ?? 'left'};font-size:0.85rem;color:var(--pila-muted);">${alt}</figcaption>` : '';
+      
+      return `<figure style="margin:12px 0;padding:0;${BLOCK_COLORS}${styles}">
+        <img src="${escapeAttr(src)}" alt="${alt}" style="${styles}${width}${height}"/>
+        ${caption}
+      </figure>`;
     }
 
     case 'table': {

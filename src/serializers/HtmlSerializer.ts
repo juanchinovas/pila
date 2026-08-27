@@ -269,12 +269,21 @@ export class HtmlSerializer {
       case 'image': {
         const src = sanitizeHref(block.attrs?.src ?? '');
         const alt = escapeAttr(block.attrs?.alt ?? '');
-        const width = block.attrs?.width ? ` width="${escapeAttr(block.attrs.width)}"` : '';
-        const height = block.attrs?.height ? ` height="${escapeAttr(block.attrs.height)}"` : '';
+        const width = block.attrs?.width
+        ? `width:${escapeAttr(block.attrs.width)};`
+        : 'max-width:100%;';
+      const height = block.attrs?.height
+        ? `height:${escapeAttr(block.attrs.height)};`
+        : 'height:auto;';
         const figureClassAttr = classAttr(block.attrs?.tailwindClasses);
         const figureStyleAttr = imageFigureStyleAttr(block.attrs);
-        const imgStyleAttr = imageImgStyleAttr(block.attrs);
-        return `<figure${figureClassAttr}${figureStyleAttr}><img src="${escapeAttr(src)}" alt="${alt}"${width}${height}${imgStyleAttr}/></figure>`;
+        const imgStyleAttr = imageImgStyleAttr(block.attrs).replace(/"$/, ';');
+        const caption = alt ? `<figcaption style="text-align:${block.attrs?.alignment ?? 'left'};font-size:0.85rem;color:var(--pila-muted);">${alt}</figcaption>` : '';
+        
+        return `<figure${figureClassAttr}${figureStyleAttr}>
+          <img src="${escapeAttr(src)}" alt="${alt}" ${imgStyleAttr}${width}${height}"/>
+          ${caption}
+        </figure>`;
       }
       case 'table': {
         const rows = block.attrs?.rows ?? [];

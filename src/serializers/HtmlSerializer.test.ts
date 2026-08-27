@@ -202,7 +202,6 @@ describe('HtmlSerializer', () => {
       {
         id: '1',
         type: 'paragraph',
-         
         content: [{ text: 'evil', link: 'javascript:alert(1)' }],
       },
     ]);
@@ -241,8 +240,9 @@ describe('HtmlSerializer', () => {
         attrs: { src: 'https://example.com/img.png', alt: '', width: '400px', height: '200px' },
       },
     ]);
-    expect(html).toContain('width="400px"');
-    expect(html).toContain('height="200px"');
+    // width and height are serialized as inline styles on the img element
+    expect(html).toContain('width:400px');
+    expect(html).toContain('height:200px');
   });
 
   it('omits width/height attributes when not set', () => {
@@ -436,8 +436,9 @@ describe('HtmlSerializer', () => {
         },
       },
     ]);
-    expect(html).toContain('<figure style="margin-left:auto;margin-right:auto">');
-    expect(html).toContain('style="object-fit:cover;border-radius:12px"');
+    // Figure gets alignment styles, img gets object-fit, border-radius, and alignment
+    expect(html).toContain('<figure style="object-fit:cover;margin-left:auto;margin-right:auto">');
+    expect(html).toContain('object-fit:cover;border-radius:12px;margin-left:auto;margin-right:auto');
   });
 
   it('serializes block background/text colors for special block wrappers', () => {

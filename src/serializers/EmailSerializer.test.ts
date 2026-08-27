@@ -105,7 +105,7 @@ describe('EmailSerializer', () => {
       { id: '3', type: 'numberedList', content: [{ text: 'third' }] },
     ]);
     expect(html.match(/<ol /g)).toHaveLength(1);
-    expect(html).toContain('<li style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;color:#1a1a1a;display:list-item;font-size:15px;line-height:1.6;">first</li><li style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;color:#1a1a1a;display:list-item;font-size:15px;line-height:1.6;">second</li><li style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;color:#1a1a1a;display:list-item;font-size:15px;line-height:1.6;">third</li>');
+    expect(html).toContain('<li style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;display:list-item;font-size:15px;line-height:1.6;">first</li><li style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;display:list-item;font-size:15px;line-height:1.6;">second</li><li style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;display:list-item;font-size:15px;line-height:1.6;">third</li>');
   });
 
   it('renders unchecked todo with ☐ character', () => {
