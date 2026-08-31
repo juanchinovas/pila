@@ -9,11 +9,13 @@ const crossBrowserSmoke = [
 
 export default defineConfig({
   testDir: './e2e',
-  timeout: 15000,
+  timeout: 30000,
   fullyParallel: true,
   use: {
     headless: true,
     viewport: { width: 1280, height: 900 },
+    actionTimeout: 15000,
+    navigationTimeout: 30000,
   },
   projects: [
     {

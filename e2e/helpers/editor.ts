@@ -3,7 +3,7 @@ import { expect, Page } from '@playwright/test'
 const MAIN_EDITOR_BLOCKS = '#editor .pila-editor > .pila-block'
 
 export async function waitForEditor(page: Page): Promise<void> {
-  await page.goto('/')
+  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30000 })
   await page.waitForSelector(`${MAIN_EDITOR_BLOCKS}:nth-child(3)`)
 }
 

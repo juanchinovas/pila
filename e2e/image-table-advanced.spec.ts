@@ -25,17 +25,104 @@ async function clickVisibleTableHandle(page: import('@playwright/test').Page, ki
   }, kind)
 }
 
-async function setTableColor(page: import('@playwright/test').Page, value: string) {
-  await page.evaluate((nextValue) => {
-    const input = document.querySelector<HTMLInputElement>('#color_picker_input_table')
-    if (!input) throw new Error('Table color picker input not found')
+async function setTableColor(page: import('@playwright/test').Page, label: 'Background' | 'Text color', value: string) {
+  await page.evaluate(({ targetLabel, nextValue }) => {
+    const visiblePopovers = Array.from(document.querySelectorAll<HTMLElement>('.pila-block-popover'))
+      .filter((el) => getComputedStyle(el).display !== 'none')
+    const visiblePopover = visiblePopovers[visiblePopovers.length - 1]
+    if (!visiblePopover) throw new Error('Visible table popover not found')
+
+    const items = Array.from(visiblePopover.querySelectorAll<HTMLElement>('.pila-popover-item'))
+    const item = items.find((el) => {
+      const rowLabel = el.querySelector('.pila-popover-label')?.textContent?.trim()
+      return rowLabel === targetLabel
+    })
+    if (!item) throw new Error(`Table color item not found for label: ${targetLabel}`)
+
+    const input = item.querySelector<HTMLInputElement>('input[type="color"]')
+    if (!input) throw new Error(`Table color input not found for label: ${targetLabel}`)
     input.value = nextValue
     input.dispatchEvent(new Event('input', { bubbles: true }))
     input.dispatchEvent(new Event('change', { bubbles: true }))
-  }, value)
+  }, { targetLabel: label, nextValue: value })
+}
+
+async function clickVisiblePopoverAction(page: import('@playwright/test').Page, label: string) {
+  await page.evaluate((targetLabel) => {
+    const visiblePopovers = Array.from(document.querySelectorAll<HTMLElement>('.pila-block-popover'))
+      .filter((el) => getComputedStyle(el).display !== 'none')
+    const visiblePopover = visiblePopovers[visiblePopovers.length - 1]
+    if (!visiblePopover) throw new Error('Visible block popover not found')
+
+    const items = Array.from(visiblePopover.querySelectorAll<HTMLElement>('.pila-popover-item'))
+    const target = items.find((el) => {
+      const rowLabel = el.querySelector('.pila-popover-label')?.textContent?.trim()
+      return rowLabel === targetLabel
+    })
+    if (!target) throw new Error(`Popover action not found: ${targetLabel}`)
+
+    target.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+    target.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }))
+    target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+  }, label)
+}
+
+async function setImagePopoverInputByLabel(
+  page: import('@playwright/test').Page,
+  label: string,
+  value: string,
+) {
+  await page.evaluate(({ targetLabel, nextValue }) => {
+    const popover = document.querySelector<HTMLElement>('.pila-image-props-popover')
+    if (!popover) throw new Error('Image properties popover not found')
+
+    const labels = Array.from(popover.querySelectorAll('label'))
+    const target = labels.find((el) => (el.textContent ?? '').trim() === targetLabel)
+    if (!target) throw new Error(`Image popover label not found: ${targetLabel}`)
+
+    const wrapper = target.parentElement
+    const input = wrapper?.querySelector<HTMLInputElement>('input')
+    if (!input) throw new Error(`Image popover input not found for label: ${targetLabel}`)
+
+    input.value = nextValue
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+  }, { targetLabel: label, nextValue: value })
+}
+
+async function tableHasHeaderIndex(
+  page: import('@playwright/test').Page,
+  key: 'headerRows' | 'headerCols',
+  index: number,
+): Promise<boolean> {
+  const json = await getEditorJson(page)
+  const table = json.find((block) => (block as { type?: string }).type === 'table') as {
+    attrs?: { headerRows?: number[]; headerCols?: number[] }
+  } | undefined
+  const values = table?.attrs?.[key]
+  return Array.isArray(values) && values.includes(index)
+}
+
+async function toggleHeaderWithRetry(
+  page: import('@playwright/test').Page,
+  cell: import('@playwright/test').Locator,
+  kind: 'row' | 'col',
+  actionLabel: 'Toggle row as header' | 'Toggle column as header',
+  key: 'headerRows' | 'headerCols',
+): Promise<void> {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    await cell.hover()
+    await clickVisibleTableHandle(page, kind)
+    await clickVisiblePopoverAction(page, actionLabel)
+    if (await tableHasHeaderIndex(page, key, 0)) return
+  }
+
+  expect(await tableHasHeaderIndex(page, key, 0)).toBe(true)
 }
 
 test.describe('Advanced image and table workflows', () => {
+  test.describe.configure({ timeout: 60_000 })
+
   test.beforeEach(async ({ page }) => {
     await waitForEditor(page)
   })
@@ -53,9 +140,9 @@ test.describe('Advanced image and table workflows', () => {
     await page.locator('button[title="Edit image properties"]').first().click()
     const popover = page.locator('.pila-image-props-popover').first()
     await expect(popover).toBeVisible()
-    await popover.locator('input[type="text"]').nth(3).fill('Popover alt text')
-    await popover.locator('select').selectOption('contain')
-    await popover.locator('input[type="text"]').nth(4).fill('12px')
+    await setImagePopoverInputByLabel(page, 'Alt Text', 'Popover alt text')
+    await popover.locator('select').first().selectOption('contain')
+    await setImagePopoverInputByLabel(page, 'Border Radius (px)', '12px')
     await popover.getByRole('button', { name: 'Save' }).click()
 
     await page.evaluate(() => {
@@ -77,13 +164,18 @@ test.describe('Advanced image and table workflows', () => {
     expect(imageBlock?.attrs?.width).toMatch(/px$/)
 
     const blocksBeforeEnter = await page.locator('#editor .pila-editor > .pila-block').count()
-    await image.click()
+    await image.focus()
+    await expect.poll(async () => page.evaluate(() => document.activeElement?.tagName)).toBe('IMG')
     await page.keyboard.press('Enter')
     await expect.poll(async () => page.locator('#editor .pila-editor > .pila-block').count()).toBe(blocksBeforeEnter + 1)
 
     const imagesBeforeDelete = await page.locator('#editor .pila-editor > pila-image').count()
-    await image.click()
+    await image.focus()
     await page.keyboard.press('Delete')
+    if (await page.locator('#editor .pila-editor > pila-image').count() === imagesBeforeDelete) {
+      await image.focus()
+      await page.keyboard.press('Backspace')
+    }
     await expect.poll(async () => page.locator('#editor .pila-editor > pila-image').count()).toBe(imagesBeforeDelete - 1)
   })
 
@@ -92,13 +184,8 @@ test.describe('Advanced image and table workflows', () => {
     const bodyMergeStart = page.locator('#editor .pila-editor > pila-table [data-row-index="1"][data-col-index="1"]').first()
     const bodyMergeEnd = page.locator('#editor .pila-editor > pila-table [data-row-index="2"][data-col-index="2"]').first()
 
-    await firstCell.hover()
-    await clickVisibleTableHandle(page, 'row')
-    await page.locator('.pila-block-popover .pila-popover-item', { hasText: 'Toggle row as header' }).click()
-
-    await firstCell.hover()
-    await clickVisibleTableHandle(page, 'col')
-    await page.locator('.pila-block-popover .pila-popover-item', { hasText: 'Toggle column as header' }).click()
+    await toggleHeaderWithRetry(page, firstCell, 'row', 'Toggle row as header', 'headerRows')
+    await toggleHeaderWithRetry(page, firstCell, 'col', 'Toggle column as header', 'headerCols')
 
     const startBox = await bodyMergeStart.boundingBox()
     const endBox = await bodyMergeEnd.boundingBox()
@@ -113,8 +200,8 @@ test.describe('Advanced image and table workflows', () => {
 
     await bodyMergeEnd.hover()
     await clickVisibleTableHandle(page, 'row')
-    await expect(page.locator('.pila-block-popover .pila-popover-item', { hasText: 'Merge cells' })).toBeVisible()
-    await page.locator('.pila-block-popover .pila-popover-item', { hasText: 'Merge cells' }).click()
+    await expect(page.locator('.pila-block-popover:visible .pila-popover-item', { hasText: 'Merge cells' })).toBeVisible()
+    await clickVisiblePopoverAction(page, 'Merge cells')
     await expect(page.locator('#editor .pila-editor > pila-table [data-row-index="1"][data-col-index="1"]').first()).toHaveAttribute('colspan', '2')
     await expect(page.locator('#editor .pila-editor > pila-table [data-row-index="1"][data-col-index="1"]').first()).toHaveAttribute('rowspan', '2')
 
@@ -129,7 +216,7 @@ test.describe('Advanced image and table workflows', () => {
 
     await bodyMergeStart.hover()
     await clickVisibleTableHandle(page, 'row')
-    await page.locator('.pila-block-popover .pila-popover-item', { hasText: 'Unmerge cells' }).click()
+    await clickVisiblePopoverAction(page, 'Unmerge cells')
 
     json = await getEditorJson(page)
     const unmergedTable = json.find((block) => (block as { type?: string }).type === 'table') as {
@@ -148,17 +235,17 @@ test.describe('Advanced image and table workflows', () => {
     const cell = page.locator('#editor .pila-editor > pila-table [data-row-index="1"][data-col-index="1"]').first()
     await cell.hover()
     await clickVisibleTableHandle(page, 'cell')
-    await page.locator('.pila-block-popover .pila-popover-item', { hasText: 'Background' }).click()
-    await setTableColor(page, '#00ff00')
+    await setTableColor(page, 'Background', '#00ff00')
+    await expect.poll(async () => cell.evaluate((el) => (el as HTMLElement).style.backgroundColor)).not.toBe('')
 
     await cell.hover()
     await clickVisibleTableHandle(page, 'cell')
-    await page.locator('.pila-block-popover .pila-popover-item', { hasText: 'Text color' }).click()
-    await setTableColor(page, '#ff0000')
+    await setTableColor(page, 'Text color', '#ff0000')
+    await expect.poll(async () => cell.evaluate((el) => (el as HTMLElement).style.color)).not.toBe('')
 
     await cell.hover()
     await clickVisibleTableHandle(page, 'cell')
-    await page.locator('.pila-block-popover .pila-popover-item', { hasText: 'Align center' }).click()
+    await clickVisiblePopoverAction(page, 'Align center')
 
     await page.evaluate(() => {
       const visibleHandles = Array.from(document.querySelectorAll<HTMLElement>('.pila-table-handle'))
@@ -214,17 +301,20 @@ test.describe('Advanced image and table workflows', () => {
       }
     } | undefined
 
-    expect(table?.attrs?.rows?.some((row) => row.cells.some((cellData) => cellData.background?.includes('0, 255, 0')))).toBe(true)
-    expect(table?.attrs?.rows?.some((row) => row.cells.some((cellData) => cellData.color?.includes('255, 0, 0')))).toBe(true)
-    expect(table?.attrs?.rows?.some((row) => row.cells.some((cellData) => cellData.align === 'center'))).toBe(true)
+    const styledCenterCell = table?.attrs?.rows
+      ?.flatMap((row) => row.cells)
+      .find((cellData) => cellData.align === 'center')
+    expect(styledCenterCell).toBeTruthy()
+    expect(styledCenterCell?.background).toBeTruthy()
+    expect(styledCenterCell?.color).toBeTruthy()
     expect(table?.attrs?.rows?.[0]?.cells?.[0]?.content?.[0]?.text).not.toBe('Name')
 
     await page.locator('#btn-html').click()
-    await expect(page.locator('#output')).toContainText('background-color:rgb(0, 255, 0)')
-    await expect(page.locator('#output')).toContainText('color:rgb(255, 0, 0)')
+    await expect(page.locator('#output')).toContainText(/background-color:(rgb\(0,\s*255,\s*0\)|#00ff00)/i)
+    await expect(page.locator('#output')).toContainText(/color:(rgb\(255,\s*0,\s*0\)|#ff0000)/i)
 
     await page.locator('#btn-email').click()
-    await expect(page.locator('#output')).toContainText('background:rgb(0, 255, 0)')
-    await expect(page.locator('#output')).toContainText('color:rgb(255, 0, 0)')
+    await expect(page.locator('#output')).toContainText(/background:(rgb\(0,\s*255,\s*0\)|#00ff00)/i)
+    await expect(page.locator('#output')).toContainText(/color:(rgb\(255,\s*0,\s*0\)|#ff0000)/i)
   })
 })

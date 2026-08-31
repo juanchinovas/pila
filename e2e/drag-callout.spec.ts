@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { waitForEditor } from './helpers/editor';
 
 async function getBlockIds(page: Page): Promise<string[]> {
   return page.evaluate(() =>
@@ -81,7 +82,7 @@ async function nativeDrag(page: Page, fromX: number, fromY: number, toX: number,
 
 test.describe('Callout block drag and drop', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await waitForEditor(page);
     await page.waitForSelector('.pila-editor > .pila-block:nth-child(10)');
   });
 
@@ -125,7 +126,7 @@ test.describe('Callout block drag and drop', () => {
 
 test.describe('Native mouse drag - callout', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await waitForEditor(page);
     await page.waitForSelector('.pila-editor > .pila-block:nth-child(10)');
   });
 

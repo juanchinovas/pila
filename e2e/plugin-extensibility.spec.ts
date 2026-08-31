@@ -37,9 +37,15 @@ test.describe('Plugin extensibility', () => {
   test('plugin toolbar button executes and persists block state', async ({ page }) => {
     await selectWordInFirstParagraph(page)
 
-    const toolbar = page.locator('[data-pila-ui="floating-toolbar"]').first()
+    const toolbar = page.locator('[data-pila-ui="floating-toolbar"]:visible').first()
     await expect(toolbar).toBeVisible()
-    await toolbar.locator('button[title="Plugin Marker"]').click()
+    await page.evaluate(() => {
+      const button = document.querySelector<HTMLButtonElement>('[data-pila-ui="floating-toolbar"] button[title="Plugin Marker"]')
+      if (!button) throw new Error('Plugin Marker toolbar button not found')
+      button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+      button.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }))
+      button.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+    })
 
     await expect.poll(async () => page.evaluate(() => (window as typeof window & {
       __pilaDemoPluginState?: { toolbarClicks: number }

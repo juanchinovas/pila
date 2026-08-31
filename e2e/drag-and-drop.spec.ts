@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test'
+import { waitForEditor } from './helpers/editor'
 
 /**
  * Simulate a real HTML5 drag from a source element to a target element.
@@ -79,9 +80,7 @@ async function blockIds(page: Page): Promise<string[]> {
 
 test.describe('Drag and drop blocks', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-    // Wait for the editor and at least 3 blocks to be rendered
-    await page.waitForSelector('.pila-editor > .pila-block:nth-child(3)')
+    await waitForEditor(page)
   })
 
   test('drag-handle element is appended to body', async ({ page }) => {
