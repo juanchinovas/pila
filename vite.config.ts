@@ -12,6 +12,7 @@ export default defineConfig({
       root: resolve(__dirname),
       insertTypesEntry: true,
       include: ['src'],
+      exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
       outDir: resolve(__dirname, 'dist'),
       tsconfigPath: resolve(__dirname, 'tsconfig.json'),
     }),
