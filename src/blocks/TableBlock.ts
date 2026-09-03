@@ -269,8 +269,22 @@ export class TableBlock extends PilaBlock {
     this.updateSelectionUI();
   }
 
-  private onTableMouseUp(): void {
+  private onTableMouseUp(e?: MouseEvent): void {
+    // If a mouseup event is provided and a selection is in progress,
+    // try to resolve the cell under the cursor to update selectionEnd.
+    if (e && this.isSelecting) {
+      const el = document.elementFromPoint(e.clientX, e.clientY) as Element | null;
+      const td = el?.closest('td, th') as HTMLElement | null;
+      if (td) {
+        const r = parseInt(td.dataset.rowIndex || '0', 10);
+        const c = parseInt(td.dataset.colIndex || '0', 10);
+        this.selectionEnd = { r, c };
+      }
+    }
+
     this.isSelecting = false;
+    // Ensure UI reflects any final selection position
+    this.updateSelectionUI();
   }
 
   private updateSelectionUI(): void {
@@ -425,7 +439,9 @@ export class TableBlock extends PilaBlock {
 
     // Cell selection listeners
     this.eventGroup.on(table, 'mousedown', (e) => this.onTableMouseDown(e));
-    this.eventGroup.on(window, 'mouseup', () => this.onTableMouseUp());
+    // Capture mouseup coordinates so we can finalize selection even when
+    // cell mouseenter isn't fired (e.g. synthetic drags in tests).
+    this.eventGroup.on(window, 'mouseup', (e) => this.onTableMouseUp(e as MouseEvent));
 
     const headerRowSet = this.headerRowSet();
     const headerColSet = this.headerColSet();
