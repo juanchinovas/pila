@@ -163,6 +163,9 @@ export class HtmlSerializer {
 
     const css = prismCss + '\n' + variablesCss + '\n' + blockCss;
 
+    // Wrap exported HTML in a dedicated, namespaced root to avoid leaking styles
+    const wrappedBody = `<div class="pila-doc">${body}</div>`;
+
     if (fullDocument) {
       return [
         '<!DOCTYPE html>',
@@ -176,14 +179,14 @@ export class HtmlSerializer {
         '  </style>',
         '</head>',
         '<body>',
-        body,
+        wrappedBody,
         '</body>',
         '</html>',
       ].join('\n');
     }
 
     if (includeCSS) {
-      return `<style>${css}</style>\n${body}`;
+      return `<style>${css}</style>\n${wrappedBody}`;
     }
 
     return body;
@@ -246,7 +249,8 @@ export class HtmlSerializer {
         const baseStyle = blockStyleCss(block.attrs);
         const mergedStyle = [baseStyle, checkedStyle].filter(Boolean).join(';');
         const todoStyleAttr = mergedStyle ? ` style="${escapeAttr(mergedStyle)}"` : '';
-        return `<div${classAttr('todo', block.attrs?.tailwindClasses)}${styleAttr}><input type="checkbox"${checked} disabled /><span${todoStyleAttr}>${inlineToHtml(content)}</span></div>`;
+        // namespace todo class for exported HTML
+        return `<div${classAttr('pila-doc-todo', block.attrs?.tailwindClasses)}${styleAttr}><input type="checkbox"${checked} disabled /><span${todoStyleAttr}>${inlineToHtml(content)}</span></div>`;
       }
       case 'code': {
         const rawLang = block.attrs?.language ?? 'plaintext';
@@ -261,8 +265,8 @@ export class HtmlSerializer {
       case 'callout': {
         const icon = escapeHtml(block.attrs?.icon ?? '💡');
         const flavor = block.attrs?.flavor ?? 'info';
-        const flavorClass = `callout--${flavor}`;
-        return `<div${classAttr('callout', flavorClass, block.attrs?.tailwindClasses)}${styleAttr}><span class="callout-icon">${icon}</span><p>${inlineToHtml(content)}</p></div>`;
+        const flavorClass = `pila-doc-callout--${flavor}`;
+        return `<div${classAttr('pila-doc-callout', flavorClass, block.attrs?.tailwindClasses)}${styleAttr}><span class="pila-doc-callout-icon">${icon}</span><p>${inlineToHtml(content)}</p></div>`;
       }
       case 'divider':
         return `<hr${classAttr(block.attrs?.tailwindClasses)}${styleAttr} />`;

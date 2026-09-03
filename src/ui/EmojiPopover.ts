@@ -33,24 +33,24 @@ export class EmojiPopover {
     }
 
     this.menuEl = document.createElement('div');
-    this.menuEl.className = 'pila-slash-menu pila-emoji-popover flex flex-col';
+    this.menuEl.className = 'pila-slash-menu pila-emoji-popover';
     this.menuEl.dataset.pilaUi = 'emoji-popover';
     this.menuEl.style.display = 'none';
     
     const filterContainer = document.createElement('div');
-    filterContainer.className = 'pila-emoji-filter-container p-2 border-b border-gray-100';
+    filterContainer.className = 'pila-emoji-filter-container';
     
     this.inputEl = document.createElement('input');
     this.inputEl.type = 'text';
     this.inputEl.setAttribute('form', '');
     this.inputEl.placeholder = 'Filter emojis...';
-    this.inputEl.className = 'pila-emoji-filter-input w-full border border-gray-200 rounded px-2 py-1 outline-none text-sm';
+    this.inputEl.className = 'pila-emoji-filter-input';
     
     filterContainer.appendChild(this.inputEl);
     this.menuEl.appendChild(filterContainer);
 
     const listEl = document.createElement('div');
-    listEl.className = 'pila-emoji-list max-h-[200px] overflow-y-auto p-1';
+    listEl.className = 'pila-emoji-list';
     this.menuEl.appendChild(listEl);
 
     this.portalTo.appendChild(this.menuEl);
@@ -150,7 +150,7 @@ export class EmojiPopover {
 
     if (this.filteredItems.length === 0) {
       const empty = document.createElement('div');
-      empty.className = 'px-2 py-4 text-center text-gray-400 text-sm';
+      empty.className = 'pila-emoji-empty';
       empty.textContent = 'No emojis found';
       listEl.appendChild(empty);
       return;
@@ -158,14 +158,14 @@ export class EmojiPopover {
 
     this.filteredItems.forEach((item, idx) => {
       const row = document.createElement('div');
-      row.className = 'flex gap-1 items-center px-2 py-1 rounded cursor-pointer hover:bg-gray-100';
+      row.className = 'pila-emoji-row';
       row.tabIndex = 0;
       if (idx === this.selectedIndex) {
-        row.classList.add('bg-gray-100');
+        row.classList.add('pila-emoji-row--selected');
       }
       
       const emoji = document.createElement('span');
-      emoji.className = 'pila-slash-icon !bg-transparent text-lg';
+      emoji.className = 'pila-slash-icon pila-emoji-icon';
       emoji.textContent = item.emoji;
 
       const name = document.createElement('span');

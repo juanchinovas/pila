@@ -46,7 +46,7 @@ export class DragHandle {
     this.handleEl.setAttribute('aria-label', 'Drag to reorder');
     this.addingBelowBtn = document.createElement('button');
     this.addingBelowBtn.type = 'button';
-    this.addingBelowBtn.classList.add('p-0.5');
+    this.addingBelowBtn.classList.add('pila-drag-btn');
     this.addingBelowBtn.title = 'Insert new block';
     this.addingBelowBtn.appendChild(icon(Icons.Plus, 18));
     this.handleEl.appendChild(this.addingBelowBtn);
@@ -54,7 +54,7 @@ export class DragHandle {
     this.draggingBtn = document.createElement('button');
     this.draggingBtn.type = 'button';
     this.draggingBtn.appendChild(icon(Icons.GripVertical, 18));
-    this.draggingBtn.classList.add('p-0.5');
+    this.draggingBtn.classList.add('pila-drag-btn');
     this.draggingBtn.title = 'Drag to reorder\nclick for more actions';
     this.handleEl.appendChild(this.draggingBtn);
 

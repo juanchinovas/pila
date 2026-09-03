@@ -14,13 +14,7 @@ export interface TableToolbarContext {
   onDeleteCol(): void
 }
 
-const BTN =
-  'px-1.5 py-0.5 rounded border border-transparent ' +
-  'bg-transparent text-[color:var(--pila-text)] cursor-pointer ' +
-  'transition-colors hover:bg-[var(--pila-accent)] hover:text-white select-none ' +
-  'flex items-center justify-center flex-col gap-0';
-
-const SEP_CLS = 'w-px h-4 bg-[var(--pila-border)] mx-0.5 shrink-0 self-center';
+// Namespaced classes used for toolbar buttons are defined in pila.css
 
 export class TableToolbar {
   private portalTo: HTMLElement;
@@ -39,9 +33,7 @@ export class TableToolbar {
 
   private buildDOM(): HTMLElement {
     const toolbar = document.createElement('div');
-    toolbar.className =
-      'fixed z-[9000] flex items-center gap-px px-1 py-1 rounded-lg shadow-xl ' +
-      'bg-[var(--pila-bg)] border border-[var(--pila-border)]';
+    toolbar.className = 'pila-table-toolbar';
     toolbar.dataset.pilaUi = 'table-toolbar';
 
     // Toggle header row / col
@@ -78,11 +70,11 @@ export class TableToolbar {
 
     // Delete (red on hover)
     const delRow = this.makeIconBtn(Icons.Trash2, () => this.ctx?.onDeleteRow(), 'Delete row', 'Row');
-    delRow.classList.add('hover:!bg-red-500');
+    delRow.classList.add('pila-table-delete-btn');
     toolbar.appendChild(delRow);
 
     const delCol = this.makeIconBtn(Icons.Trash2, () => this.ctx?.onDeleteCol(), 'Delete column', 'Col');
-    delCol.classList.add('hover:!bg-red-500');
+    delCol.classList.add('pila-table-delete-btn');
     toolbar.appendChild(delCol);
 
     return toolbar;
@@ -90,14 +82,14 @@ export class TableToolbar {
 
   private sep(): HTMLElement {
     const s = document.createElement('span');
-    s.className = SEP_CLS;
+    s.className = 'pila-table-toolbar-sep';
     return s;
   }
 
   private makeIconBtn(iconNode: LucideIconNode, handler: () => void, title?: string, text?: string): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = BTN;
+    btn.className = 'pila-table-toolbar-btn';
     if (title) btn.title = title;
     btn.appendChild(icon(iconNode, 14));
     if (text) btn.appendChild(document.createTextNode(text));

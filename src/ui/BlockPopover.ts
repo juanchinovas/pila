@@ -98,7 +98,7 @@ export class BlockPopover {
         const input = document.createElement('input');
         input.type = 'color';
         input.setAttribute('form', '');
-        input.className = 'pila-custom-color-input w-full';
+        input.className = 'pila-custom-color-input';
         input.style.position = 'absolute';
         input.style.opacity = '0';
         input.value = (action.color ?? action.value ?? '#000000') as string;

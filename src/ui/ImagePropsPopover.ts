@@ -24,12 +24,9 @@ export class ImagePropsPopover {
   
   private resolveFn: ((result: ImagePropsResult | null) => void) | null = null;
 
-  private readonly FIELD_CLASS =
-    'w-full px-2 py-1 text-xs rounded border border-[var(--pila-border)] ' +
-    'bg-[var(--pila-bg)] text-[var(--pila-text)] outline-none ' +
-    'focus:border-[var(--pila-accent)] focus:ring-1 focus:ring-[var(--pila-accent)]';
+  private readonly FIELD_CLASS = 'pila-modal-field';
 
-  private readonly LABEL_CLASS = 'block text-[10px] uppercase font-bold text-[var(--pila-muted)] mb-1';
+  private readonly LABEL_CLASS = 'pila-modal-label';
 
   constructor(portalTo: HTMLElement = document.body) {
     this.portalTo = portalTo;
@@ -43,28 +40,15 @@ export class ImagePropsPopover {
 
       this.popoverEl = document.createElement('div');
       this.popoverEl.className = 'pila-image-props-popover';
-      this.popoverEl.style.cssText = `
-        position: absolute;
-        z-index: 10000;
-        width: 240px;
-        background: var(--pila-slash-bg);
-        border: 1px solid var(--pila-slash-border);
-        border-radius: var(--pila-radius);
-        box-shadow: var(--pila-shadow);
-        padding: 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      `;
       setPortalPosition(this.popoverEl, this.portalTo, x, y);
 
       // Fields
       const uploadContainer = document.createElement('div');
-      uploadContainer.className = 'flex flex-col gap-1';
+      uploadContainer.className = 'pila-image-upload-container';
 
       const separator = document.createElement('div');
-      separator.className = 'flex items-center justify-center p-1';
-      separator.innerHTML = '<span class="text-[var(--pila-muted)] text-xs">or</span>';
+      separator.className = 'pila-modal-separator';
+      separator.innerHTML = '<span class="pila-modal-sep-text">or</span>';
 
       const uploadArea = this.makeFileInputField();
       uploadContainer.appendChild(uploadArea);
@@ -137,13 +121,13 @@ export class ImagePropsPopover {
       const cancelBtn = document.createElement('button');
       cancelBtn.type = 'button';
       cancelBtn.textContent = 'Cancel';
-      cancelBtn.className = 'px-3 py-1 text-xs rounded border border-[var(--pila-border)] text-[var(--pila-muted)] hover:bg-[var(--pila-border)]';
+      cancelBtn.className = 'pila-btn pila-btn--cancel';
       cancelBtn.onclick = () => this.cancel();
 
       const saveBtn = document.createElement('button');
       saveBtn.type = 'button';
       saveBtn.textContent = 'Save';
-      saveBtn.className = 'px-3 py-1 text-xs rounded bg-[var(--pila-accent)] text-white hover:opacity-90';
+      saveBtn.className = 'pila-btn pila-btn--confirm';
       saveBtn.onclick = () => this.confirm();
 
       actions.appendChild(cancelBtn);
@@ -183,14 +167,14 @@ export class ImagePropsPopover {
   private makeFileInputField() {
   // Fields
     const uploadArea = document.createElement('div');
-    uploadArea.className = 'relative flex flex-col items-center justify-center gap-1 h-36 rounded border border-dashed border-[var(--pila-border)] transition-colors';
+    uploadArea.className = 'pila-modal-upload-area';
     const uploadBtn = document.createElement('button');
     uploadBtn.type = 'button';
     uploadBtn.textContent = 'Upload Image';
-    uploadBtn.className = 'absolute bg-black/60 rounded px-3 py-1.5 text-xs text-white hover:border-[var(--pila-accent)] hover:bg-black/80';
+    uploadBtn.className = 'pila-modal-upload-btn';
     
     const imagePreview = document.createElement('img');
-    imagePreview.className = 'max-h-40 object-contain';
+    imagePreview.className = 'pila-modal-image-preview';
     uploadArea.appendChild(imagePreview);
 
     const fileInput = document.createElement('input');

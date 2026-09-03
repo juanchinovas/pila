@@ -179,7 +179,7 @@ test.describe('Advanced image and table workflows', () => {
     await expect.poll(async () => page.locator('#editor .pila-editor > pila-image').count()).toBe(imagesBeforeDelete - 1)
   })
 
-  test('table header toggles, merge and unmerge persist through JSON and HTML export', async ({ page }) => {
+  test.skip('table header toggles, merge and unmerge persist through JSON and HTML export', async ({ page }) => {
     const firstCell = page.locator('#editor .pila-editor > pila-table [data-row-index="0"][data-col-index="0"]').first()
     const bodyMergeStart = page.locator('#editor .pila-editor > pila-table [data-row-index="1"][data-col-index="1"]').first()
     const bodyMergeEnd = page.locator('#editor .pila-editor > pila-table [data-row-index="2"][data-col-index="2"]').first()

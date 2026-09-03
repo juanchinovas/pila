@@ -16,15 +16,11 @@ export class ImagePropsModal {
 
   private resolveFn: ((result: ImagePropsResult | null) => void) | null = null;
 
-  private readonly FIELD_CLASS =
-    'w-full px-3 py-1.5 text-sm rounded border border-[var(--pila-border)] ' +
-    'bg-[var(--pila-bg)] text-[var(--pila-text)] outline-none ' +
-    'focus:border-[var(--pila-accent)] focus:ring-1 focus:ring-[var(--pila-accent)]';
+  private readonly FIELD_CLASS = 'pila-modal-field';
 
-  private readonly LABEL_CLASS = 'block text-xs font-medium text-[var(--pila-muted)] mb-1';
+  private readonly LABEL_CLASS = 'pila-modal-label';
 
-  private readonly BTN_BASE =
-    'px-4 py-1.5 text-sm rounded cursor-pointer transition-colors';
+  // BTN_BASE removed; using explicit pila-btn classes for buttons
 
   constructor(portalTo: HTMLElement = document.body) {
     this.portalTo = portalTo;
@@ -34,9 +30,7 @@ export class ImagePropsModal {
   private buildDOM(): void {
     // Backdrop
     this.backdrop = document.createElement('div');
-    this.backdrop.className =
-      'fixed inset-0 z-[9998] flex items-center justify-center ' +
-      'bg-black/40 backdrop-blur-sm';
+    this.backdrop.className = 'pila-modal-backdrop';
     this.backdrop.setAttribute('role', 'dialog');
     this.backdrop.setAttribute('aria-modal', 'true');
     this.backdrop.setAttribute('aria-label', 'Image properties');
@@ -44,21 +38,19 @@ export class ImagePropsModal {
 
     // Dialog panel
     this.dialog = document.createElement('div');
-    this.dialog.className =
-      'relative z-[9999] w-full max-w-sm rounded-xl shadow-xl ' +
-      'bg-[var(--pila-bg)] border border-[var(--pila-border)] p-5 flex flex-col gap-4';
+    this.dialog.className = 'pila-modal-dialog';
 
     // Title
     const title = document.createElement('h2');
-    title.className = 'text-sm font-semibold text-[var(--pila-text)]';
+    title.className = 'pila-modal-title';
     title.textContent = 'Image properties';
 
     // Fields
     const fields = document.createElement('div');
-    fields.className = 'flex flex-col gap-3';
+    fields.className = 'pila-modal-fields';
     const separator = document.createElement('div');
-    separator.className = 'flex items-center justify-center p-1';
-    separator.innerHTML = '<span class="text-[var(--pila-muted)] text-xs">or</span>';
+    separator.className = 'pila-modal-separator';
+    separator.innerHTML = '<span class="pila-modal-sep-text">or</span>';
 
     const uploadArea = this.makeFileInputField();
     fields.appendChild(uploadArea);
@@ -72,21 +64,17 @@ export class ImagePropsModal {
 
     // Action row
     const actions = document.createElement('div');
-    actions.className = 'flex justify-end gap-2';
+    actions.className = 'pila-modal-actions';
 
     this.cancelBtn = document.createElement('button');
     this.cancelBtn.type = 'button';
     this.cancelBtn.textContent = 'Cancel';
-    this.cancelBtn.className =
-      `${this.BTN_BASE} border border-[var(--pila-border)] text-[var(--pila-muted)] ` +
-      'hover:bg-[var(--pila-border)]';
+    this.cancelBtn.className = 'pila-btn pila-btn--cancel';
 
     this.confirmBtn = document.createElement('button');
     this.confirmBtn.type = 'button';
     this.confirmBtn.textContent = 'Confirm';
-    this.confirmBtn.className =
-      `${this.BTN_BASE} bg-[var(--pila-accent)] text-white ` +
-      'hover:opacity-90';
+    this.confirmBtn.className = 'pila-btn pila-btn--confirm';
 
     actions.appendChild(this.cancelBtn);
     actions.appendChild(this.confirmBtn);
@@ -139,7 +127,7 @@ export class ImagePropsModal {
     if (readOnly) {
       input.readOnly = true;
       input.tabIndex = -1;
-      input.className += ' opacity-60 cursor-default';
+      input.className += ' pila-modal-field--readonly';
     }
 
     ref(input);
@@ -151,14 +139,14 @@ export class ImagePropsModal {
   private makeFileInputField() {
     // Fields
       const uploadArea = document.createElement('div');
-      uploadArea.className = 'relative flex flex-col items-center justify-center gap-1 h-40 rounded border border-dashed border-[var(--pila-border)] transition-colors';
+      uploadArea.className = 'pila-modal-upload-area';
       const uploadBtn = document.createElement('button');
       uploadBtn.type = 'button';
       uploadBtn.textContent = 'Upload Image';
-      uploadBtn.className = 'fixed bg-black/60 rounded px-3 py-1.5 text-xs text-white hover:border-[var(--pila-accent)] hover:bg-black/80';
-      
+      uploadBtn.className = 'pila-modal-upload-btn';
+
       const imagePreview = document.createElement('img');
-      imagePreview.className = 'max-h-40 object-contain';
+      imagePreview.className = 'pila-modal-image-preview';
       uploadArea.appendChild(imagePreview);
 
       const fileInput = document.createElement('input');
@@ -210,7 +198,7 @@ export class ImagePropsModal {
     this.srcField.readOnly = false;
     this.srcField.tabIndex = 0;
     this.srcField.className = this.srcField.className
-      .replace(' opacity-60 cursor-default', '');
+      .replace(' pila-modal-field--readonly', '');
 
     this.backdrop.style.display = 'flex';
     this.portalTo.appendChild(this.backdrop);

@@ -1,5 +1,6 @@
 /* ─── Block Styles ────────────────────────────────────────────── */
-body {
+/* Scoped exported document root */
+.pila-doc {
   margin: 0;
   padding: 0;
   font-family: var(--pila-font);
@@ -15,22 +16,25 @@ body {
   line-height: 1.6;
 }
 
-p {
+.pila-doc p {
   margin: 0 0 12px;
   font-size: 15px;
   line-height: 1.6;
 }
 
-h1, h2, h3 {
+.pila-doc h1,
+.pila-doc h2,
+.pila-doc h3 {
   font-weight: 700;
   line-height: 1.25;
   margin: 24px 0 8px;
 }
-h1 { font-size: 28px; }
-h2 { font-size: 22px; }
-h3 { font-size: 18px; font-weight: 600; }
+.pila-doc h1 { font-size: 28px; }
+.pila-doc h2 { font-size: 22px; }
+.pila-doc h3 { font-size: 18px; font-weight: 600; }
 
-blockquote {
+/* blockquote inside exported doc */
+.pila-doc blockquote {
   margin: 12px 0;
   padding: 8px 16px;
   border-left: 4px solid var(--pila-quote-border);
@@ -70,7 +74,8 @@ blockquote {
   border-radius: 0;
 }
 
-code {
+/* inline code inside exported doc */
+.pila-doc code {
   font-family: var(--pila-mono);
   font-size: 0.875em;
   background: var(--pila-inline-code-bg);
@@ -79,15 +84,16 @@ code {
   border-radius: 3px;
 }
 
-a {
+/* links inside exported doc */
+.pila-doc a {
   color: var(--pila-accent);
   text-decoration: underline;
 }
-a:hover {
+.pila-doc a:hover {
   color: var(--pila-accent-hover);
 }
 
-.callout {
+.pila-doc-callout {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -100,33 +106,33 @@ a:hover {
   font-size: 15px;
   line-height: 1.6;
 }
-.callout--warning {
+.pila-doc-callout--warning {
   border-left-color: var(--pila-callout-warning-border);
   background: var(--pila-callout-warning-bg);
   color: var(--pila-callout-warning-text);
 }
-.callout--error {
+.pila-doc-callout--error {
   border-left-color: var(--pila-callout-error-border);
   background: var(--pila-callout-error-bg);
   color: var(--pila-callout-error-text);
 }
-.callout--success {
+.pila-doc-callout--success {
   border-left-color: var(--pila-callout-success-border);
   background: var(--pila-callout-success-bg);
   color: var(--pila-callout-success-text);
 }
-.callout--tip {
+.pila-doc-callout--tip {
   border-left-color: var(--pila-callout-tip-border);
   background: var(--pila-callout-tip-bg);
   color: var(--pila-callout-tip-text);
 }
-.callout-icon {
+.pila-doc-callout-icon {
   flex-shrink: 0;
   font-size: 1.1em;
   min-width: 1.3em;
   line-height: 1.6;
 }
-.callout > p {
+.pila-doc-callout > p {
   margin: 0;
   flex: 1;
 }
@@ -159,65 +165,68 @@ a:hover {
   border: 2px solid var(--pila-accent);
 }
 
-ul, ol {
+/* lists inside exported doc */
+.pila-doc ul,
+.pila-doc ol {
   padding-left: 1.5em;
   margin: 12px 0;
 }
-li {
+.pila-doc li {
   margin: 0 0 4px;
   font-size: 15px;
   line-height: 1.6;
 }
 
-hr {
+.pila-doc hr {
   border: none;
   border-top: 1px solid var(--pila-border);
   margin: 20px 0;
 }
 
-table {
+.pila-doc table {
   border-collapse: collapse;
   width: 100%;
   margin: 12px 0;
   font-size: 15px;
 }
-th, td {
+.pila-doc th,
+.pila-doc td {
   padding: 8px 12px;
   border: 1px solid var(--pila-border);
   text-align: left;
 }
-th {
+.pila-doc th {
   background: var(--pila-code-bg);
   font-weight: 600;
 }
 
-.pila-columns {
+.pila-doc .pila-columns {
   display: flex;
   align-items: stretch;
   width: 100%;
   gap: 12px;
   margin: 12px 0;
 }
-.pila-column {
+.pila-doc .pila-column {
   flex: 1;
   min-width: 0;
 }
 
-figure {
+.pila-doc figure {
   margin: 12px 0;
   padding: 0;
 }
-figure img {
+.pila-doc figure img {
   max-width: 100%;
   height: auto;
 }
 
-.todo {
+.pila-doc-todo {
   margin: 0 0 8px;
   font-size: 15px;
   line-height: 1.6;
 }
-.todo input[type="checkbox"] {
+.pila-doc-todo input[type="checkbox"] {
   margin-right: 6px;
 }
 
@@ -248,7 +257,7 @@ figure img {
 
 /* Also neutralize any inline code that might get Prism classes */
 .pila-editor :not(pre) > code[class*="language-"],
-body :not(pre) > code[class*="language-"] {
+.pila-doc :not(pre) > code[class*="language-"] {
   text-shadow: none;
   box-shadow: none;
   background: var(--pila-inline-code-bg);

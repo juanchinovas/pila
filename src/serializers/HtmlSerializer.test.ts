@@ -13,7 +13,7 @@ describe('HtmlSerializer', () => {
     expect(html).toContain('--pila-font');
     expect(html).toContain('--pila-accent');
     expect(html).toContain('.pila-button--primary');
-    expect(html).toContain('.callout');
+    expect(html).toContain('.pila-doc-callout');
     expect(html).toContain('</style>');
   });
 
@@ -258,7 +258,9 @@ describe('HtmlSerializer', () => {
     const html = HtmlSerializer.serialize([
       { id: '1', type: 'image', attrs: { src: 'https://example.com/img.png', alt: '' } },
     ]);
-    expect(html).not.toContain('class=');
+    // wrapper root should exist but the image itself must not carry a class attribute
+    expect(html).toContain('class="pila-doc"');
+    expect(html).not.toMatch(/<img[^>]*class=/);
   });
 
   // ── Phase 5: table structure ──────────────────────────────────────────────
@@ -419,7 +421,7 @@ describe('HtmlSerializer', () => {
         attrs: { tailwindClasses: 'rounded-xl shadow-sm' },
       },
     ]);
-    expect(html).toContain('class="callout callout--info rounded-xl shadow-sm"');
+    expect(html).toContain('class="pila-doc-callout pila-doc-callout--info rounded-xl shadow-sm"');
   });
 
   it('serializes image object-fit, border-radius, and alignment styles', () => {
@@ -462,7 +464,7 @@ describe('HtmlSerializer', () => {
         attrs: { background: '#0f172a', textColor: '#e2e8f0' },
       },
     ]);
-    expect(html).toContain('<div class="callout callout--info" style="background-color:#ecfeff;color:#155e75">');
+    expect(html).toContain('<div class="pila-doc-callout pila-doc-callout--info" style="background-color:#ecfeff;color:#155e75">');
     expect(html).toContain('<a href="https://example.com" class="pila-button pila-button--primary" target="_blank" rel="noopener noreferrer" style="background-color:#111827;color:#f9fafb">Styled button</a>');
     expect(html).toContain('<div class="pila-code-block" style="background-color:#0f172a;color:#e2e8f0"><div class="pila-code-lang">plaintext</div><pre><code class="language-plaintext">const ready = true;</code></pre></div>');
   });
